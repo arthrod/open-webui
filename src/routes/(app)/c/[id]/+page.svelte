@@ -377,7 +377,6 @@
 			)
 			.flat(1);
 
-		console.info(docs, 'dddddddd3333333')
 		const [res, controller] = await generateChatCompletion(localStorage.token, {
 			model: model,
 			messages: messagesBody,
@@ -573,7 +572,7 @@
 			)
 			.flat(1);
 
-		console.log(docs, 'dddddd444444');
+		console.log(docs);
 
 		scrollToBottom();
 

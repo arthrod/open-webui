@@ -258,7 +258,7 @@
 
 				<div>
 					<button
-						class=" px-2 py-2 rounded-xl border border-gray-200 dark:border-gray-600 dark:border-0 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition font-medium text-sm flex items-center space-x-1"
+						class=" px-2 py-2 rounded-xl border border-gray-400 dark:border-gray-600 dark:border-0 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition font-medium text-sm flex items-center space-x-1"
 						on:click={() => {
 							showAddDocModal = true;
 						}}
@@ -296,7 +296,7 @@
 				</div>
 			</div> -->
 
-			<hr class=" dark:border-gray-700 my-2.5" />
+			<hr class=" dark:border-gray-500 my-2.5" />
 
 			{#if tags.length > 0}
 				<div class="px-2.5 pt-1 flex gap-1 flex-wrap">

@@ -42,6 +42,7 @@
         role="switch"
         aria-checked={checked}
         aria-labelledby={`switch-${uniqueID}`}
+        class="bg-white dark:bg-black"
         on:click={handleClick}>
             <span>{options[0] ?? 'On'}</span>
             <span>{options[1] ?? 'Off'}</span>
@@ -83,7 +84,6 @@
 	}
     /* Inner Design Option */
     .s--inner button {
-        background-color: #fff;
         border: 1px solid var(--gray);
         border-radius: 1.5em;
     }

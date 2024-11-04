@@ -2,6 +2,7 @@
 	import { getContext } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { updateUserPassword } from '$lib/apis/auths';
+	import { user } from '$lib/stores';
 
 	const i18n = getContext('i18n');
 
@@ -9,6 +10,8 @@
 	let currentPassword = '';
 	let newPassword = '';
 	let newPasswordConfirm = '';
+	let normalUser = true;
+	$: normalUser = !$user.extra_sso
 
 	const updatePasswordHandler = async () => {
 		if (newPassword === newPasswordConfirm) {
@@ -41,17 +44,20 @@
 	on:submit|preventDefault={() => {
 		updatePasswordHandler();
 	}}
->
-	<div class="flex justify-between items-center text-sm">
-		<div class="  font-medium">{$i18n.t('Change Password')}</div>
-		<button
-			class=" text-xs font-medium text-gray-500"
-			type="button"
-			on:click={() => {
-				show = !show;
-			}}>{show ? $i18n.t('Hide') : $i18n.t('Show')}</button
-		>
-	</div>
+> 
+	<!-- Hide password changing for AD user -->
+	{#if normalUser}
+		<div class="flex justify-between items-center text-sm">
+			<div class="  font-medium">{$i18n.t('Change Password')}</div>
+			<button
+				class=" text-xs font-medium text-gray-500"
+				type="button"
+				on:click={() => {
+					show = !show;
+				}}>{show ? $i18n.t('Hide') : $i18n.t('Show')}</button
+			>
+		</div>
+	{/if}
 
 	{#if show}
 		<div class=" py-2.5 space-y-1.5">

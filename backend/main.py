@@ -116,6 +116,8 @@ app.state.MODEL_FILTER_LIST = MODEL_FILTER_LIST
 
 app.state.WEBHOOK_URL = WEBHOOK_URL
 
+app.mount("/uploads", StaticFiles(directory="/app/backend/data/uploads"), name="uploads")
+
 origins = ["*"]
 
 async def initialize_toolkits():

@@ -71,7 +71,7 @@ from utils.misc import (
     extract_folders_after_data_docs,
 )
 from utils.utils import get_current_user, get_admin_user
-
+from utils.cleaning.format_text_with_custom_map import replace_text_in_files
 from config import (
     SRC_LOG_LEVELS,
     UPLOAD_DIR,
@@ -587,6 +587,12 @@ def store_data_in_vector_db(data, collection_name, overwrite: bool = False, file
             data.append(new_document)
 
     concatenated_content = "".join([doc.page_content for doc in data])
+
+    # Replace the text with the custom map(exp. CID:431 -> ff)
+    if file_content_type == 'application/pdf':
+        logging.info(f'replacing text in pdf. concatenated_content: {concatenated_content}')
+        concatenated_content = replace_text_in_files(concatenated_content)
+        logging.info(f'replaced text in pdf. concatenated_content: {concatenated_content}')
     combined_document = Document(page_content=concatenated_content, metadata={"source": file_path})
     
     text_splitter = RecursiveCharacterTextSplitter(

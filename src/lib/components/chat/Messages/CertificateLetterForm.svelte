@@ -113,7 +113,7 @@
 			>
 				<!-- Letter type  -->
 				<div class="flex w-full">
-					<div class="w-2/3 mr-6">
+					<div class="flex-1">
 						<div class="mb-2 text-sm">Letter Type</div>
 						<div class="flex items-center">
 							<select
@@ -129,7 +129,7 @@
 						</div>
 					</div>
 					{#if type === 'Salary Certificate'}
-						<div class="flex-1">
+						<div class="flex-1 ml-6">
 							<div class="mb-2 text-sm">Language</div>
 							<div class="flex items-center">
 								<select

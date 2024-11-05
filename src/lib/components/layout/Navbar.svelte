@@ -64,7 +64,7 @@
 	const handleTypeChange = (val) => {
 		showConfirm = true;
 		return
-		toast('Swich user type will start a new chat. Would you like to continue?', {
+		toast('Switch user type will start a new chat. Would you like to continue?', {
 			action: {
 				label: 'Confirm',
 				onClick: async () => {
@@ -103,7 +103,7 @@
 
 <ConfirmModal 
 	bind:show={showConfirm} 
-	content="Swich user type will start a new chat. Would you like to continue?"
+	content="Switch user type will start a new chat. Would you like to continue?"
 	on:cancel={() => {currentEmployeeType = bkEmployeeType}}
 	on:confirm={handleConfirm}
 />

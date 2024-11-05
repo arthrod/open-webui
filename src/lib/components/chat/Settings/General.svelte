@@ -160,7 +160,8 @@
 				</div>
 			</div>
 
-			<div class=" flex w-full justify-between">
+			<!-- Only supports ENG now -->
+			<!-- <div class=" flex w-full justify-between">
 				<div class=" self-center text-xs font-medium">{$i18n.t('Language')}</div>
 				<div class="flex items-center relative">
 					<select
@@ -188,7 +189,7 @@
 						Help us translate Open WebUI!
 					</a>
 				</div>
-			{/if}
+			{/if} -->
 			<div class="flex w-full justify-between">
 				<div class="flex items-center relative">
 					<div class=" self-center text-xs font-medium mr-2">Bot Name</div>

@@ -67,7 +67,7 @@
 						disabled={$employeeType == type}
 						on:click={async () => {
 							showDropdown = false;
-							toast('Swich user type will start a new chat. Would you like to continue?', {
+							toast('Switch user type will start a new chat. Would you like to continue?', {
 								action: {
 									label: 'Confirm',
 									onClick: async () => {

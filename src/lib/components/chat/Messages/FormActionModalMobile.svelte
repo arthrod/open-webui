@@ -150,7 +150,7 @@
 </script>
 
 <Modal size="lg" bind:show>
-	<div class="bg-[#ffffffdd] rounded-lg">
+	<div class="bg-[#ffffffdd] rounded-lg" id="mobile-form">
 		<!-- <div class=" flex justify-between dark:text-gray-300 px-5 pt-4 pb-2">
 			<div class=" text-lg font-medium self-center capitalize">
 				{$i18n.t('Citation')}
@@ -182,17 +182,17 @@
 					}}
 				>
 					<!-- Leave Type & ID  -->
-					<div class="flex w-full">
+					<div class="flex-col w-full">
 						<div class="{$isMobile ? 'w-full' : 'w-1/2'} mr-16">
 							<div class="mb-2 text-sm flex items-center">
 								<img src="/icon/type.png" alt="icon-form" class="h-[22px] mr-2" />
 								<span>Type of Leave</span>
 							</div>
-							<div class="flex items-center">
+							<div class="flex-1">
 								<select
 									required
 									bind:value={type}
-									class="flex-1 rounded-md px-2 h-[44px] bg-transparent"
+									class="w-full rounded-md px-2 h-[44px] bg-transparent"
 									style="border: 1px solid #0000004D"
 								>
 									{#each leaves as leaveType}
@@ -239,7 +239,7 @@
 						<span>Leave Days</span>
 					</div>
 					<div class="my-2 flex items-center">
-						<Textfield required variant="outlined" bind:value={days} class="w-1/3 mr-2" />
+						<Textfield required variant="outlined" bind:value={days} class="w-[36vw] mr-2" />
 						<span>Day(s)</span>
 					</div>
 					<!-- Address -->
@@ -256,7 +256,7 @@
 						<span>Telephone (Local)</span>
 					</div>
 					<div class="flex items-center">
-						<Textfield required variant="outlined" bind:value={phone} class="w-1/2" />
+						<Textfield required variant="outlined" bind:value={phone} class="w-full" />
 					</div>
 					<!-- Remark  -->
 					<div class="mt-4 mb-2 text-sm flex items-center">
@@ -283,3 +283,10 @@
 		</div>
 	</div>
 </Modal>
+
+
+<style>
+#mobile-form {
+	--date-input-width: 36vw;
+}
+</style>

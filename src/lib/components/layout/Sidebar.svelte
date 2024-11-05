@@ -560,7 +560,7 @@
 					}, 0);
 				}}
 			>
-				Start New Chat<span>+</span>
+				{$i18n.t('Open new chat')}<span>+</span>
 				<!-- <div class="flex self-center">
 						<div class="self-center mr-1.5">
 							<img

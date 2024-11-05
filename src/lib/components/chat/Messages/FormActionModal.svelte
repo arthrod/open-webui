@@ -185,7 +185,7 @@
 			>
 				<!-- Leave Type & ID  -->
 				<div class="flex w-full">
-					<div class="w-1/2 mr-16">
+					<div class="w-full">
 						<div class="mb-2 text-sm">Type of Leave</div>
 						<div class="flex items-center">
 							<img src="/icon/type.png" alt="icon-form" class="h-[22px] mr-2" />
@@ -236,7 +236,7 @@
 						<div class="mt-4 text-sm">Leave Days</div>
 						<div class="my-2 flex items-center">
 							<img src="/icon/calendar1.png" alt="icon-form" class="h-[24px] mr-2" />
-							<Textfield required variant="outlined" bind:value={days} class="w-1/2 mr-2" />
+							<Textfield required variant="outlined" bind:value={days} class="w-3/5 mr-2" />
 							<span>Day(s)</span>
 						</div>
 					</div>
@@ -251,7 +251,7 @@
 				<div class="mt-4 mb-2 text-sm">Telephone (Local)</div>
 				<div class="flex items-center">
 					<img src="/icon/phone.png" alt="icon-form" class="h-[30px] mr-2" />
-					<Textfield required variant="outlined" bind:value={phone} class="w-1/2" />
+					<Textfield required variant="outlined" bind:value={phone} class="w-full" />
 				</div>
 				<!-- Remark  -->
 				<div class="mt-4 mb-2 text-sm">Employee Remarks (Optional)</div>

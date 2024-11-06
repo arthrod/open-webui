@@ -2,6 +2,7 @@
 	import { getContext, onMount, tick } from 'svelte';
 
 	import Modal from '$lib/components/common/Modal.svelte';
+	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	const i18n = getContext('i18n');
 
 	export let show = false;
@@ -58,7 +59,21 @@
 							{$i18n.t('Source')}
 						</div>
 						<div class="text-sm dark:text-gray-400">
-							{document.source?.name ?? $i18n.t('No source available')}
+							<button
+								on:click={() => {
+									let target = document.source.name ?? '';
+									if (!!target) {
+										target.startsWith('http')
+											? window.open(target)
+											: window.open(`/uploads/${document.source.name}`);
+									}
+								}}
+								class={document.source.name ? 'underline' : ''}
+							>
+								<Tooltip content="Open to view the source" placement="right">
+									{document.source?.name ?? $i18n.t('No source available')}
+								</Tooltip>
+							</button>
 							{#if document.metadata?.page !== undefined}
 								<span>- Page {document.metadata?.page}</span>
 							{/if}

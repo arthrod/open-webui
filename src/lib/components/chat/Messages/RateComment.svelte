@@ -65,7 +65,7 @@
 </script>
 
 <div
-	class=" my-2.5 rounded-xl px-4 py-3 border dark:border-gray-850"
+	class=" my-2.5 rounded-xl px-4 py-3 bg-[#ffffffaa] dark:bg-gray-800"
 	id="message-feedback-{messageId}"
 >
 	<div class="flex justify-between items-center">
@@ -93,7 +93,7 @@
 		<div class="flex flex-wrap gap-2 text-sm mt-2.5">
 			{#each reasons as reason}
 				<button
-					class="px-3.5 py-1 border dark:border-gray-850 hover:bg-gray-100 dark:hover:bg-gray-850 {selectedReason ===
+					class="px-3.5 py-1 border border-gray-600 dark:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-850 {selectedReason ===
 					reason
 						? 'bg-gray-200 dark:bg-gray-800'
 						: ''} transition rounded-lg"

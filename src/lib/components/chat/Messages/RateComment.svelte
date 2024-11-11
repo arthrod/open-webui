@@ -16,6 +16,7 @@
 
 	function loadReasons() {
 		LIKE_REASONS = [
+			'Correct',
 			$i18n.t('Accurate information'),
 			$i18n.t('Followed instructions perfectly'),
 			$i18n.t('Showcased creativity'),
@@ -26,6 +27,8 @@
 		];
 
 		DISLIKE_REASONS = [
+			'Incorrect',
+			'Partially incorrect',
 			$i18n.t("Don't like the style"),
 			$i18n.t('Not factually correct'),
 			$i18n.t("Didn't fully follow instructions"),

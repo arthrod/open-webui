@@ -94,7 +94,7 @@
 				}))
 		];
 
-		$employeeType === defaultDocuments.set([
+		defaultDocuments.set([
 			// ...collections.filter((el) => el.name === 'common'),
 			...collections.filter((el) => el.name === $employeeType.toLowerCase())
 		]);

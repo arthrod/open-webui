@@ -30,7 +30,7 @@
 	let dropdownElement;
 	let dropdownTrigger;
 
-	let currentEmployeeType;
+	let currentEmployeeType = "Staff";
 	let bkEmployeeType;
 
 	let showConfirm = false;
@@ -87,7 +87,7 @@
 		// No data in localStorage, means new login, need to get employee type from sso data
 		if (!localEmpType) {
 			const ssoData = $user.extra_sso ? JSON.parse($user.extra_sso) : {}
-			currentEmployeeType = ssoData.emp_type ?? 'Staff'
+			currentEmployeeType = 'Staff'
 			employeeType.set(currentEmployeeType)
 		} else {
 			currentEmployeeType = localEmpType
@@ -139,7 +139,7 @@
 			<div class="self-start flex flex-none items-center pc-only">
 				<!-- <div class="md:hidden flex self-center w-[1px] h-5 mx-2 bg-gray-300 dark:bg-stone-700" /> -->
 				<!-- <EmployeeTypeSwitch /> -->
-				<ToggleSwitch bind:value={currentEmployeeType} design="inner" options={['Staff','Faculty']} label="" on:change={handleTypeChange} />
+				<!-- <ToggleSwitch bind:value={currentEmployeeType} design="inner" options={['Staff','Faculty']} label="" on:change={handleTypeChange} /> -->
 				<div class="relative ml-2">
 					{#if $user !== undefined}
 						<Tooltip content={$user.name}>

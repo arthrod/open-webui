@@ -67,7 +67,7 @@
 				await tick();
 				loaded = true;
 
-				window.setTimeout(() => scrollToBottom(), 0);
+				// window.setTimeout(() => scrollToBottom(), 0);
 				const chatInput = document.getElementById('chat-textarea');
 				chatInput?.focus();
 			} else {

@@ -416,41 +416,44 @@
 			+ New document
 		</button> -->
 		<input
-						bind:this={filesInputElement}
-						bind:files={inputFiles}
-						type="file"
-						hidden
-						multiple
-						on:change={async () => {
-							if (inputFiles && inputFiles.length > 0) {
-								const _inputFiles = Array.from(inputFiles);
-								_inputFiles.forEach((file) => {
-									if (
-										SUPPORTED_FILE_TYPE.includes(file['type']) ||
-										SUPPORTED_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))
-									) {
-										uploadDoc(file);
-										filesInputElement.value = '';
-									} else {
-										toast.error(
-											$i18n.t(
-												`Unknown File Type '{{file_type}}', but accepting and treating as plain text`,
-												{ file_type: file['type'] }
-											)
-										);
-										uploadDoc(file);
-										filesInputElement.value = '';
-									}
-								});
-							} else {
-								toast.error($i18n.t(`File not found.`));
-							}
-						}}
-					/>
+			bind:this={filesInputElement}
+			bind:files={inputFiles}
+			type="file"
+			hidden
+			multiple
+			on:change={async () => {
+				if (inputFiles && inputFiles.length > 0) {
+					const _inputFiles = Array.from(inputFiles);
+					_inputFiles.forEach((file) => {
+						if (
+							SUPPORTED_FILE_TYPE.includes(file['type']) ||
+							SUPPORTED_FILE_EXTENSIONS.includes(file.name.split('.').at(-1))
+						) {
+							uploadDoc(file);
+							filesInputElement.value = '';
+						} else {
+							toast.error(
+								$i18n.t(
+									`Unknown File Type '{{file_type}}', but accepting and treating as plain text`,
+									{ file_type: file['type'] }
+								)
+							);
+							uploadDoc(file);
+							filesInputElement.value = '';
+						}
+					});
+				} else {
+					toast.error($i18n.t(`File not found.`));
+				}
+			}}
+		/>
 		<!-- hide recent documents before finish download function -->
 		<!-- <div class="px-5 py-2 text-[#555] dark:text-[#aaa]">Recent Documents</div> -->
-			<!-- FILE LIST -->
-		<div class="relative flex flex-col overflow-y-auto px-4 max-h-[38%]" style="display: none !important;">
+		<!-- FILE LIST -->
+		<div
+			class="relative flex flex-col overflow-y-auto px-4 max-h-[38%]"
+			style="display: none !important;"
+		>
 			{#each filteredDocs as doc}
 				<div
 					class=" flex items-center space-x-3 rounded-xl px-3.5 py-1.5 hover:bg-gray-100 dark:hover:bg-[#33333320]"
@@ -556,7 +559,11 @@
 					showSidebar.set(false);
 					const newChatButton = document.getElementById('new-chat-button');
 					setTimeout(() => {
-						newChatButton?.click();
+						if (!newChatButton) {
+							goto('/');
+						} else {
+							newChatButton?.click();
+						}
 					}, 0);
 				}}
 			>
@@ -1014,32 +1021,32 @@
 									<div class=" self-center font-medium">{$i18n.t('Archived Chats')}</div>
 								</button> -->
 								{#if $user.role === 'admin'}
-								<a
-									class="flex rounded-md py-2.5 px-3.5 w-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-									href="/documents"
-									on:click={() => {
-										// selectedChatId = null;
-										chatId.set('');
-									}}
-								>
-									<div class="self-center ml-1 mr-3 dark:text-white">
-										<svg
-											width="14"
-											height="14"
-											viewBox="0 0 12 12"
-											fill="none"
-											stroke-width="1"
-											stroke="currentColor"
-											xmlns="http://www.w3.org/2000/svg"
-										>
-											<path
-												d="M10.7775 11.1525H1.22247C0.924105 11.1525 0.637956 11.034 0.426978 10.823C0.216 10.612 0.0974731 10.3259 0.0974731 10.0275V1.9875C0.0974731 1.68913 0.216 1.40298 0.426978 1.192C0.637956 0.981023 0.924105 0.862497 1.22247 0.862497H4.49997C4.66301 0.861411 4.82426 0.896499 4.97211 0.965235C5.11996 1.03397 5.25072 1.13464 5.35497 1.26L6.02247 2.01C6.0577 2.05087 6.1015 2.08348 6.15076 2.10552C6.20002 2.12755 6.25352 2.13847 6.30747 2.1375L10.755 2.0925C11.0547 2.09446 11.3416 2.21441 11.5536 2.42637C11.7656 2.63833 11.8855 2.92525 11.8875 3.225V9.975C11.8935 10.1256 11.8694 10.2759 11.8166 10.417C11.7638 10.5582 11.6833 10.6874 11.5799 10.797C11.4766 10.9067 11.3523 10.9946 11.2145 11.0557C11.0767 11.1167 10.9282 11.1496 10.7775 11.1525ZM1.22247 1.6125C1.12302 1.6125 1.02763 1.65201 0.957308 1.72233C0.886982 1.79266 0.847473 1.88804 0.847473 1.9875V10.0275C0.847473 10.127 0.886982 10.2223 0.957308 10.2927C1.02763 10.363 1.12302 10.4025 1.22247 10.4025H10.7775C10.8776 10.4025 10.9738 10.3632 11.0453 10.2931C11.1168 10.223 11.158 10.1276 11.16 10.0275V3.2775C11.16 3.17605 11.1197 3.07876 11.0479 3.00703C10.9762 2.9353 10.8789 2.895 10.7775 2.895L6.33747 2.94C6.17049 2.94479 6.00482 2.9091 5.85462 2.83596C5.70443 2.76282 5.57417 2.65441 5.47497 2.52L4.81497 1.77C4.7781 1.72131 4.7305 1.68177 4.67587 1.65446C4.62124 1.62714 4.56105 1.61278 4.49997 1.6125H1.22247Z"
-												fill="#323333"
-											/>
-										</svg>
-									</div>
-									<div class=" self-center font-medium">{$i18n.t('Documents')}</div>
-								</a>
+									<a
+										class="flex rounded-md py-2.5 px-3.5 w-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+										href="/documents"
+										on:click={() => {
+											// selectedChatId = null;
+											chatId.set('');
+										}}
+									>
+										<div class="self-center ml-1 mr-3 dark:text-white">
+											<svg
+												width="14"
+												height="14"
+												viewBox="0 0 12 12"
+												fill="none"
+												stroke-width="1"
+												stroke="currentColor"
+												xmlns="http://www.w3.org/2000/svg"
+											>
+												<path
+													d="M10.7775 11.1525H1.22247C0.924105 11.1525 0.637956 11.034 0.426978 10.823C0.216 10.612 0.0974731 10.3259 0.0974731 10.0275V1.9875C0.0974731 1.68913 0.216 1.40298 0.426978 1.192C0.637956 0.981023 0.924105 0.862497 1.22247 0.862497H4.49997C4.66301 0.861411 4.82426 0.896499 4.97211 0.965235C5.11996 1.03397 5.25072 1.13464 5.35497 1.26L6.02247 2.01C6.0577 2.05087 6.1015 2.08348 6.15076 2.10552C6.20002 2.12755 6.25352 2.13847 6.30747 2.1375L10.755 2.0925C11.0547 2.09446 11.3416 2.21441 11.5536 2.42637C11.7656 2.63833 11.8855 2.92525 11.8875 3.225V9.975C11.8935 10.1256 11.8694 10.2759 11.8166 10.417C11.7638 10.5582 11.6833 10.6874 11.5799 10.797C11.4766 10.9067 11.3523 10.9946 11.2145 11.0557C11.0767 11.1167 10.9282 11.1496 10.7775 11.1525ZM1.22247 1.6125C1.12302 1.6125 1.02763 1.65201 0.957308 1.72233C0.886982 1.79266 0.847473 1.88804 0.847473 1.9875V10.0275C0.847473 10.127 0.886982 10.2223 0.957308 10.2927C1.02763 10.363 1.12302 10.4025 1.22247 10.4025H10.7775C10.8776 10.4025 10.9738 10.3632 11.0453 10.2931C11.1168 10.223 11.158 10.1276 11.16 10.0275V3.2775C11.16 3.17605 11.1197 3.07876 11.0479 3.00703C10.9762 2.9353 10.8789 2.895 10.7775 2.895L6.33747 2.94C6.17049 2.94479 6.00482 2.9091 5.85462 2.83596C5.70443 2.76282 5.57417 2.65441 5.47497 2.52L4.81497 1.77C4.7781 1.72131 4.7305 1.68177 4.67587 1.65446C4.62124 1.62714 4.56105 1.61278 4.49997 1.6125H1.22247Z"
+													fill="#323333"
+												/>
+											</svg>
+										</div>
+										<div class=" self-center font-medium">{$i18n.t('Documents')}</div>
+									</a>
 								{/if}
 								<button
 									class="flex rounded-md py-2.5 px-3.5 w-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
@@ -1079,7 +1086,7 @@
 								<button
 									class="flex rounded-md py-2.5 px-3.5 w-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
 									on:click={() => {
-										handleSignOut()
+										handleSignOut();
 									}}
 								>
 									<div class=" self-center mr-3">

@@ -336,6 +336,7 @@
 	onMount(async () => {
 		await tick();
 		renderStyling();
+		showRateComment = readOnly && message?.annotation?.rating;
 	});
 </script>
 
@@ -685,7 +686,7 @@
 											</button>
 										</Tooltip>
 
-										{#if !readOnly}
+										{#if !readOnly || message?.annotation?.rating}
 											<Tooltip content={$i18n.t('Good Response')} placement="bottom">
 												<button
 													class="{isLastMessage
@@ -693,7 +694,9 @@
 														: 'invisible group-hover:visible'} p-1 rounded {message?.annotation
 														?.rating === 1
 														? 'bg-gray-100 dark:bg-gray-800'
-														: ''} dark:hover:text-white hover:text-black transition"
+														: ''} 
+														dark:hover:text-white hover:text-black transition"
+													disabled={readOnly}
 													on:click={() => {
 														rateMessage(message.id, 1);
 														showRateComment = true;
@@ -729,6 +732,7 @@
 														?.rating === -1
 														? 'bg-gray-100 dark:bg-gray-800'
 														: ''} dark:hover:text-white hover:text-black transition"
+													disabled={readOnly}
 													on:click={() => {
 														rateMessage(message.id, -1);
 														showRateComment = true;
@@ -997,6 +1001,7 @@
 								{#if showRateComment}
 									<RateComment
 										messageId={message.id}
+										{readOnly}
 										bind:show={showRateComment}
 										bind:message
 										on:submit={() => {

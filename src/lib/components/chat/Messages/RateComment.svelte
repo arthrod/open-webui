@@ -10,6 +10,7 @@
 	export let messageId = null;
 	export let show = false;
 	export let message;
+	export let readOnly = false;
 
 	let LIKE_REASONS = [];
 	let DISLIKE_REASONS = [];
@@ -73,23 +74,24 @@
 >
 	<div class="flex justify-between items-center">
 		<div class=" text-sm">{$i18n.t('Tell us more:')}</div>
-
-		<button
-			on:click={() => {
-				show = false;
-			}}
-		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				fill="none"
-				viewBox="0 0 24 24"
-				stroke-width="1.5"
-				stroke="currentColor"
-				class="size-4"
+		{#if !readOnly}
+			<button
+				on:click={() => {
+					show = false;
+				}}
 			>
-				<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-			</svg>
-		</button>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke-width="1.5"
+					stroke="currentColor"
+					class="size-4"
+				>
+					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+				</svg>
+			</button>
+		{/if}
 	</div>
 
 	{#if reasons.length > 0}
@@ -103,6 +105,7 @@
 					on:click={() => {
 						selectedReason = reason;
 					}}
+					disabled={readOnly}
 				>
 					{reason}
 				</button>
@@ -113,20 +116,22 @@
 	<div class="mt-2">
 		<textarea
 			bind:value={comment}
+			disabled={readOnly}
 			class="w-full text-sm px-1 py-2 bg-transparent outline-none resize-none rounded-xl"
 			placeholder={$i18n.t('Feel free to add specific details')}
 			rows="2"
 		/>
 	</div>
-
-	<div class="mt-2 flex justify-end">
-		<button
-			class=" bg-emerald-700 text-white text-sm font-medium rounded-lg px-3.5 py-1.5"
-			on:click={() => {
-				submitHandler();
-			}}
-		>
-			Submit
-		</button>
-	</div>
+	{#if !readOnly}
+		<div class="mt-2 flex justify-end">
+			<button
+				class=" bg-emerald-700 text-white text-sm font-medium rounded-lg px-3.5 py-1.5"
+				on:click={() => {
+					submitHandler();
+				}}
+			>
+				Submit
+			</button>
+		</div>
+	{/if}
 </div>

@@ -2,7 +2,17 @@
 	import { getContext, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
-	import { WEBUI_NAME, chatId, modelfiles, settings, showSettings, user, isMobile, employeeType } from '$lib/stores';
+	import {
+		WEBUI_NAME,
+		chatId,
+		modelfiles,
+		settings,
+		showSettings,
+		user,
+		isMobile,
+		employeeType
+	} from '$lib/stores';
+	import { goto } from '$app/navigation';
 
 	import { slide, fade } from 'svelte/transition';
 	import ShareChatModal from '../chat/ShareChatModal.svelte';
@@ -10,9 +20,9 @@
 	import Tooltip from '../common/Tooltip.svelte';
 	import Menu from './Navbar/Menu.svelte';
 	import { page } from '$app/stores';
-	import EmployeeTypeSwitch from './Navbar/EmployeeTypeSwitch.svelte'
-	import ToggleSwitch from '$lib/components/common/ToggleSwitch.svelte'
-	import ConfirmModal from '../common/ConfirmModal.svelte'
+	import EmployeeTypeSwitch from './Navbar/EmployeeTypeSwitch.svelte';
+	import ToggleSwitch from '$lib/components/common/ToggleSwitch.svelte';
+	import ConfirmModal from '../common/ConfirmModal.svelte';
 	const i18n = getContext('i18n');
 
 	export let initNewChat: Function;
@@ -63,37 +73,36 @@
 
 	const handleTypeChange = (val) => {
 		showConfirm = true;
-		return
+		return;
 		toast('Switch user type will start a new chat. Would you like to continue?', {
 			action: {
 				label: 'Confirm',
-				onClick: async () => {
-				}
+				onClick: async () => {}
 			}
-		})
-	}
+		});
+	};
 
 	const handleConfirm = async () => {
 		await employeeType.set(currentEmployeeType);
-		localStorage.setItem('empType', currentEmployeeType)
+		localStorage.setItem('empType', currentEmployeeType);
 		const newChatButton = document.getElementById('new-chat-button');
 		setTimeout(() => {
 			newChatButton?.click();
 		}, 0);
-	}
+	};
 
 	onMount(() => {
-		const localEmpType = localStorage.getItem('empType')
+		const localEmpType = localStorage.getItem('empType');
 		// No data in localStorage, means new login, need to get employee type from sso data
 		if (!localEmpType) {
 			const ssoData = $user.extra_sso ? JSON.parse($user.extra_sso) : {}
 			currentEmployeeType = 'Staff'
 			employeeType.set(currentEmployeeType)
 		} else {
-			currentEmployeeType = localEmpType
-			employeeType.set(localEmpType)
+			currentEmployeeType = localEmpType;
+			employeeType.set(localEmpType);
 		}
-		bkEmployeeType = currentEmployeeType
+		bkEmployeeType = currentEmployeeType;
 		document.addEventListener('click', handleOutsideClick);
 		return () => {
 			document.removeEventListener('click', handleOutsideClick);
@@ -101,38 +110,33 @@
 	});
 </script>
 
-<ConfirmModal 
-	bind:show={showConfirm} 
+<ConfirmModal
+	bind:show={showConfirm}
 	content="Switch user type will start a new chat. Would you like to continue?"
-	on:cancel={() => {currentEmployeeType = bkEmployeeType}}
+	on:cancel={() => {
+		currentEmployeeType = bkEmployeeType;
+	}}
 	on:confirm={handleConfirm}
 />
 <ShareChatModal bind:show={showShareChatModal} chatId={$chatId} />
 <nav id="nav" class=" sticky py-2.5 top-0 flex flex-row justify-center z-30">
 	<div class=" flex max-w-full w-full mx-auto px-5 pt-3 md:px-[1.3rem]">
 		<div class="flex flex-wrap justify-between items-center w-full max-w-full">
-			<button class="flex self-center" on:click={() => {
-				initNewChat();
-			}}>
-				<img
-					src="/logo-mbzuai.png"
-					class="w-[108px] pc-only mr-4"
-					alt="logo-mbzuai"
-				/>
-				<img
-					src="/logo-ciai.png"
-					class="mr-4 w-[70px] pc-only"
-					alt="logo-ciai"
-				/>
-				<img 
-					src="/logo-main.png"
-					class="w-[30px] pc-only mr-2"
-					alt="system-logo"
-				/>
+			<button
+				class="flex self-center"
+				on:click={() => {
+					initNewChat();
+				}}
+			>
+				<img src="/logo-mbzuai.png" class="w-[108px] pc-only mr-4" alt="logo-mbzuai" />
+				<img src="/logo-ciai.png" class="mr-4 w-[70px] pc-only" alt="logo-ciai" />
+				<img src="/logo-main.png" class="w-[30px] pc-only mr-2" alt="system-logo" />
 			</button>
 			<img src="/logo-mbzuai-mobile.svg" class="w-[28px] mobile-only mr-4" alt="logo-mbzuai" />
 
-			<div class="overflow-hidden flex-1 font-normal text-base text-black dark:text-white opacity-75">
+			<div
+				class="overflow-hidden flex-1 font-normal text-base text-black dark:text-white opacity-75"
+			>
 				MBZUAI ServiceDesk Chatbot
 			</div>
 
@@ -151,18 +155,18 @@
 								}}
 							>
 								<div class="self-center mr-2">
-										<img
-											src={$user.profile_image_url ?? '/user-ava.png'}
-											class=" max-w-[30px] object-cover rounded-full"
-											alt="User profile"
-										/>
+									<img
+										src={$user.profile_image_url ?? '/user-ava.png'}
+										class=" max-w-[30px] object-cover rounded-full"
+										alt="User profile"
+									/>
 								</div>
 							</button>
 						</Tooltip>
 						{#if showDropdown}
 							<div
 								id="dropdownDots"
-								class="absolute z-40 top-[60px] right-0 rounded-lg shadow w-[160px] bg-white dark:bg-gray-900"
+								class="absolute z-40 top-[60px] right-[20px] rounded-lg shadow w-[200px] bg-white dark:bg-gray-900"
 								transition:fade|slide={{ duration: 100 }}
 								bind:this={dropdownElement}
 							>
@@ -199,6 +203,60 @@
 											</div>
 											<div class=" self-center font-medium">{$i18n.t('Documents')}</div>
 										</a>
+									</div>
+
+									<div class="p-1 py-2 w-full">
+										<button
+											class="flex rounded-md py-2.5 px-3.5 w-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+											on:click={() => {
+												goto('/admin')
+											}}
+										>
+											<div class=" self-center mr-3">
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke-width="1.5"
+													stroke="currentColor"
+													class="w-5 h-5"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
+													/>
+												</svg>
+											</div>
+											<div class=" self-center font-medium">{$i18n.t('Admin Panel')}</div>
+										</button>
+									</div>
+
+									<div class="p-1 py-2 w-full">
+										<button
+											class="flex rounded-md py-2.5 px-3.5 w-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+											on:click={() => {
+												goto('/messages')
+											}}
+										>
+											<div class=" self-center mr-3">
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke-width={1.5}
+													stroke="currentColor"
+													class="w-5 h-5"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"
+													/>
+												</svg>
+											</div>
+											<div class=" self-center font-medium">{$i18n.t('User Messages')}</div>
+										</button>
 									</div>
 								{/if}
 								<hr class=" dark:border-gray-800 m-0 p-0" />

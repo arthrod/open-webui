@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { io } from 'socket.io-client';
 	import { spring } from 'svelte/motion';
 
@@ -37,9 +37,10 @@
 
 	let loaded = false;
 	const BREAKPOINT = 768;
+	const publicPaths = ['/landing', '/auth'];
 
 	const setupSocket = () => {
-		const _socket = io(`${WEBUI_BASE_URL}` || undefined, {
+		const _socket = io(WEBUI_BASE_URL || '', {
 			reconnection: true,
 			reconnectionDelay: 1000,
 			reconnectionDelayMax: 5000,
@@ -84,10 +85,7 @@
 		});
 	};
 
-	onMount(async () => {
-		theme.set(localStorage.theme);
-
-		mobile.set(window.innerWidth < BREAKPOINT);
+	onMount(() => {
 		const onResize = () => {
 			if (window.innerWidth < BREAKPOINT) {
 				mobile.set(true);
@@ -96,98 +94,106 @@
 			}
 		};
 
-		window.addEventListener('resize', onResize);
+		const init = async () => {
+			theme.set(localStorage.theme || '');
+			mobile.set(window.innerWidth < BREAKPOINT);
+			window.addEventListener('resize', onResize);
 
-		let backendConfig = null;
-		try {
-			backendConfig = await getBackendConfig();
-			console.log('Backend config:', backendConfig);
-		} catch (error) {
-			console.error('Error loading backend config:', error);
-		}
-		// Initialize i18n even if we didn't get a backend config,
-		// so `/error` can show something that's not `undefined`.
+			let backendConfig = null;
+			try {
+				backendConfig = await getBackendConfig();
+				console.log('Backend config:', backendConfig);
+			} catch (error) {
+				console.error('Error loading backend config:', error);
+			}
 
-		initI18n();
-		if (!localStorage.locale) {
-			const languages = await getLanguages();
-			const browserLanguages = navigator.languages
-				? navigator.languages
-				: [navigator.language || navigator.userLanguage];
-			const lang = backendConfig.default_locale
-				? backendConfig.default_locale
-				: bestMatchingLanguage(languages, browserLanguages, 'en-US');
-			$i18n.changeLanguage(lang);
-		}
+			initI18n('en');
+			if (!localStorage.locale) {
+				const languages = await getLanguages();
+				const browserLanguages = navigator.languages
+					? navigator.languages
+					: [navigator.language];
+				const lang = backendConfig?.default_locale
+					? backendConfig.default_locale
+					: bestMatchingLanguage(languages, browserLanguages, 'en-US');
+				$i18n.changeLanguage(lang);
+			}
 
-		if (backendConfig) {
-			// Save Backend Status to Store
-			await config.set(backendConfig);
-			await WEBUI_NAME.set(backendConfig.name);
+			const currentPath = $page.url.pathname;
 
-			if ($config) {
-				setupSocket();
+			if (backendConfig) {
+				await config.set(backendConfig);
+				await WEBUI_NAME.set(backendConfig.name);
 
-				if (localStorage.token) {
-					// Get Session User Info
-					const sessionUser = await getSessionUser(localStorage.token).catch((error) => {
-						toast.error(error);
-						return null;
-					});
+				if ($config) {
+					setupSocket();
 
-					if (sessionUser) {
-						// Save Session User to Store
-						await user.set(sessionUser);
-						await config.set(await getBackendConfig());
+				// Allow access to landing and auth pages without authentication
+				// deleted by cline const publicPaths = ['/landing', '/auth'];
+				// deleted by cline const currentPath = $page.url.pathname;
+
+					if (localStorage.token) {
+						const sessionUser = await getSessionUser(localStorage.token).catch((error) => {
+							toast.error(error);
+							return null;
+						});
+
+						if (sessionUser) {
+							await user.set(sessionUser);
+							await config.set(await getBackendConfig());
+						} else {
+							localStorage.removeItem('token');
+							if (!publicPaths.includes(currentPath)) {
+								await goto('/landing');
+							}
+						}
 					} else {
-						// Redirect Invalid Session User to /auth Page
-						localStorage.removeItem('token');
-						await goto('/auth');
+						if (!publicPaths.includes(currentPath)) {
+							await goto('/landing');
+						}
 					}
-				} else {
-					// Don't redirect if we're already on the auth page
-					// Needed because we pass in tokens from OAuth logins via URL fragments
-					if ($page.url.pathname !== '/auth') {
-						await goto('/auth');
-					}
+				}
+			} else {
+				// Only redirect to error if not on a public path
+				if (!publicPaths.includes(currentPath)) {
+					await goto(`/error`);
 				}
 			}
-		} else {
-			// Redirect to /error when Backend Not Detected
-			await goto(`/error`);
-		}
 
-		await tick();
+			await tick();
 
-		if (
-			document.documentElement.classList.contains('her') &&
-			document.getElementById('progress-bar')
-		) {
-			loadingProgress.subscribe((value) => {
-				const progressBar = document.getElementById('progress-bar');
+			if (
+				document.documentElement.classList.contains('her') &&
+				document.getElementById('progress-bar')
+			) {
+				loadingProgress.subscribe((value) => {
+					const progressBar = document.getElementById('progress-bar');
 
-				if (progressBar) {
-					progressBar.style.width = `${value}%`;
-				}
-			});
+					if (progressBar) {
+						progressBar.style.width = `${value}%`;
+					}
+				});
 
-			await loadingProgress.set(100);
+				await loadingProgress.set(100);
 
-			document.getElementById('splash-screen')?.remove();
+				document.getElementById('splash-screen')?.remove();
 
-			const audio = new Audio(`/audio/greeting.mp3`);
-			const playAudio = () => {
-				audio.play();
-				document.removeEventListener('click', playAudio);
-			};
+				const audio = new Audio(`/audio/greeting.mp3`);
+				const playAudio = () => {
+					audio.play();
+					document.removeEventListener('click', playAudio);
+				};
 
-			document.addEventListener('click', playAudio);
+				document.addEventListener('click', playAudio);
 
-			loaded = true;
-		} else {
-			document.getElementById('splash-screen')?.remove();
-			loaded = true;
-		}
+				loaded = true;
+			} else {
+				document.getElementById('splash-screen')?.remove();
+				loaded = true;
+			}
+		};
+
+		init();
 
 		return () => {
 			window.removeEventListener('resize', onResize);
@@ -198,14 +204,9 @@
 <svelte:head>
 	<title>{$WEBUI_NAME}</title>
 	<link crossorigin="anonymous" rel="icon" href="{WEBUI_BASE_URL}/static/favicon.png" />
-
-	<!-- rosepine themes have been disabled as it's not up to date with our latest version. -->
-	<!-- feel free to make a PR to fix if anyone wants to see it return -->
-	<!-- <link rel="stylesheet" type="text/css" href="/themes/rosepine.css" />
-	<link rel="stylesheet" type="text/css" href="/themes/rosepine-dawn.css" /> -->
 </svelte:head>
 
-{#if loaded}
+{#if loaded || publicPaths.includes($page.url.pathname)}
 	<slot />
 {/if}
 

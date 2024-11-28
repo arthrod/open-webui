@@ -508,7 +508,7 @@
 		await showOverview.set(false);
 		await showArtifacts.set(false);
 
-		if ($page.url.pathname.includes('/c/')) {
+		if ($page.url.pathname.includes(`${base}/c/`)) {
 			window.history.replaceState(history.state, '', `/`);
 		}
 
@@ -1456,7 +1456,7 @@
 
 		const messages = createMessagesList(responseMessageId);
 		if (messages.length == 2 && messages.at(-1).content !== '' && selectedModels[0] === model.id) {
-			window.history.replaceState(history.state, '', `/c/${_chatId}`);
+			window.history.replaceState(history.state, '', `${base}/c/${_chatId}`);
 
 			const title = await generateChatTitle(messages);
 			await setChatTitle(_chatId, title);
@@ -1775,7 +1775,7 @@
 
 		const messages = createMessagesList(responseMessageId);
 		if (messages.length == 2 && selectedModels[0] === model.id) {
-			window.history.replaceState(history.state, '', `/c/${_chatId}`);
+			window.history.replaceState(history.state, '', `${base}/c/${_chatId}`);
 
 			const title = await generateChatTitle(messages);
 			await setChatTitle(_chatId, title);

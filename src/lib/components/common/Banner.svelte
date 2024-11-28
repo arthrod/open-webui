@@ -2,7 +2,7 @@
 	import type { Banner } from '$lib/types';
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { fade } from 'svelte/transition';
-
+	import { WEBUI_BASE_URL } from '$lib/constants';
 	const dispatch = createEventDispatcher();
 
 	export let banner: Banner = {
@@ -89,7 +89,7 @@
 				<div class="hidden md:flex group w-fit md:items-center">
 					<a
 						class="text-gray-700 dark:text-white text-xs font-semibold underline"
-						href="/"
+						href="{WEBUI_BASE_URL}/"
 						target="_blank">Learn More</a
 					>
 

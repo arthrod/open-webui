@@ -40,27 +40,35 @@
 	const BREAKPOINT = 768;
 
 	const setupSocket = () => {
-		const _socket = io(`${WEBUI_BASE_URL}` || undefined, {
+		const origin = window.location.origin;
+
+		const _socket = io({
+			path: `/${base}/ws/socket.io`,
+			transports: ['websocket'],
 			reconnection: true,
 			reconnectionDelay: 1000,
 			reconnectionDelayMax: 5000,
 			randomizationFactor: 0.5,
-			path: `${WEBUI_BASE_URL}/ws/socket.io`,
-			auth: { token: localStorage.token }
+			auth: { token: localStorage.token },
+			autoConnect: true,
+			withCredentials: true,
+			extraHeaders: {
+				Origin: origin
+			}
 		});
 
-		socket.set(_socket);
-
 		_socket.on('connect_error', (err) => {
-			console.log('connect_error', err);
+			console.log('Socket connect_error', err);
+			console.error('Error message:', err.message);
+			console.error('Error description:', err.description);
 		});
 
 		_socket.on('connect', () => {
-			console.log('connected', _socket.id);
+			console.log('Socket connected with ID:', _socket.id);
 		});
 
 		_socket.on('reconnect_attempt', (attempt) => {
-			console.log('reconnect_attempt', attempt);
+			console.log('Socket reconnect_attempt', attempt);
 		});
 
 		_socket.on('reconnect_failed', () => {
@@ -70,7 +78,7 @@
 		_socket.on('disconnect', (reason, details) => {
 			console.log(`Socket ${_socket.id} disconnected due to ${reason}`);
 			if (details) {
-				console.log('Additional details:', details);
+				console.log('Socket additional details:', details);
 			}
 		});
 
@@ -83,6 +91,9 @@
 			console.log('usage', data);
 			USAGE_POOL.set(data['models']);
 		});
+
+		socket.set(_socket);
+		return _socket;
 	};
 
 	onMount(async () => {

@@ -31,7 +31,7 @@ from open_webui.config import (
     AppConfig,
 )
 from open_webui.constants import ERROR_MESSAGES
-from open_webui.env import WEBUI_SESSION_COOKIE_SAME_SITE, WEBUI_SESSION_COOKIE_SECURE
+from open_webui.env import WEBUI_SESSION_COOKIE_SAME_SITE, WEBUI_SESSION_COOKIE_SECURE, WEBUI_URL
 from open_webui.utils.misc import parse_duration
 from open_webui.utils.utils import get_password_hash, create_token
 from open_webui.utils.webhook import post_webhook
@@ -206,7 +206,7 @@ class OAuthManager:
                         )
                         picture_url = ""
                 if not picture_url:
-                    picture_url = "/user.png"
+                    picture_url = f"{WEBUI_URL}/user.png"
                 username_claim = auth_manager_config.OAUTH_USERNAME_CLAIM
 
                 role = self.get_user_role(None, user_data)

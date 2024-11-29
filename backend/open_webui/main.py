@@ -111,6 +111,7 @@ from open_webui.env import (
     RESET_CONFIG_ON_START,
     OFFLINE_MODE,
     WEBUI_BASE_PATH,
+    WEBUI_URL,
 )
 from open_webui.utils.misc import (
     add_or_update_system_message,
@@ -2634,13 +2635,13 @@ async def get_manifest_json():
         "orientation": "natural",
         "icons": [
             {
-                "src": "/static/logo.png",
+                "src": f"{WEBUI_URL}/static/logo.png",
                 "type": "image/png",
                 "sizes": "500x500",
                 "purpose": "any",
             },
             {
-                "src": "/static/logo.png",
+                "src": f"{WEBUI_URL}/static/logo.png",
                 "type": "image/png",
                 "sizes": "500x500",
                 "purpose": "maskable",

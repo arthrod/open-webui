@@ -5,7 +5,7 @@ from open_webui.apps.webui.internal.db import Base, JSONField, get_db
 from open_webui.apps.webui.models.chats import Chats
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import BigInteger, Column, String, Text
-
+from open_webui.env import WEBUI_URL
 ####################
 # User DB Schema
 ####################
@@ -88,7 +88,7 @@ class UsersTable:
         id: str,
         name: str,
         email: str,
-        profile_image_url: str = "/user.png",
+        profile_image_url: str = f"{WEBUI_URL}/user.png",
         role: str = "pending",
         oauth_sub: Optional[str] = None,
     ) -> Optional[UserModel]:

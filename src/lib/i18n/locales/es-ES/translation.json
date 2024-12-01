@@ -516,7 +516,7 @@
 	"Leave empty to use the default prompt, or enter a custom prompt": "Deje vacío para usar el propmt predeterminado, o ingrese un propmt personalizado",
 	"Light": "Claro",
 	"Listening...": "Escuchando...",
-	"LLMs can make mistakes. Verify important information.": "Los LLM pueden cometer errores. Verifica la información importante.",
+	"Nerdy can make mistakes. Please verify responses.": "Los LLM pueden cometer errores. Verifica la información importante.",
 	"Local": "",
 	"Local Models": "Modelos locales",
 	"Lost": "",

@@ -4,11 +4,13 @@
 
 	import { flyAndScale } from '$lib/utils/transitions';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import ArchiveBox from '$lib/components/icons/ArchiveBox.svelte';
 	import { showSettings, activeUserCount, USAGE_POOL, mobile, showSidebar } from '$lib/stores';
 	import { fade, slide } from 'svelte/transition';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	import { userSignOut } from '$lib/apis/auths';
+	import { NERDY_INTEGRATED } from '$lib/constants';
 
 	const i18n = getContext('i18n');
 
@@ -92,7 +94,7 @@
 			{#if role === 'admin'}
 				<a
 					class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-					href="/playground"
+					href="{base}/playground"
 					on:click={() => {
 						show = false;
 
@@ -122,7 +124,7 @@
 
 				<a
 					class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-					href="/admin"
+					href="{base}/admin"
 					on:click={() => {
 						show = false;
 
@@ -150,7 +152,8 @@
 					<div class=" self-center truncate">{$i18n.t('Admin Panel')}</div>
 				</a>
 			{/if}
-
+			
+			{#if !NERDY_INTEGRATED}
 			<hr class=" border-gray-50 dark:border-gray-850 my-1 p-0" />
 
 			<button
@@ -183,6 +186,7 @@
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Sign Out')}</div>
 			</button>
+			{/if}
 
 			{#if $activeUserCount}
 				<hr class=" border-gray-50 dark:border-gray-850 my-1 p-0" />

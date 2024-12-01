@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount, tick, getContext } from 'svelte';
 
-	import { WEBUI_BASE_URL } from '$lib/constants';
+	import { WEBUI_URL } from '$lib/constants';
 	import { WEBUI_NAME, config, user, models, settings, showSidebar } from '$lib/stores';
 	import { generateOpenAIChatCompletion } from '$lib/apis/openai';
 
@@ -52,7 +52,7 @@
 					}
 				]
 			},
-			`${WEBUI_BASE_URL}/api`
+			`${WEBUI_URL}/api`
 		);
 
 		if (res && res.ok) {

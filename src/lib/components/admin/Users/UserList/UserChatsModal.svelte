@@ -2,7 +2,7 @@
 	import { toast } from 'svelte-sonner';
 	import dayjs from 'dayjs';
 	import { getContext, createEventDispatcher } from 'svelte';
-
+	import { base } from '$app/paths';
 	const dispatch = createEventDispatcher();
 
 	import { getChatListByUserId, deleteChatById, getArchivedChatList } from '$lib/apis/chats';
@@ -119,7 +119,7 @@
 												'border-b'} dark:bg-gray-900 dark:border-gray-850 text-xs"
 										>
 											<td class="px-3 py-1">
-												<a href="/s/{chat.id}" target="_blank">
+												<a href="/{base}/s/{chat.id}" target="_blank">
 													<div class=" underline line-clamp-1 max-w-96">
 														{chat.title}
 													</div>

@@ -30,4 +30,8 @@ export default defineConfig({
 	paths: {
 		base: '/assistant'
 	},
+	configs: {
+		workspace: false,
+		models: false
+	}
 });

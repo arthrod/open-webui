@@ -37,7 +37,7 @@
 		importChat
 	} from '$lib/apis/chats';
 	import { createNewFolder, getFolders, updateFolderParentIdById } from '$lib/apis/folders';
-	import { WEBUI_BASE_URL } from '$lib/constants';
+	import { WEBUI_URL } from '$lib/constants';
 
 	import ArchivedChatsModal from './Sidebar/ArchivedChatsModal.svelte';
 	import UserMenu from './Sidebar/UserMenu.svelte';
@@ -419,7 +419,7 @@
 			<a
 				id="sidebar-new-chat-button"
 				class="flex flex-1 rounded-lg px-2 py-1 h-full hover:bg-gray-100 dark:hover:bg-gray-900 transition"
-				href="{WEBUI_BASE_URL}/"
+				href="{WEBUI_URL}/"
 				draggable="false"
 				on:click={async () => {
 					selectedChatId = null;
@@ -436,7 +436,7 @@
 				<div class="self-center mx-1.5">
 					<img
 						crossorigin="anonymous"
-						src="{WEBUI_BASE_URL}/static/favicon.png"
+						src="{WEBUI_URL}/static/favicon.png"
 						class=" size-5 -translate-x-1.5 rounded-full"
 						alt="logo"
 					/>
@@ -471,11 +471,11 @@
 			</button>
 		</div>
 
-		{#if $user?.role === 'admin' || $user?.permissions?.workspace?.models || $user?.permissions?.workspace?.knowledge || $user?.permissions?.workspace?.prompts || $user?.permissions?.workspace?.tools}
+		{#if false && $user?.role === 'admin' || $user?.permissions?.workspace?.models || $user?.permissions?.workspace?.knowledge || $user?.permissions?.workspace?.prompts || $user?.permissions?.workspace?.tools}
 			<div class="px-1.5 flex justify-center text-gray-800 dark:text-gray-200">
 				<a
 					class="flex-grow flex space-x-3 rounded-lg px-2 py-[7px] hover:bg-gray-100 dark:hover:bg-gray-900 transition"
-					href="{WEBUI_BASE_URL}/workspace"
+					href="{WEBUI_URL}/workspace"
 					on:click={() => {
 						selectedChatId = null;
 						chatId.set('');

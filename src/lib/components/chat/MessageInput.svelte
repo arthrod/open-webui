@@ -23,7 +23,7 @@
 	import { uploadFile } from '$lib/apis/files';
 	import { getTools } from '$lib/apis/tools';
 
-	import { WEBUI_BASE_URL, WEBUI_API_BASE_URL, PASTED_TEXT_CHARACTER_LIMIT } from '$lib/constants';
+	import { WEBUI_URL, WEBUI_API_BASE_URL, PASTED_TEXT_CHARACTER_LIMIT, NERDY_INTEGRATED } from '$lib/constants';
 
 	import Tooltip from '../common/Tooltip.svelte';
 	import InputMenu from './MessageInput/InputMenu.svelte';
@@ -361,7 +361,7 @@
 												?.profile_image_url ??
 												($i18n.language === 'dg-DG'
 													? `/doge.png`
-													: `${WEBUI_BASE_URL}/static/favicon.png`)}
+													: `${WEBUI_URL}/static/favicon.png`)}
 										/>
 										<div class="translate-y-[0.5px]">
 											Talking to <span class=" font-medium">{atSelectedModel.name}</span>
@@ -1039,7 +1039,9 @@
 													}}
 													aria-label="Call"
 												>
-													<Headphone className="size-6" />
+													{#if !NERDY_INTEGRATED}
+														<Headphone className="size-6" />
+													{/if}
 												</button>
 											</Tooltip>
 										</div>

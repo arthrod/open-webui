@@ -22,6 +22,7 @@
 	import ChatBubbleOval from '$lib/components/icons/ChatBubbleOval.svelte';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
+	import { NERDY_INTEGRATED } from '$lib/constants';
 
 	const i18n = getContext('i18n');
 	const dispatch = createEventDispatcher();
@@ -29,7 +30,7 @@
 	export let id = '';
 	export let value = '';
 	export let placeholder = 'Select a model';
-	export let searchEnabled = true;
+	export let searchEnabled = !NERDY_INTEGRATED;
 	export let searchPlaceholder = $i18n.t('Search a model');
 
 	export let showTemporaryChatControl = false;
@@ -326,7 +327,7 @@
 												placement="top-start"
 											>
 												<img
-													src={item.model?.info?.meta?.profile_image_url ?? '/static/favicon.png'}
+													src={item.model?.info?.meta?.profile_image_url ?? base + "/static/favicon.png"}
 													alt="Model"
 													class="rounded-full size-5 flex items-center mr-2"
 												/>

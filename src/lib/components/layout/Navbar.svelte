@@ -14,6 +14,7 @@
 		user
 	} from '$lib/stores';
 
+	import { NERDY_INTEGRATED } from '$lib/constants';
 	import { slide } from 'svelte/transition';
 	import ShareChatModal from '../chat/ShareChatModal.svelte';
 	import ModelSelector from '../chat/ModelSelector.svelte';
@@ -43,7 +44,7 @@
 </script>
 
 <ShareChatModal bind:show={showShareChatModal} chatId={$chatId} />
-
+{#if true }
 <div class="sticky top-0 z-30 w-full px-1.5 py-1.5 -mb-8 flex items-center">
 	<div
 		class=" bg-gradient-to-b via-50% from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pointer-events-none absolute inset-0 -bottom-7 z-[-1] blur"
@@ -115,7 +116,7 @@
 							</div>
 						</button>
 					</Menu>
-				{:else if $mobile}
+				{:else if !NERDY_INTEGRATED && $mobile}
 					<Tooltip content={$i18n.t('Controls')}>
 						<button
 							class=" flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
@@ -131,7 +132,7 @@
 					</Tooltip>
 				{/if}
 
-				{#if !$mobile}
+				{#if !NERDY_INTEGRATED && !$mobile}
 					<Tooltip content={$i18n.t('Controls')}>
 						<button
 							class=" flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
@@ -193,3 +194,4 @@
 		</div>
 	</div>
 </div>
+{/if}

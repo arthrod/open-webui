@@ -516,7 +516,7 @@
 	"Leave empty to use the default prompt, or enter a custom prompt": "",
 	"Light": "მსუბუქი",
 	"Listening...": "",
-	"LLMs can make mistakes. Verify important information.": "შესაძლოა LLM-ებმა შეცდომები დაუშვან. გადაამოწმეთ მნიშვნელოვანი ინფორმაცია.",
+	"Nerdy can make mistakes. Please verify responses.": "შესაძლოა LLM-ებმა შეცდომები დაუშვან. გადაამოწმეთ მნიშვნელოვანი ინფორმაცია.",
 	"Local": "",
 	"Local Models": "",
 	"Lost": "",

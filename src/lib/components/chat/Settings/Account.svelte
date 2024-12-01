@@ -205,7 +205,7 @@
 						<button
 							class=" text-xs text-center text-gray-800 dark:text-gray-400 rounded-lg px-2 py-1"
 							on:click={async () => {
-								profileImageUrl = `${WEBUI_BASE_URL}/user.png`;
+								profileImageUrl = `${WEBUI_URL}/user.png`;
 							}}>{$i18n.t('Remove')}</button
 						>
 					</div>

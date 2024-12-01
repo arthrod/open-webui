@@ -7,12 +7,12 @@
 	import ChevronDown from '../icons/ChevronDown.svelte';
 	import Check from '../icons/Check.svelte';
 	import Search from '../icons/Search.svelte';
-
+	import { NERDY_INTEGRATED } from '$lib/constants';
 	const dispatch = createEventDispatcher();
 
 	export let value = '';
 	export let placeholder = 'Select a model';
-	export let searchEnabled = true;
+	export let searchEnabled = !NERDY_INTEGRATED;
 	export let searchPlaceholder = 'Search a model';
 
 	export let items = [

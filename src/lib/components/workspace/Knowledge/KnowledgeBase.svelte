@@ -790,7 +790,7 @@
 										<div class=" flex-1 text-2xl font-medium">
 											<a
 												class="hover:text-gray-500 hover:dark:text-gray-100 hover:underline flex-grow line-clamp-1"
-												href={selectedFile.id ? `/api/v1/files/${selectedFile.id}/content` : '#'}
+												href={selectedFile.id ? `${base}/api/v1/files/${selectedFile.id}/content` : '#'}
 												target="_blank"
 											>
 												{selectedFile?.meta?.name}

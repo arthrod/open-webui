@@ -516,7 +516,7 @@
 	"Leave empty to use the default prompt, or enter a custom prompt": "",
 	"Light": "Light",
 	"Listening...": "",
-	"LLMs can make mistakes. Verify important information.": "LLMs can make borks. Verify important info.",
+	"Nerdy can make mistakes. Please verify responses.": "LLMs can make borks. Verify important info.",
 	"Local": "",
 	"Local Models": "",
 	"Lost": "",

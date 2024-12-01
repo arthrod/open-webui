@@ -12,12 +12,6 @@
 		<meta name="theme-color" content="#171717" />
 		<meta name="robots" content="noindex,nofollow" />
 		<meta name="description" content="Open WebUI" />
-		<link
-			rel="search"
-			type="application/opensearchdescription+xml"
-			title="Open WebUI"
-			href="/opensearch.xml"
-		/>
 
 		<script>
 			function resizeIframe(obj) {
@@ -31,9 +25,7 @@
 				const metaThemeColorTag = document.querySelector('meta[name="theme-color"]');
 				const prefersDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-				if (!localStorage?.theme) {
-					localStorage.theme = 'system';
-				}
+				localStorage.theme = 'light';
 
 				if (localStorage.theme === 'system') {
 					document.documentElement.classList.add(prefersDarkTheme ? 'dark' : 'light');
@@ -73,7 +65,7 @@
 			})();
 		</script>
 
-		<title>Open WebUI</title>
+		<title>Assistant</title>
 
 		%sveltekit.head%
 	</head>

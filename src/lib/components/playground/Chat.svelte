@@ -8,7 +8,7 @@
 		OLLAMA_API_BASE_URL,
 		OPENAI_API_BASE_URL,
 		WEBUI_API_BASE_URL,
-		WEBUI_BASE_URL
+		WEBUI_URL
 	} from '$lib/constants';
 	import { WEBUI_NAME, config, user, models, settings } from '$lib/stores';
 
@@ -76,7 +76,7 @@
 					...messages
 				].filter((message) => message)
 			},
-			`${WEBUI_BASE_URL}/api`
+			`${WEBUI_URL}/api`
 		);
 
 		let responseMessage;

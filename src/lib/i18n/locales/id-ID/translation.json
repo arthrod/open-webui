@@ -516,7 +516,7 @@
 	"Leave empty to use the default prompt, or enter a custom prompt": "",
 	"Light": "Cahaya",
 	"Listening...": "Mendengarkan",
-	"LLMs can make mistakes. Verify important information.": "LLM dapat membuat kesalahan. Verifikasi informasi penting.",
+	"Nerdy can make mistakes. Please verify responses.": "LLM dapat membuat kesalahan. Verifikasi informasi penting.",
 	"Local": "",
 	"Local Models": "Model Lokal",
 	"Lost": "",

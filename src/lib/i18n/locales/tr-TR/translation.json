@@ -516,7 +516,7 @@
 	"Leave empty to use the default prompt, or enter a custom prompt": "Varsayılan promptu kullanmak için boş bırakın veya özel bir prompt girin",
 	"Light": "Açık",
 	"Listening...": "Dinleniyor...",
-	"LLMs can make mistakes. Verify important information.": "LLM'ler hata yapabilir. Önemli bilgileri doğrulayın.",
+	"Nerdy can make mistakes. Please verify responses.": "LLM'ler hata yapabilir. Önemli bilgileri doğrulayın.",
 	"Local": "Yerel",
 	"Local Models": "Yerel Modeller",
 	"Lost": "Kayıp",

@@ -516,7 +516,7 @@
 	"Leave empty to use the default prompt, or enter a custom prompt": "Leer lassen, um den Standardprompt zu verwenden, oder geben Sie einen benutzerdefinierten Prompt ein",
 	"Light": "Hell",
 	"Listening...": "Höre zu...",
-	"LLMs can make mistakes. Verify important information.": "LLMs können Fehler machen. Überprüfe wichtige Informationen.",
+	"Nerdy can make mistakes. Please verify responses.": "LLMs können Fehler machen. Überprüfe wichtige Informationen.",
 	"Local": "Lokal",
 	"Local Models": "Lokale Modelle",
 	"Lost": "Verloren",

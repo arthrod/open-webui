@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { NERDY_INTEGRATED } from '$lib/constants';
 	import { getContext, tick } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { models, settings, user } from '$lib/stores';
@@ -282,6 +283,34 @@
 			]
 		}
 	];
+
+	// if NERDY_INTEGRATED is true, remove some settings tabs from searchData
+	if (NERDY_INTEGRATED) {
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'interface'),
+			1
+		);
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'audio'),
+			1
+		);
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'chats'),
+			1
+		);
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'account'),
+			1
+		);
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'admin'),
+			1
+		);
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'about'),
+			1
+		);
+	}
 
 	let search = '';
 	let visibleTabs = searchData.map((tab) => tab.id);

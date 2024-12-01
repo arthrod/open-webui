@@ -9,7 +9,7 @@
 
 	import { config, user, models as _models, temporaryChatEnabled } from '$lib/stores';
 	import { sanitizeResponseContent, findWordIndices } from '$lib/utils';
-	import { WEBUI_BASE_URL } from '$lib/constants';
+	import { WEBUI_URL } from '$lib/constants';
 
 	import Suggestions from './Suggestions.svelte';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
@@ -123,7 +123,7 @@
 										src={model?.info?.meta?.profile_image_url ??
 											($i18n.language === 'dg-DG'
 												? `/doge.png`
-												: `${WEBUI_BASE_URL}/static/favicon.png`)}
+												: `${WEBUI_URL}/static/favicon.png`)}
 										class=" size-9 sm:size-10 rounded-full border-[1px] border-gray-200 dark:border-none"
 										alt="logo"
 										draggable="false"
@@ -135,11 +135,7 @@
 				</div>
 
 				<div class=" text-3xl sm:text-4xl line-clamp-1" in:fade={{ duration: 100 }}>
-					{#if models[selectedModelIdx]?.name}
-						{models[selectedModelIdx]?.name}
-					{:else}
-						{$i18n.t('Hello, {{name}}', { name: $user.name })}
-					{/if}
+					{$i18n.t('Hello, {{name}}', { name: $user.name })}
 				</div>
 			</div>
 

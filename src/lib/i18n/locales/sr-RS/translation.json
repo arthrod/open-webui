@@ -516,7 +516,7 @@
 	"Leave empty to use the default prompt, or enter a custom prompt": "",
 	"Light": "Светла",
 	"Listening...": "",
-	"LLMs can make mistakes. Verify important information.": "ВЈМ-ови (LLM-ови) могу правити грешке. Проверите важне податке.",
+	"Nerdy can make mistakes. Please verify responses.": "ВЈМ-ови (LLM-ови) могу правити грешке. Проверите важне податке.",
 	"Local": "",
 	"Local Models": "",
 	"Lost": "",

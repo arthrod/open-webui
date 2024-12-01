@@ -16,6 +16,7 @@
 		mobile,
 		temporaryChatEnabled
 	} from '$lib/stores';
+	import { NERDY_INTEGRATED } from '$lib/constants';
 	import { flyAndScale } from '$lib/utils/transitions';
 
 	import Dropdown from '$lib/components/common/Dropdown.svelte';
@@ -152,7 +153,7 @@
 				</DropdownMenu.Item>
 			{/if}
 
-			{#if !$temporaryChatEnabled}
+			{#if !NERDY_INTEGRATED && !$temporaryChatEnabled}
 				<DropdownMenu.Item
 					class="flex gap-2 items-center px-3 py-2 text-sm  cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
 					id="chat-share-button"

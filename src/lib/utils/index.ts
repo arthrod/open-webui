@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import sha256 from 'js-sha256';
 
-import { WEBUI_BASE_URL } from '$lib/constants';
+import { WEBUI_URL } from '$lib/constants';
 import { TTS_RESPONSE_SPLIT } from '$lib/types';
 
 //////////////////////////
@@ -30,13 +30,13 @@ export const replaceTokens = (content, sourceIds, char, user) => {
 
 	// Replace video ID tags with corresponding <video> elements
 	content = content.replace(videoIdToken, (match, fileId) => {
-		const videoUrl = `${WEBUI_BASE_URL}/api/v1/files/${fileId}/content`;
+		const videoUrl = `${WEBUI_URL}/api/v1/files/${fileId}/content`;
 		return `<video src="${videoUrl}" controls></video>`;
 	});
 
 	// Replace HTML ID tags with corresponding HTML content
 	content = content.replace(htmlIdToken, (match, fileId) => {
-		const htmlUrl = `${WEBUI_BASE_URL}/api/v1/files/${fileId}/content/html`;
+		const htmlUrl = `${WEBUI_URL}/api/v1/files/${fileId}/content/html`;
 		return `<iframe src="${htmlUrl}" width="100%" frameborder="0" onload="this.style.height=(this.contentWindow.document.body.scrollHeight+20)+'px';"></iframe>`;
 	});
 
@@ -197,7 +197,7 @@ export const generateInitialsImage = (name) => {
 		console.log(
 			'generateInitialsImage: failed pixel test, fingerprint evasion is likely. Using default image.'
 		);
-		return '${WEBUI_BASE_URL}/user.png';
+		return '${WEBUI_URL}/user.png';
 	}
 
 	ctx.fillStyle = '#F39C12';

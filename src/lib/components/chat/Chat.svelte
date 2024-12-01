@@ -13,7 +13,7 @@
 
 	import { get, type Unsubscriber, type Writable } from 'svelte/store';
 	import type { i18n as i18nType } from 'i18next';
-	import { WEBUI_BASE_URL } from '$lib/constants';
+	import { WEBUI_URL } from '$lib/constants';
 
 	import {
 		chatId,
@@ -1356,7 +1356,7 @@
 									if ($settings.notificationEnabled && !document.hasFocus()) {
 										const notification = new Notification(`${model.id}`, {
 											body: responseMessage.content,
-											icon: `${WEBUI_BASE_URL}/static/favicon.png`
+											icon: `${WEBUI_URL}/static/favicon.png`
 										});
 									}
 
@@ -1612,7 +1612,7 @@
 					chat_id: $chatId,
 					id: responseMessageId
 				},
-				`${WEBUI_BASE_URL}/api`
+				`${WEBUI_URL}/api`
 			);
 
 			// Wait until history/message have been updated
@@ -1712,7 +1712,7 @@
 				if ($settings.notificationEnabled && !document.hasFocus()) {
 					const notification = new Notification(`${model.id}`, {
 						body: responseMessage.content,
-						icon: `${WEBUI_BASE_URL}/static/favicon.png`
+						icon: `${WEBUI_URL}/static/favicon.png`
 					});
 				}
 
@@ -2322,7 +2322,7 @@
 							<div
 								class="absolute bottom-1.5 text-xs text-gray-500 text-center line-clamp-1 right-0 left-0"
 							>
-								{$i18n.t('LLMs can make mistakes. Verify important information.')}
+								{$i18n.t('Nerdy can make mistakes. Please verify responses.')}
 							</div>
 						</div>
 					{:else}

@@ -130,6 +130,9 @@ class OAuthManager:
         return await client.authorize_redirect(request, redirect_uri)
 
     async def handle_callback(self, provider, request, response):
+        log.warning(f"OAuth callback for provider: {provider}")
+        log.warning(f"request data dict: {dict(request)}")
+
         if provider not in OAUTH_PROVIDERS:
             raise HTTPException(404)
         client = self.get_client(provider)

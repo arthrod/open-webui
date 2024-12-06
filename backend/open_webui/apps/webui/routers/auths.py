@@ -399,13 +399,19 @@ async def signin(request: Request, response: Response, form_data: SigninForm):
 @router.post("/signup", response_model=SessionUserResponse)
 async def signup(request: Request, response: Response, form_data: SignupForm):
     if WEBUI_AUTH:
-        if (
-            not request.app.state.config.ENABLE_SIGNUP
-            or not request.app.state.config.ENABLE_LOGIN_FORM
-        ):
-            raise HTTPException(
-                status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.ACCESS_PROHIBITED
-            )
+        # TODO: Nerdy Integration hack to allow any email passed in via the trusted email header to 
+        # be used to create a user account. This is a temporary solution to allow for the creation of
+        # user accounts via the trusted email header. This is a security risk and should be removed
+        # once a proper solution is implemented.
+        pass
+        # # Original code
+        # if (
+        #     not request.app.state.config.ENABLE_SIGNUP
+        #     or not request.app.state.config.ENABLE_LOGIN_FORM
+        # ):
+        #     raise HTTPException(
+        #         status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.ACCESS_PROHIBITED
+        #     )
     else:
         if Users.get_num_users() != 0:
             raise HTTPException(

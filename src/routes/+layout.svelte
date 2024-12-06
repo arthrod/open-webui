@@ -185,8 +185,6 @@
 
 			await loadingProgress.set(100);
 
-			document.getElementById('splash-screen')?.remove();
-
 			const audio = new Audio(`${base}/audio/greeting.mp3`);
 			const playAudio = () => {
 				audio.play();
@@ -197,7 +195,6 @@
 
 			loaded = true;
 		} else {
-			document.getElementById('splash-screen')?.remove();
 			loaded = true;
 		}
 

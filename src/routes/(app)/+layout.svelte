@@ -19,7 +19,7 @@
 	import { getBanners } from '$lib/apis/configs';
 	import { getUserSettings } from '$lib/apis/users';
 
-	import { WEBUI_VERSION } from '$lib/constants';
+	import { WEBUI_VERSION, NERDY_INTEGRATED } from '$lib/constants';
 	import { compareVersion } from '$lib/utils';
 
 	import {
@@ -205,7 +205,9 @@
 </script>
 
 <SettingsModal bind:show={$showSettings} />
+{#if !NERDY_INTEGRATED}
 <ChangelogModal bind:show={$showChangelog} />
+{/if}
 
 {#if version && compareVersion(version.latest, version.current) && ($settings?.showUpdateToast ?? true)}
 	<div class=" absolute bottom-8 right-8 z-50" in:fade={{ duration: 100 }}>

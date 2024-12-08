@@ -37,8 +37,8 @@
 		importChat
 	} from '$lib/apis/chats';
 	import { createNewFolder, getFolders, updateFolderParentIdById } from '$lib/apis/folders';
-	import { WEBUI_URL } from '$lib/constants';
-
+	import { WEBUI_URL, NERDY_INTEGRATED } from '$lib/constants';
+	
 	import ArchivedChatsModal from './Sidebar/ArchivedChatsModal.svelte';
 	import UserMenu from './Sidebar/UserMenu.svelte';
 	import ChatItem from './Sidebar/ChatItem.svelte';
@@ -770,7 +770,8 @@
 				</Folder>
 			</div>
 		</div>
-
+	
+		{#if !NERDY_INTEGRATED}
 		<div class="px-2">
 			<div class="flex flex-col font-primary">
 				{#if $user !== undefined}
@@ -801,6 +802,7 @@
 				{/if}
 			</div>
 		</div>
+		{/if}
 	</div>
 </div>
 

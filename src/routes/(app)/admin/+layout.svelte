@@ -52,6 +52,7 @@
 					<div
 						class="flex gap-1 scrollbar-none overflow-x-auto w-fit text-center text-sm font-medium rounded-full bg-transparent pt-1"
 					>
+						{#if !NERDY_INTEGRATED}
 						<a
 							class="min-w-fit rounded-full p-1.5 {['/admin/users'].includes($page.url.pathname)
 								? ''
@@ -59,7 +60,6 @@
 							href="{base}/admin">{$i18n.t('Users')}</a
 						>
 
-						{#if !NERDY_INTEGRATED}
 						<a
 							class="min-w-fit rounded-full p-1.5 {$page.url.pathname.includes('/admin/evaluations')
 								? ''

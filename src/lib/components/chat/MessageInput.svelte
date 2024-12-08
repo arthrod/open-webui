@@ -1018,7 +1018,7 @@
 										{/if}
 
 										{#if !history.currentId || history.messages[history.currentId]?.done == true}
-											{#if prompt === ''}
+											{#if !NERDY_INTEGRATED && prompt === ''}
 												<div class=" flex items-center">
 													<Tooltip content={$i18n.t('Call')}>
 														<button
@@ -1065,9 +1065,7 @@
 															}}
 															aria-label="Call"
 														>
-														{#if !NERDY_INTEGRATED}
 														<Headphone className="size-5" />
-														{/if}
 												</button>
 													</Tooltip>
 												</div>

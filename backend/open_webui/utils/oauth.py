@@ -257,7 +257,7 @@ class OAuthManager:
         )
 
         # Redirect back to the frontend with the JWT token
-        redirect_url = f"{request.base_url}auth#token={jwt_token}"
+        redirect_url = f"{WEBUI_URL}/auth#token={jwt_token}"
         return RedirectResponse(url=redirect_url)
 
 

@@ -160,7 +160,11 @@
 					// Don't redirect if we're already on the auth page
 					// Needed because we pass in tokens from OAuth logins via URL fragments
 					if ($page.url.pathname !== '/auth') {
-						await goto(`${base}/auth`);
+						console.log("Assistant has no auth token, redirecting to OIDC authentication flow.");
+						// Commented out because we're not using the /auth page anymore give Assistant is part of
+						// Nerdy and we're using OIDC for authentication with Nerdy IDP without the need for a separate auth page.
+						// Original OpenWebUI code
+						// await goto(`${base}/auth`);
 					}
 				}
 			}

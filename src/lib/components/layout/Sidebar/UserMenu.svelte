@@ -121,7 +121,7 @@
 					</div>
 					<div class=" self-center truncate">{$i18n.t('Playground')}</div>
 				</a>
-
+				{#if !NERDY_INTEGRATED}
 				<a
 					class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 					href="{base}/admin"
@@ -151,6 +151,7 @@
 					</div>
 					<div class=" self-center truncate">{$i18n.t('Admin Panel')}</div>
 				</a>
+				{/if}
 			{/if}
 			
 			{#if !NERDY_INTEGRATED}

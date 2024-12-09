@@ -246,7 +246,7 @@
 									}}
 								/>
 							</div>
-						{:else if !NERDY_INTEGRATED && $showArtifacts}
+						{:else if $showArtifacts}
 							<Artifacts {history} overlay={dragged} />
 						{:else if $showOverview}
 							<Overview

@@ -4,11 +4,13 @@
 
 	import { flyAndScale } from '$lib/utils/transitions';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import ArchiveBox from '$lib/components/icons/ArchiveBox.svelte';
 	import { showSettings, activeUserCount, USAGE_POOL, mobile, showSidebar } from '$lib/stores';
 	import { fade, slide } from 'svelte/transition';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	import { userSignOut } from '$lib/apis/auths';
+	import { NERDY_INTEGRATED } from '$lib/constants';
 
 	const i18n = getContext('i18n');
 
@@ -89,10 +91,10 @@
 				<div class=" self-center truncate">{$i18n.t('Archived Chats')}</div>
 			</button>
 
-			{#if role === 'admin'}
+			{#if !NERDY_INTEGRATED && role === 'admin'}
 				<a
 					class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-					href="/playground"
+					href="{base}/playground"
 					on:click={() => {
 						show = false;
 
@@ -119,10 +121,10 @@
 					</div>
 					<div class=" self-center truncate">{$i18n.t('Playground')}</div>
 				</a>
-
+			{/if}
 				<a
 					class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-					href="/admin"
+					href="{base}/admin/settings"
 					on:click={() => {
 						show = false;
 
@@ -143,14 +145,14 @@
 							<path
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
+								d="M11.25 2.25a.75.75 0 00-1.034-.71l-2.23 1.012a.75.75 0 00-.392.931l.9 3.111-4.018 4.017a4.5 4.5 0 106.364 6.364l4.018-4.018 3.111.9a.75.75 0 00.93-.392l1.013-2.23a.75.75 0 00-.71-1.034L16.5 11.25 11.25 2.25z"
 							/>
 						</svg>
 					</div>
-					<div class=" self-center truncate">{$i18n.t('Admin Panel')}</div>
+					<div class=" self-center truncate">{$i18n.t('Tool Configurations')}</div>
 				</a>
-			{/if}
-
+			
+			{#if !NERDY_INTEGRATED}
 			<hr class=" border-gray-50 dark:border-gray-850 my-1 p-0" />
 
 			<button
@@ -183,6 +185,7 @@
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Sign Out')}</div>
 			</button>
+			{/if}
 
 			{#if $activeUserCount}
 				<hr class=" border-gray-50 dark:border-gray-850 my-1 p-0" />

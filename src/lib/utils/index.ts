@@ -1,12 +1,16 @@
 import { v4 as uuidv4 } from 'uuid';
 import sha256 from 'js-sha256';
 
-import { WEBUI_BASE_URL } from '$lib/constants';
+import { WEBUI_URL } from '$lib/constants';
 import { TTS_RESPONSE_SPLIT } from '$lib/types';
 
 //////////////////////////
 // Helper functions
 //////////////////////////
+
+function escapeRegExp(string: string): string {
+	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 export const replaceTokens = (content, sourceIds, char, user) => {
 	const charToken = /{{char}}/gi;
@@ -26,21 +30,24 @@ export const replaceTokens = (content, sourceIds, char, user) => {
 
 	// Replace video ID tags with corresponding <video> elements
 	content = content.replace(videoIdToken, (match, fileId) => {
-		const videoUrl = `${WEBUI_BASE_URL}/api/v1/files/${fileId}/content`;
+		const videoUrl = `${WEBUI_URL}/api/v1/files/${fileId}/content`;
 		return `<video src="${videoUrl}" controls></video>`;
 	});
 
 	// Replace HTML ID tags with corresponding HTML content
 	content = content.replace(htmlIdToken, (match, fileId) => {
-		const htmlUrl = `${WEBUI_BASE_URL}/api/v1/files/${fileId}/content/html`;
+		const htmlUrl = `${WEBUI_URL}/api/v1/files/${fileId}/content/html`;
 		return `<iframe src="${htmlUrl}" width="100%" frameborder="0" onload="this.style.height=(this.contentWindow.document.body.scrollHeight+20)+'px';"></iframe>`;
 	});
 
 	// Remove sourceIds from the content and replace them with <source_id>...</source_id>
 	if (Array.isArray(sourceIds)) {
 		sourceIds.forEach((sourceId) => {
+			// Escape special characters in the sourceId
+			const escapedSourceId = escapeRegExp(sourceId);
+
 			// Create a token based on the exact `[sourceId]` string
-			const sourceToken = `\\[${sourceId}\\]`; // Escape special characters for RegExp
+			const sourceToken = `\\[${escapedSourceId}\\]`; // Escape special characters for RegExp
 			const sourceRegex = new RegExp(sourceToken, 'g'); // Match all occurrences of [sourceId]
 
 			content = content.replace(sourceRegex, `<source_id data="${sourceId}" />`);
@@ -190,7 +197,7 @@ export const generateInitialsImage = (name) => {
 		console.log(
 			'generateInitialsImage: failed pixel test, fingerprint evasion is likely. Using default image.'
 		);
-		return '/user.png';
+		return '${WEBUI_URL}/user.png';
 	}
 
 	ctx.fillStyle = '#F39C12';

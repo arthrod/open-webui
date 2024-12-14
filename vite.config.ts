@@ -26,5 +26,12 @@ export default defineConfig({
 	},
 	worker: {
 		format: 'es'
+	},
+	paths: {
+		base: '/assistant'
+	},
+	configs: {
+		workspace: false,
+		models: false
 	}
 });

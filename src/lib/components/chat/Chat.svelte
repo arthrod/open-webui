@@ -6,13 +6,14 @@
 
 	import { getContext, onDestroy, onMount, tick } from 'svelte';
 	const i18n: Writable<i18nType> = getContext('i18n');
-
+	
+	import { base } from '$app/paths';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
 	import { get, type Unsubscriber, type Writable } from 'svelte/store';
 	import type { i18n as i18nType } from 'i18next';
-	import { WEBUI_BASE_URL } from '$lib/constants';
+	import { WEBUI_URL } from '$lib/constants';
 
 	import {
 		chatId,
@@ -138,7 +139,7 @@
 				const chatInput = document.getElementById('chat-input');
 				chatInput?.focus();
 			} else {
-				await goto('/');
+				await goto(`${base}/`);
 			}
 		})();
 	}
@@ -346,7 +347,7 @@
 			});
 		} else {
 			if ($temporaryChatEnabled) {
-				await goto('/');
+				await goto(`${base}/`);
 			}
 		}
 
@@ -507,7 +508,7 @@
 		await showOverview.set(false);
 		await showArtifacts.set(false);
 
-		if ($page.url.pathname.includes('/c/')) {
+		if ($page.url.pathname.includes(`${base}/c/`)) {
 			window.history.replaceState(history.state, '', `/`);
 		}
 
@@ -580,7 +581,7 @@
 	const loadChat = async () => {
 		chatId.set(chatIdProp);
 		chat = await getChatById(localStorage.token, $chatId).catch(async (error) => {
-			await goto('/');
+			await goto(`${base}/`);
 			return null;
 		});
 
@@ -888,11 +889,10 @@
 		await tick();
 
 		// Reset chat input textarea
-		const chatInputContainer = document.getElementById('chat-input-container');
+		const chatInputElement = document.getElementById('chat-input');
 
-		if (chatInputContainer) {
-			chatInputContainer.value = '';
-			chatInputContainer.style.height = '';
+		if (chatInputElement) {
+			chatInputElement.style.height = '';
 		}
 
 		const _files = JSON.parse(JSON.stringify(files));
@@ -1356,7 +1356,7 @@
 									if ($settings.notificationEnabled && !document.hasFocus()) {
 										const notification = new Notification(`${model.id}`, {
 											body: responseMessage.content,
-											icon: `${WEBUI_BASE_URL}/static/favicon.png`
+											icon: `${WEBUI_URL}/static/favicon.png`
 										});
 									}
 
@@ -1455,7 +1455,7 @@
 
 		const messages = createMessagesList(responseMessageId);
 		if (messages.length == 2 && messages.at(-1).content !== '' && selectedModels[0] === model.id) {
-			window.history.replaceState(history.state, '', `/c/${_chatId}`);
+			window.history.replaceState(history.state, '', `${base}/c/${_chatId}`);
 
 			const title = await generateChatTitle(messages);
 			await setChatTitle(_chatId, title);
@@ -1612,7 +1612,7 @@
 					chat_id: $chatId,
 					id: responseMessageId
 				},
-				`${WEBUI_BASE_URL}/api`
+				`${WEBUI_URL}/api`
 			);
 
 			// Wait until history/message have been updated
@@ -1712,7 +1712,7 @@
 				if ($settings.notificationEnabled && !document.hasFocus()) {
 					const notification = new Notification(`${model.id}`, {
 						body: responseMessage.content,
-						icon: `${WEBUI_BASE_URL}/static/favicon.png`
+						icon: `${WEBUI_URL}/static/favicon.png`
 					});
 				}
 
@@ -1774,7 +1774,7 @@
 
 		const messages = createMessagesList(responseMessageId);
 		if (messages.length == 2 && selectedModels[0] === model.id) {
-			window.history.replaceState(history.state, '', `/c/${_chatId}`);
+			window.history.replaceState(history.state, '', `${base}/c/${_chatId}`);
 
 			const title = await generateChatTitle(messages);
 			await setChatTitle(_chatId, title);
@@ -1977,7 +1977,7 @@
 				}
 			);
 
-			return title;
+			return title ? title : (lastUserMessage?.content ?? 'New Chat');
 		} else {
 			return lastUserMessage?.content ?? 'New Chat';
 		}
@@ -2285,7 +2285,7 @@
 							</div>
 						</div>
 
-						<div class=" pb-[1.6rem]">
+						<div class=" pb-[1rem]">
 							<MessageInput
 								{history}
 								{selectedModels}
@@ -2310,15 +2310,19 @@
 								on:submit={async (e) => {
 									if (e.detail) {
 										await tick();
-										submitPrompt(e.detail.replaceAll('\n\n', '\n'));
+										submitPrompt(
+											($settings?.richTextInput ?? true)
+												? e.detail.replaceAll('\n\n', '\n')
+												: e.detail
+										);
 									}
 								}}
 							/>
 
 							<div
-								class="absolute bottom-1.5 text-xs text-gray-500 text-center line-clamp-1 right-0 left-0"
+								class="absolute bottom-1 text-xs text-gray-500 text-center line-clamp-1 right-0 left-0"
 							>
-								{$i18n.t('LLMs can make mistakes. Verify important information.')}
+								<!-- {$i18n.t('Nerdy can make mistakes. Please verify responses.')} -->
 							</div>
 						</div>
 					{:else}
@@ -2347,7 +2351,11 @@
 								on:submit={async (e) => {
 									if (e.detail) {
 										await tick();
-										submitPrompt(e.detail.replaceAll('\n\n', '\n'));
+										submitPrompt(
+											($settings?.richTextInput ?? true)
+												? e.detail.replaceAll('\n\n', '\n')
+												: e.detail
+										);
 									}
 								}}
 							/>

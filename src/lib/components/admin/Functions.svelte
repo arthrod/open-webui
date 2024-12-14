@@ -2,6 +2,7 @@
 	import { toast } from 'svelte-sonner';
 	import fileSaver from 'file-saver';
 	const { saveAs } = fileSaver;
+	import { base } from '$app/paths';
 
 	import { WEBUI_NAME, config, functions, models } from '$lib/stores';
 	import { onMount, getContext, tick } from 'svelte';
@@ -98,7 +99,7 @@
 				id: `${_function.id}_clone`,
 				name: `${_function.name} (Clone)`
 			});
-			goto('/admin/functions/create');
+			goto(`${base}/admin/functions/create`);
 		}
 	};
 
@@ -210,7 +211,7 @@
 		<div>
 			<a
 				class=" px-2 py-2 rounded-xl hover:bg-gray-700/10 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition font-medium text-sm flex items-center space-x-1"
-				href="/admin/functions/create"
+				href="{base}/admin/functions/create"
 			>
 				<Plus className="size-3.5" />
 			</a>
@@ -219,7 +220,7 @@
 </div>
 
 <div class="mb-5">
-	{#each filteredItems as func}
+	{#each filteredItems as func (func.id)}
 		<div
 			class=" flex space-x-4 cursor-pointer w-full px-3 py-2 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl"
 		>
@@ -322,7 +323,7 @@
 					<FunctionMenu
 						{func}
 						editHandler={() => {
-							goto(`/admin/functions/edit?id=${encodeURIComponent(func.id)}`);
+							goto(`${base}/admin/functions/edit?id=${encodeURIComponent(func.id)}`);
 						}}
 						shareHandler={() => {
 							shareHandler(func);

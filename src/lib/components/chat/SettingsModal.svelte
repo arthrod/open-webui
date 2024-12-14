@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { NERDY_INTEGRATED } from '$lib/constants';
 	import { getContext, tick } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { models, settings, user } from '$lib/stores';
 	import { updateUserSettings } from '$lib/apis/users';
 	import { getModels as _getModels } from '$lib/apis';
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 
 	import Modal from '../common/Modal.svelte';
 	import Account from './Settings/Account.svelte';
@@ -281,6 +283,34 @@
 			]
 		}
 	];
+
+	// if NERDY_INTEGRATED is true, remove some settings tabs from searchData
+	if (NERDY_INTEGRATED) {
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'interface'),
+			1
+		);
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'audio'),
+			1
+		);
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'chats'),
+			1
+		);
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'account'),
+			1
+		);
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'admin'),
+			1
+		);
+		searchData.splice(
+			searchData.findIndex((tab) => tab.id === 'about'),
+			1
+		);
+	}
 
 	let search = '';
 	let visibleTabs = searchData.map((tab) => tab.id);
@@ -574,7 +604,7 @@
 										? ''
 										: ' text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'}"
 									on:click={async () => {
-										await goto('/admin/settings');
+										await goto(`${base}/admin/settings`);
 										show = false;
 									}}
 								>

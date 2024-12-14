@@ -1,6 +1,7 @@
 <script>
 	import { io } from 'socket.io-client';
 	import { spring } from 'svelte/motion';
+	import { base } from '$app/paths';
 
 	let loadingProgress = spring(0, {
 		stiffness: 0.05
@@ -29,7 +30,7 @@
 
 	import 'tippy.js/dist/tippy.css';
 
-	import { WEBUI_BASE_URL, WEBUI_HOSTNAME } from '$lib/constants';
+	import { WEBUI_URL, WEBUI_HOSTNAME } from '$lib/constants';
 	import i18n, { initI18n, getLanguages } from '$lib/i18n';
 	import { bestMatchingLanguage } from '$lib/utils';
 
@@ -39,27 +40,35 @@
 	const BREAKPOINT = 768;
 
 	const setupSocket = () => {
-		const _socket = io(`${WEBUI_BASE_URL}` || undefined, {
+		const origin = window.location.origin;
+
+		const _socket = io({
+			path: `/${base}/ws/socket.io`,
+			transports: ['websocket'],
 			reconnection: true,
 			reconnectionDelay: 1000,
 			reconnectionDelayMax: 5000,
 			randomizationFactor: 0.5,
-			path: '/ws/socket.io',
-			auth: { token: localStorage.token }
+			auth: { token: localStorage.token },
+			autoConnect: true,
+			withCredentials: true,
+			extraHeaders: {
+				Origin: origin
+			}
 		});
 
-		socket.set(_socket);
-
 		_socket.on('connect_error', (err) => {
-			console.log('connect_error', err);
+			console.log('Socket connect_error', err);
+			console.error('Error message:', err.message);
+			console.error('Error description:', err.description);
 		});
 
 		_socket.on('connect', () => {
-			console.log('connected', _socket.id);
+			console.log('Socket connected with ID:', _socket.id);
 		});
 
 		_socket.on('reconnect_attempt', (attempt) => {
-			console.log('reconnect_attempt', attempt);
+			console.log('Socket reconnect_attempt', attempt);
 		});
 
 		_socket.on('reconnect_failed', () => {
@@ -69,7 +78,7 @@
 		_socket.on('disconnect', (reason, details) => {
 			console.log(`Socket ${_socket.id} disconnected due to ${reason}`);
 			if (details) {
-				console.log('Additional details:', details);
+				console.log('Socket additional details:', details);
 			}
 		});
 
@@ -82,6 +91,9 @@
 			console.log('usage', data);
 			USAGE_POOL.set(data['models']);
 		});
+
+		socket.set(_socket);
+		return _socket;
 	};
 
 	onMount(async () => {
@@ -142,19 +154,23 @@
 					} else {
 						// Redirect Invalid Session User to /auth Page
 						localStorage.removeItem('token');
-						await goto('/auth');
+						await goto(`${base}/auth`);
 					}
 				} else {
 					// Don't redirect if we're already on the auth page
 					// Needed because we pass in tokens from OAuth logins via URL fragments
 					if ($page.url.pathname !== '/auth') {
-						await goto('/auth');
+						console.log("Assistant has no auth token, redirecting to OIDC authentication flow.");
+						// Commented out because we're not using the /auth page anymore give Assistant is part of
+						// Nerdy and we're using OIDC for authentication with Nerdy IDP without the need for a separate auth page.
+						// Original OpenWebUI code
+						// await goto(`${base}/auth`);
 					}
 				}
 			}
 		} else {
 			// Redirect to /error when Backend Not Detected
-			await goto(`/error`);
+			await goto(`${base}/error`);
 		}
 
 		await tick();
@@ -173,9 +189,7 @@
 
 			await loadingProgress.set(100);
 
-			document.getElementById('splash-screen')?.remove();
-
-			const audio = new Audio(`/audio/greeting.mp3`);
+			const audio = new Audio(`${base}/audio/greeting.mp3`);
 			const playAudio = () => {
 				audio.play();
 				document.removeEventListener('click', playAudio);
@@ -185,7 +199,6 @@
 
 			loaded = true;
 		} else {
-			document.getElementById('splash-screen')?.remove();
 			loaded = true;
 		}
 
@@ -197,7 +210,7 @@
 
 <svelte:head>
 	<title>{$WEBUI_NAME}</title>
-	<link crossorigin="anonymous" rel="icon" href="{WEBUI_BASE_URL}/static/favicon.png" />
+	<link crossorigin="anonymous" rel="icon" href="{base}/static/favicon.png" />
 
 	<!-- rosepine themes have been disabled as it's not up to date with our latest version. -->
 	<!-- feel free to make a PR to fix if anyone wants to see it return -->

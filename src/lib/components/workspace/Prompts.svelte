@@ -4,6 +4,7 @@
 	const { saveAs } = fileSaver;
 
 	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
 	import { onMount, getContext } from 'svelte';
 	import { WEBUI_NAME, config, prompts as _prompts, user } from '$lib/stores';
 
@@ -59,7 +60,7 @@
 
 	const cloneHandler = async (prompt) => {
 		sessionStorage.prompt = JSON.stringify(prompt);
-		goto('/workspace/prompts/create');
+		goto(`${base}/workspace/prompts/create`);
 	};
 
 	const exportHandler = async (prompt) => {
@@ -131,7 +132,7 @@
 			<div>
 				<a
 					class=" px-2 py-2 rounded-xl hover:bg-gray-700/10 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition font-medium text-sm flex items-center space-x-1"
-					href="/workspace/prompts/create"
+					href="{base}/workspace/prompts/create"
 				>
 					<Plus className="size-3.5" />
 				</a>

@@ -2,7 +2,10 @@
 	import type { Banner } from '$lib/types';
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { fade } from 'svelte/transition';
-
+	import DOMPurify from 'dompurify';
+	import { marked } from 'marked';
+	import { WEBUI_URL } from '$lib/constants';
+	import { base } from '$app/paths';
 	const dispatch = createEventDispatcher();
 
 	export let banner: Banner = {
@@ -55,7 +58,7 @@
 						<div class="flex md:hidden group w-fit md:items-center">
 							<a
 								class="text-gray-700 dark:text-white text-xs font-semibold underline"
-								href="/assets/files/whitepaper.pdf"
+								href="{base}/assets/files/whitepaper.pdf"
 								target="_blank">Learn More</a
 							>
 
@@ -81,7 +84,7 @@
 				</div>
 
 				<div class="flex-1 text-xs text-gray-700 dark:text-white">
-					{banner.content}
+					{@html marked.parse(DOMPurify.sanitize(banner.content))}
 				</div>
 			</div>
 
@@ -89,7 +92,7 @@
 				<div class="hidden md:flex group w-fit md:items-center">
 					<a
 						class="text-gray-700 dark:text-white text-xs font-semibold underline"
-						href="/"
+						href="{WEBUI_URL}/"
 						target="_blank">Learn More</a
 					>
 

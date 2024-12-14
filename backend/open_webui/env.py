@@ -6,6 +6,7 @@ import pkgutil
 import sys
 import shutil
 from pathlib import Path
+from urllib.parse import urlparse
 
 import markdown
 from bs4 import BeautifulSoup
@@ -99,11 +100,12 @@ for source in log_sources:
 log.setLevel(SRC_LOG_LEVELS["CONFIG"])
 
 
-WEBUI_NAME = os.environ.get("WEBUI_NAME", "Open WebUI")
-if WEBUI_NAME != "Open WebUI":
-    WEBUI_NAME += " (Open WebUI)"
-
+WEBUI_NAME = os.environ.get("WEBUI_NAME", "Assistant")
 WEBUI_URL = os.environ.get("WEBUI_URL", "http://localhost:3000")
+
+# Derive the base path from the WEBUI_URL directory path
+parsed_url = urlparse(WEBUI_URL)
+WEBUI_BASE_PATH = parsed_url.path
 
 WEBUI_FAVICON_URL = "https://openwebui.com/favicon.png"
 
@@ -329,6 +331,9 @@ WEBUI_AUTH_TRUSTED_EMAIL_HEADER = os.environ.get(
 )
 WEBUI_AUTH_TRUSTED_NAME_HEADER = os.environ.get("WEBUI_AUTH_TRUSTED_NAME_HEADER", None)
 
+BYPASS_MODEL_ACCESS_CONTROL = (
+    os.environ.get("BYPASS_MODEL_ACCESS_CONTROL", "False").lower() == "true"
+)
 
 ####################################
 # WEBUI_SECRET_KEY
@@ -373,7 +378,7 @@ else:
         AIOHTTP_CLIENT_TIMEOUT = 300
 
 AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST = os.environ.get(
-    "AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST", "3"
+    "AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST", "5"
 )
 
 if AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST == "":
@@ -384,7 +389,7 @@ else:
             AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST
         )
     except Exception:
-        AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST = 3
+        AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST = 5
 
 ####################################
 # OFFLINE_MODE

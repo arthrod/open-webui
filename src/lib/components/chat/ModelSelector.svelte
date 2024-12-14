@@ -4,16 +4,15 @@
 	import { toast } from 'svelte-sonner';
 	import Selector from './ModelSelector/Selector.svelte';
 	import Tooltip from '../common/Tooltip.svelte';
+	import { NERDY_INTEGRATED } from '$lib/constants';
 
-	import { setDefaultModels } from '$lib/apis/configs';
 	import { updateUserSettings } from '$lib/apis/users';
-
 	const i18n = getContext('i18n');
 
 	export let selectedModels = [''];
 	export let disabled = false;
 
-	export let showSetDefault = true;
+	export let showSetDefault = false;
 
 	const saveDefaultModel = async () => {
 		const hasEmptyModel = selectedModels.filter((it) => it === '');
@@ -55,7 +54,7 @@
 				</div>
 			</div>
 
-			{#if selectedModelIdx === 0}
+			{#if !NERDY_INTEGRATED && selectedModelIdx === 0}
 				<div
 					class="  self-center mx-1 disabled:text-gray-600 disabled:hover:text-gray-600 -translate-y-[0.5px]"
 				>
@@ -81,7 +80,7 @@
 						</button>
 					</Tooltip>
 				</div>
-			{:else}
+			{:else if !NERDY_INTEGRATED}
 				<div
 					class="  self-center mx-1 disabled:text-gray-600 disabled:hover:text-gray-600 -translate-y-[0.5px]"
 				>

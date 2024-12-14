@@ -3,7 +3,7 @@
 	import { WEBUI_NAME, showSidebar, functions } from '$lib/stores';
 	import MenuLines from '$lib/components/icons/MenuLines.svelte';
 	import { page } from '$app/stores';
-
+	import { base } from '$app/paths';
 	const i18n = getContext('i18n');
 
 	onMount(async () => {});
@@ -47,23 +47,15 @@
 						)
 							? ''
 							: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition"
-						href="/playground">{$i18n.t('Chat')}</a
+						href="{base}/playground">{$i18n.t('Chat')}</a
 					>
-
-					<!-- <a
-						class="min-w-fit rounded-full p-1.5 {$page.url.pathname.includes('/playground/notes')
-							? ''
-							: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition"
-						href="/playground/notes">{$i18n.t('Notes')}</a
-					> -->
-
 					<a
 						class="min-w-fit rounded-full p-1.5 {$page.url.pathname.includes(
-							'/playground/completions'
+							"{base}/playground/completions"
 						)
 							? ''
 							: 'text-gray-300 dark:text-gray-600 hover:text-gray-700 dark:hover:text-white'} transition"
-						href="/playground/completions">{$i18n.t('Completions')}</a
+						href="{base}/playground/completions">{$i18n.t('Completions')}</a
 					>
 				</div>
 			</div>

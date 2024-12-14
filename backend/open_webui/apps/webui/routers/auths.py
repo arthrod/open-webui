@@ -18,7 +18,6 @@ from open_webui.apps.webui.models.auths import (
     UserResponse,
 )
 from open_webui.apps.webui.models.users import Users
-
 from open_webui.constants import ERROR_MESSAGES, WEBHOOK_MESSAGES
 from open_webui.env import (
     WEBUI_AUTH,
@@ -27,6 +26,7 @@ from open_webui.env import (
     WEBUI_SESSION_COOKIE_SAME_SITE,
     WEBUI_SESSION_COOKIE_SECURE,
     SRC_LOG_LEVELS,
+    WEBUI_BASE_PATH,
 )
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import Response
@@ -303,7 +303,9 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
 
 @router.post("/signin", response_model=SessionUserResponse)
 async def signin(request: Request, response: Response, form_data: SigninForm):
+    log.info(f"Signin form data: {form_data}")
     if WEBUI_AUTH_TRUSTED_EMAIL_HEADER:
+        log.info(f"Trusted email header: {WEBUI_AUTH_TRUSTED_EMAIL_HEADER}")
         if WEBUI_AUTH_TRUSTED_EMAIL_HEADER not in request.headers:
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_TRUSTED_HEADER)
 
@@ -397,13 +399,19 @@ async def signin(request: Request, response: Response, form_data: SigninForm):
 @router.post("/signup", response_model=SessionUserResponse)
 async def signup(request: Request, response: Response, form_data: SignupForm):
     if WEBUI_AUTH:
-        if (
-            not request.app.state.config.ENABLE_SIGNUP
-            or not request.app.state.config.ENABLE_LOGIN_FORM
-        ):
-            raise HTTPException(
-                status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.ACCESS_PROHIBITED
-            )
+        # TODO: Nerdy Integration hack to allow any email passed in via the trusted email header to 
+        # be used to create a user account. This is a temporary solution to allow for the creation of
+        # user accounts via the trusted email header. This is a security risk and should be removed
+        # once a proper solution is implemented.
+        pass
+        # # Original code
+        # if (
+        #     not request.app.state.config.ENABLE_SIGNUP
+        #     or not request.app.state.config.ENABLE_LOGIN_FORM
+        # ):
+        #     raise HTTPException(
+        #         status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.ACCESS_PROHIBITED
+        #     )
     else:
         if Users.get_num_users() != 0:
             raise HTTPException(

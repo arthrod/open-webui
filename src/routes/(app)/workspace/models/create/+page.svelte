@@ -3,7 +3,7 @@
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
 	import { models } from '$lib/stores';
-
+	import { base } from '$app/paths';
 	import { onMount, tick, getContext } from 'svelte';
 	import { createNewModel, getModelById } from '$lib/apis/models';
 	import { getModels } from '$lib/apis';
@@ -17,6 +17,11 @@
 			toast.error(
 				`Error: A model with the ID '${modelInfo.id}' already exists. Please select a different ID to proceed.`
 			);
+			return;
+		}
+
+		if (modelInfo.id === '') {
+			toast.error('Error: Model ID cannot be empty. Please enter a valid ID to proceed.');
 			return;
 		}
 
@@ -39,7 +44,7 @@
 			if (res) {
 				await models.set(await getModels(localStorage.token));
 				toast.success($i18n.t('Model created successfully!'));
-				await goto('/workspace/models');
+				await goto(`${base}/workspace/models`);
 			}
 		}
 	};

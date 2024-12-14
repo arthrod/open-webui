@@ -9,7 +9,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { fade } from 'svelte/transition';
-
+	import { base } from '$app/paths';
 	import { getKnowledgeBases } from '$lib/apis/knowledge';
 	import { getFunctions } from '$lib/apis/functions';
 	import { getModels, getVersionUpdates } from '$lib/apis';
@@ -19,7 +19,7 @@
 	import { getBanners } from '$lib/apis/configs';
 	import { getUserSettings } from '$lib/apis/users';
 
-	import { WEBUI_VERSION } from '$lib/constants';
+	import { WEBUI_VERSION, NERDY_INTEGRATED } from '$lib/constants';
 	import { compareVersion } from '$lib/utils';
 
 	import {
@@ -54,7 +54,7 @@
 
 	onMount(async () => {
 		if ($user === undefined) {
-			await goto('/auth');
+			await goto(`${base}/auth`);
 		} else if (['user', 'admin'].includes($user.role)) {
 			try {
 				// Check if IndexedDB exists
@@ -97,7 +97,7 @@
 			banners.set(await getBanners(localStorage.token));
 			tools.set(await getTools(localStorage.token));
 
-			document.addEventListener('keydown', function (event) {
+			document.addEventListener('keydown', async function (event) {
 				const isCtrlPressed = event.ctrlKey || event.metaKey; // metaKey is for Cmd key on Mac
 				// Check if the Shift key is pressed
 				const isShiftPressed = event.shiftKey;
@@ -164,6 +164,18 @@
 					console.log('showShortcuts');
 					document.getElementById('show-shortcuts-button')?.click();
 				}
+
+				// Check if Ctrl + Shift + ' is pressed
+				if (isCtrlPressed && isShiftPressed && event.key.toLowerCase() === `'`) {
+					event.preventDefault();
+					console.log('temporaryChat');
+					temporaryChatEnabled.set(!$temporaryChatEnabled);
+					await goto('/');
+					const newChatButton = document.getElementById('new-chat-button');
+					setTimeout(() => {
+						newChatButton?.click();
+					}, 0);
+				}
 			});
 
 			if ($user.role === 'admin' && ($settings?.showChangelog ?? true)) {
@@ -205,7 +217,9 @@
 </script>
 
 <SettingsModal bind:show={$showSettings} />
+{#if !NERDY_INTEGRATED}
 <ChangelogModal bind:show={$showChangelog} />
+{/if}
 
 {#if version && compareVersion(version.latest, version.current) && ($settings?.showUpdateToast ?? true)}
 	<div class=" absolute bottom-8 right-8 z-50" in:fade={{ duration: 100 }}>

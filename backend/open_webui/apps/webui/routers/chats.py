@@ -654,6 +654,23 @@ async def delete_tag_by_id_and_tag_name(
 
 @router.delete("/{id}/tags/all", response_model=Optional[bool])
 async def delete_all_tags_by_id(id: str, user=Depends(get_verified_user)):
+    """
+    Delete all tags associated with a specific chat for the authenticated user.
+
+    Parameters:
+        id (str): The unique identifier of the chat
+        user (User): The authenticated user object obtained through dependency injection
+
+    Returns:
+        bool: True if tags were successfully deleted
+
+    Raises:
+        HTTPException: 401 Unauthorized if the chat is not found or doesn't belong to the user
+
+    Notes:
+        - Also removes tags from the Tags collection if they are no longer used in any chats
+        - Requires authentication through the get_verified_user dependency
+    """
     chat = Chats.get_chat_by_id_and_user_id(id, user.id)
     if chat:
         Chats.delete_all_tags_by_id_and_user_id(id, user.id)

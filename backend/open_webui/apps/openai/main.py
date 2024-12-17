@@ -220,6 +220,27 @@ async def cleanup_response(
 
 
 def merge_models_lists(model_lists):
+    """
+    Merge multiple lists of model configurations into a single unified list.
+
+    Parameters:
+        model_lists (List[List[dict]]): A list of lists containing model configurations.
+            Each inner list contains dictionaries with model details.
+            Models can be None or contain an "error" key which will be skipped.
+
+    Returns:
+        List[dict]: A merged list of model configurations where each model is enriched with:
+            - name: Model name (defaults to model ID if name not present)
+            - owned_by: Model owner (defaults to "vllm")
+            - openai: Original model configuration
+            - urlIdx: Index of the original list containing the model
+
+    Notes:
+        - Filters out certain OpenAI models (babbage, dall-e, davinci, embedding, tts, whisper)
+          when the API base URL contains "api.openai.com"
+        - Skips None values and models containing "error" key
+        - Preserves original model attributes while adding additional metadata
+    """
     log.debug(f"merge_models_lists {model_lists}")
     merged_list = []
 
@@ -255,10 +276,27 @@ def merge_models_lists(model_lists):
 
 
 async def get_all_models_responses() -> list:
-   # if not app.state.config.ENABLE_OPENAI_API:
-    # Return a list with just the Cicero model
+    """
+    Get list of available language models.
+
+    Currently returns a static list containing only the Cicero model. Original implementation
+    that fetched models from OpenAI API endpoints is commented out.
+
+    Returns:
+        list: A list containing a single dict with Cicero model information in the format:
+            {
+                "object": "list",
+                "data": [{
+                    "id": str,
+                    "name": str, 
+                    "object": str,
+                    "created": int,
+                    "owned_by": str
+                }]
+            }
+    """
     return [{
-        "object": "list",
+        "object": "list", 
         "data": [{
             "id": "arthrod/cicerollamatry8",
             "name": "Cicero-Pt-BR",
@@ -268,70 +306,24 @@ async def get_all_models_responses() -> list:
         }]
     }]
 
-    # Original implementation commented out below
-    # if not app.state.config.ENABLE_OPENAI_API:
-    #     return []
-
-    # # Check if API KEYS length is same than API URLS length
-    # num_urls = len(app.state.config.OPENAI_API_BASE_URLS)
-    # num_keys = len(app.state.config.OPENAI_API_KEYS)
-
-    # if num_keys != num_urls:
-    #     # if there are more keys than urls, remove the extra keys
-    #     if num_keys > num_urls:
-    #         new_keys = app.state.config.OPENAI_API_KEYS[:num_urls]
-    #         app.state.config.OPENAI_API_KEYS = new_keys
-    #     # if there are more urls than keys, add empty keys
-    #     else:
-    #         app.state.config.OPENAI_API_KEYS += [""] * (num_urls - num_keys)
-
-    # tasks = []
-    # for idx, url in enumerate(app.state.config.OPENAI_API_BASE_URLS):
-    #     if url not in app.state.config.OPENAI_API_CONFIGS:
-    #         tasks.append(
-    #             aiohttp_get(f"{url}/models", app.state.config.OPENAI_API_KEYS[idx])
-    #         )
-    #     else:
-    #         api_config = app.state.config.OPENAI_API_CONFIGS.get(url, {})
-
-    #         enable = api_config.get("enable", True)
-    #         model_ids = api_config.get("model_ids", [])
-
-    #         if enable:
-    #             if len(model_ids) == 0:
-    #                 tasks.append(
-    #                     aiohttp_get(
-    #                         f"{url}/models", app.state.config.OPENAI_API_KEYS[idx]
-    #                     )
-    #                 )
-    #             else:
-    #                 model_list = {
-    #                     "object": "list",
-    #                     "data": [
-    #                         {
-    #                             "id": model_id,
-    #                             "name": model_id,
-    #                             "owned_by": "openai",
-    #                             "openai": {"id": model_id},
-    #                             "urlIdx": idx,
-    #                         }
-    #                         for model_id in model_ids
-    #                     ],
-    #                 }
-
-    #                 tasks.append(asyncio.sleep(0, result=model_list))
-    #         else:
-    #             tasks.append(asyncio.sleep(0))
-
-    # responses = await asyncio.gather(*tasks, return_exceptions=True)
-    # responses = [r for r in responses if r is not None and not isinstance(r, Exception)]
-
-    # log.debug(f"get_all_models:responses() {responses}")
-    # return responses
-
 
 @cached(ttl=3)
 async def get_all_models() -> dict[str, list]:
+    """
+    Retrieve all available AI models from configured providers.
+
+    Makes API calls to fetch model lists from enabled providers and merges the results.
+    If OpenAI API is disabled via config, returns empty model list.
+
+    Returns:
+        dict[str, list]: Dictionary with 'data' key containing merged list of available models.
+            Returns {'data': []} if OpenAI API is disabled or no models found.
+
+    Note:
+        - Requires app.state.config.ENABLE_OPENAI_API to be configured
+        - Makes asynchronous API calls to model providers
+        - Logs debug information about retrieved models
+    """
     log.info("get_all_models()")
 
     if not app.state.config.ENABLE_OPENAI_API:
@@ -361,13 +353,40 @@ MODEL_NAME_MAPPING = {
 @app.get("/models/{url_idx}")
 async def get_models(url_idx: Optional[int] = None, user=Depends(get_verified_user)):
     """
-    Returns a fixed response with Cicero model.
-    Original implementation commented out below.
+    Get available AI models based on configuration and user access rights.
+
+    Currently returns a fixed response with the Cicero model. Original implementation 
+    (commented out) fetched models from configured OpenAI-compatible endpoints with 
+    access control.
+
+    Parameters:
+        url_idx (Optional[int]): Index of the API URL to use from configured endpoints.
+            If None, fetches from all configured endpoints.
+        user (User): Authenticated user object obtained via dependency injection.
+            Used for access control and request headers.
+
+    Returns:
+        dict: Dictionary containing list of available models in OpenAI format:
+            {
+                "data": [
+                    {
+                        "id": str,          # Model identifier
+                        "object": str,      # Always "model"
+                        "created": int,     # Unix timestamp
+                        "owned_by": str     # Model owner
+                    },
+                    ...
+                ],
+                "object": "list"
+            }
+
+    Raises:
+        HTTPException: On API connection errors (500) or access control violations
     """
     return {
         "data": [
             {
-                "id": "arthrod/cicerollamatry8",
+                "id": "arthrod/cicerollamatry8", 
                 "object": "model",
                 "created": 1677649963,
                 "owned_by": "openai"
@@ -375,92 +394,6 @@ async def get_models(url_idx: Optional[int] = None, user=Depends(get_verified_us
         ],
         "object": "list"
     }
-
-    # Original implementation commented out
-    """
-    models = {
-        "data": [],
-    }
-
-    if url_idx is None:
-        models = await get_all_models()
-    else:
-        url = app.state.config.OPENAI_API_BASE_URLS[url_idx]
-        key = app.state.config.OPENAI_API_KEYS[url_idx]
-
-        headers = {}
-        headers["Authorization"] = f"Bearer {key}"
-        headers["Content-Type"] = "application/json"
-
-        if ENABLE_FORWARD_USER_INFO_HEADERS:
-            headers["X-OpenWebUI-User-Name"] = user.name
-            headers["X-OpenWebUI-User-Id"] = user.id
-            headers["X-OpenWebUI-User-Email"] = user.email
-            headers["X-OpenWebUI-User-Role"] = user.role
-
-        r = None
-
-        timeout = aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            try:
-                async with session.get(f"{url}/models", headers=headers) as r:
-                    if r.status != 200:
-                        # Extract response error details if available
-                        error_detail = f"HTTP Error: {r.status}"
-                        res = await r.json()
-                        if "error" in res:
-                            error_detail = f"External Error: {res['error']}"
-                        raise Exception(error_detail)
-
-                    response_data = await r.json()
-
-                    # Check if we're calling OpenAI API based on the URL
-                    if "api.openai.com" in url:
-                        # Filter models according to the specified conditions
-                        response_data["data"] = [
-                            model
-                            for model in response_data.get("data", [])
-                            if not any(
-                                name in model["id"]
-                                for name in [
-                                    "babbage",
-                                    "dall-e",
-                                    "davinci",
-                                    "embedding",
-                                    "tts",
-                                    "whisper",
-                                ]
-                            )
-                        ]
-
-                    models = response_data
-            except aiohttp.ClientError as e:
-                # ClientError covers all aiohttp requests issues
-                log.exception(f"Client error: {str(e)}")
-                # Handle aiohttp-specific connection issues, timeout etc.
-                raise HTTPException(
-                    status_code=500, detail="Open WebUI: Server Connection Error"
-                )
-            except Exception as e:
-                log.exception(f"Unexpected error: {e}")
-                # Generic error handler in case parsing JSON or other steps fail
-                error_detail = f"Unexpected error: {str(e)}"
-                raise HTTPException(status_code=500, detail=error_detail)
-
-    if user.role == "user" and not BYPASS_MODEL_ACCESS_CONTROL:
-        # Filter models based on user access control
-        filtered_models = []
-        for model in models.get("data", []):
-            model_info = Models.get_model_by_id(model["id"])
-            if model_info:
-                if user.id == model_info.user_id or has_access(
-                    user.id, type="read", access_control=model_info.access_control
-                ):
-                    filtered_models.append(model)
-        models["data"] = filtered_models
-
-    return models
-    """
 
 class ConnectionVerificationForm(BaseModel):
     url: str
@@ -470,6 +403,27 @@ class ConnectionVerificationForm(BaseModel):
 async def verify_connection(
     form_data: ConnectionVerificationForm, user=Depends(get_admin_user)
 ):
+    """
+    Verify connection to an external API endpoint by testing model list retrieval.
+
+    Parameters:
+        form_data (ConnectionVerificationForm): Form containing URL and API key
+        user: Admin user dependency injection (default: Depends(get_admin_user))
+
+    Returns:
+        dict: JSON response containing model list from the external API
+
+    Raises:
+        HTTPException: 
+            - 500: Server connection error for network/timeout issues
+            - 500: Unexpected errors during verification
+        Exception: When external API returns non-200 status code
+
+    Notes:
+        - Uses aiohttp for async HTTP requests
+        - Includes timeout configuration via AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST
+        - Automatically handles Bearer token authentication
+    """
     url = form_data.url
     key = form_data.key
 

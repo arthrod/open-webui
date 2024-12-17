@@ -21,6 +21,18 @@ const DELIMITER_LIST = [
 const inlinePatterns = [];
 const blockPatterns = [];
 
+/**
+ * Escapes special characters in a string for use in a regular expression pattern.
+ *
+ * @param string - The input string to escape
+ * @returns The escaped string with all RegExp special characters properly escaped
+ *
+ * @example
+ * ```ts
+ * escapeRegex("hello.world") // returns "hello\.world"
+ * escapeRegex("[test]") // returns "\[test\]"
+ * ```
+ */
 function escapeRegex(string) {
 	return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
@@ -60,6 +72,22 @@ export default function (options = {}) {
 	};
 }
 
+/**
+ * Finds the starting index of a KaTeX mathematical expression in the source text.
+ *
+ * @param src - The source text to search for KaTeX expressions
+ * @param displayMode - If true, searches for block-level math expressions; if false, searches for inline expressions
+ * @returns The starting index of the first valid KaTeX expression, or undefined if none found
+ *
+ * @remarks
+ * The function searches for KaTeX delimiters based on the display mode:
+ * - Inline mode: Expressions between single or double dollar signs
+ * - Display mode: Expressions between double dollar signs or \[ \] pairs
+ *
+ * The function validates that:
+ * 1. The delimiter is either at the start of the text or preceded by whitespace/punctuation
+ * 2. The expression matches the expected KaTeX syntax pattern
+ */
 function katexStart(src, displayMode: boolean) {
 	const ruleReg = displayMode ? blockRule : inlineRule;
 
@@ -104,25 +132,38 @@ function katexStart(src, displayMode: boolean) {
 	}
 }
 
+/**
+ * Tokenizes KaTeX mathematical expressions in text.
+ *
+ * @param src - The source text to parse for KaTeX expressions
+ * @param tokens - The current array of tokens (unused in current implementation)
+ * @param displayMode - Whether to parse block-level (true) or inline (false) KaTeX
+ * @returns An object containing the parsed KaTeX token information, or undefined if no match
+ *          Properties include:
+ *          - type: 'blockKatex' or 'inlineKatex'
+ *          - raw: The complete matched text
+ *          - text: The extracted KaTeX expression
+ *          - displayMode: The display mode boolean value
+ */
 function katexTokenizer(src, tokens, displayMode: boolean) {
-	const ruleReg = displayMode ? blockRule : inlineRule;
-	const type = displayMode ? 'blockKatex' : 'inlineKatex';
+    const ruleReg = displayMode ? blockRule : inlineRule;
+    const type = displayMode ? 'blockKatex' : 'inlineKatex';
 
-	const match = src.match(ruleReg);
+    const match = src.match(ruleReg);
 
-	if (match) {
-		const text = match
-			.slice(2)
-			.filter((item) => item)
-			.find((item) => item.trim());
+    if (match) {
+        const text = match
+            .slice(2)
+            .filter((item) => item)
+            .find((item) => item.trim());
 
-		return {
-			type,
-			raw: match[0],
-			text: text,
-			displayMode
-		};
-	}
+        return {
+            type,
+            raw: match[0],
+            text: text,
+            displayMode
+        };
+    }
 }
 
 function inlineKatex(options) {

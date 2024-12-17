@@ -165,6 +165,23 @@ export const t = derived(currentLang, (lang) => {
     };
 });
 
+/**
+ * Toggles the application language between English (en-US) and Portuguese (pt-BR).
+ * 
+ * @remarks
+ * This function switches between two supported languages and persists the selection
+ * in localStorage. It also updates the reactive language store.
+ * 
+ * @returns void
+ * 
+ * @throws Does not execute if running in non-browser environment
+ * 
+ * @example
+ * ```typescript
+ * toggleLanguage(); // If current is 'en-US', switches to 'pt-BR'
+ * toggleLanguage(); // If current is 'pt-BR', switches to 'en-US'
+ * ```
+ */
 export function toggleLanguage(): void {
     if (!browser) return;
     

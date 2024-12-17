@@ -166,6 +166,23 @@ def load_function_module_by_id(function_id, content=None):
 
 
 def install_frontmatter_requirements(requirements):
+    """
+    Install Python package requirements specified in frontmatter.
+
+    Takes a comma-separated string of package requirements and installs them using pip.
+    If requirements is empty or None, function returns without action.
+
+    Parameters:
+        requirements (str): Comma-separated string of Python package requirements to install.
+                          Example: "pandas>=1.0.0,numpy,scikit-learn"
+
+    Raises:
+        subprocess.CalledProcessError: If pip install fails for any requirement
+        
+    Side Effects:
+        - Installs Python packages via pip
+        - Logs installation progress using the logging module
+    """
     if requirements:
         req_list = [req.strip() for req in requirements.split(",")]
         for req in req_list:

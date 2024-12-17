@@ -2763,6 +2763,17 @@ async def get_manifest_json():
 
 @app.get("/opensearch.xml")
 async def get_opensearch_xml():
+    """
+    Generate an OpenSearch XML description for browser search integration.
+
+    Returns an XML document that follows the OpenSearch 1.1 specification, allowing browsers
+    to use the application as a search provider. The XML includes search configuration
+    details like the search endpoint, favicon, and input encoding.
+
+    Returns:
+        Response: FastAPI Response object containing the OpenSearch XML with media_type
+                 set to 'application/xml'
+    """
     xml_content = rf"""
     <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
     <ShortName>{WEBUI_NAME}</ShortName>

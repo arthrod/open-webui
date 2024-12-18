@@ -135,7 +135,7 @@
 				</div>
 
 				<div class=" text-3xl sm:text-4xl line-clamp-1" in:fade={{ duration: 100 }}>
-					{$i18n.t('Hello, {{name}}', { name: $user.firstname })}
+					{$i18n.t('Hello, {{name}}', { name: $user.name })}
 				</div>
 			</div>
 

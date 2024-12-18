@@ -82,7 +82,7 @@
 		>
 			<div>
 				<div class=" capitalize line-clamp-1" in:fade={{ duration: 200 }}>
-					{$i18n.t('Hello, {{name}}', { name: $user.firstname })}
+					{$i18n.t('Hello, {{name}}', { name: $user.name })}
 				</div>
 
 				<div in:fade={{ duration: 200, delay: 200 }}>

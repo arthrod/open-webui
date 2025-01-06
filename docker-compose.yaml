@@ -5,7 +5,9 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env
-    volumes:      
+    environment:
+      - WEBUI_AUTH=False
+    volumes:
       - ./backend/open_webui:/app/backend/open_webui
       - open-webui-dev1:/app/backend/data
     ports:
@@ -20,13 +22,10 @@ services:
     env_file:
       - .env
     command: >
-      --config /app/config.yaml
-      --port 4000
-      --num_workers 8
-      --detailed_debug
-    
+      --config /app/config.yaml --port 4000 --num_workers 8 --detailed_debug
+
     depends_on:
-      - postgres  # Ensure the PostgreSQL service is started before litellm
+      - postgres # Ensure the PostgreSQL service is started before litellm
 
   postgres:
     image: postgres:latest

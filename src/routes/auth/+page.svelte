@@ -20,6 +20,8 @@
 
 	let loaded = false;
 
+	// let mode = 'queue';
+	let queue = { position: -1, totalPeople: -1 };
 	let mode = $config?.features.enable_ldap ? 'ldap' : 'signin';
 
 	let name = '';
@@ -81,6 +83,17 @@
 		}
 	};
 
+	const joinQueueHandler = async () => {
+		queue = { position: 670, totalPeople: 670 };
+		let timer = setInterval(() => {
+			queue.position -= 5;
+			if (queue.position === 0) {
+				clearInterval(timer);
+				signInHandler();
+			}
+		}, 100);
+	};
+
 	const checkOauthCallback = async () => {
 		if (!$page.url.hash) {
 			return;
@@ -115,10 +128,10 @@
 
 		loaded = true;
 		if (($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false) {
-			await signInHandler();
+			// await signInHandler();
 		} else {
 			onboarding = $config?.onboarding ?? false;
-			if (onboarding) mode = $config?.features.enable_ldap ? 'ldap' : 'signup';
+			// if (onboarding) mode = $config?.features.enable_ldap ? 'ldap' : 'signup';
 		}
 	});
 </script>
@@ -158,7 +171,7 @@
 			class="h-80 -z-10 md:hidden"
 			alt="Lucie illustration"
 		/>
-		<div class="flex flex-col items-center md:mr-4 md:h-screen md:justify-center">
+		<div class="flex flex-col items-center md:mr-4 md:h-screen md:justify-center md:w-1/3">
 			<img
 				crossorigin="anonymous"
 				src="/assets/logos/linagora-ai.png"
@@ -167,9 +180,20 @@
 			/>
 			<!-- Sign in/up form -->
 			{#if ($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false}
-				<div class="py-6">
+				<!-- Queue -->
+				<span class="text-xl md:text-2xl font-medium text-center">
+					{$i18n.t(`Try {{WEBUI_NAME}} for free`, { WEBUI_NAME: $WEBUI_NAME })}
+				</span>
+				{#if queue.position === -1}
+					<button
+						class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition rounded-full font-medium text-sm my-6 py-3 px-8"
+						on:click={joinQueueHandler}
+					>
+						{$i18n.t('Join queue')}
+					</button>
+				{:else if queue.position === 0}
 					<div
-						class="flex items-center justify-center gap-3 text-xl sm:text-2xl text-center font-semibold dark:text-gray-200"
+						class="my-6 py-3 flex items-center justify-center gap-3 text-sm sm:text-sm text-center font-semibold dark:text-gray-200"
 					>
 						<div>
 							{$i18n.t('Signing in to {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
@@ -179,7 +203,21 @@
 							<Spinner />
 						</div>
 					</div>
-				</div>
+				{:else}
+					<span
+						id="queue"
+						class="bg-gray-700/5 dark:bg-gray-100/5 dark:text-gray-300 rounded-full font-medium text-sm my-6 py-3 px-8 w-72 relative text-center"
+					>
+						<div
+							style="width: {Math.max(
+								Math.round(((queue.totalPeople - queue.position) / queue.totalPeople) * 100),
+								15
+							)}%"
+							class="absolute top-0 left-0 rounded-full h-full bg-gray-200 -z-10 transition-all"
+						/>
+						#{queue.position} in queue
+					</span>
+				{/if}
 			{:else}
 				<div class="py-6">
 					<form
@@ -414,7 +452,7 @@
 						</div>
 					{/if}
 
-					{#if ($config?.features.enable_ldap && $config?.features.enable_login_form)}
+					{#if $config?.features.enable_ldap && $config?.features.enable_login_form}
 						<div class="mt-2">
 							<button
 								class="flex justify-center items-center text-xs w-full text-center underline"

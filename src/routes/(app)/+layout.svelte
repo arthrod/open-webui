@@ -43,7 +43,7 @@
 	import ChangelogModal from '$lib/components/ChangelogModal.svelte';
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
 	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
-	import Timer from '$lib/components/icons/Timer.svelte';
+	import Timer from '$lib/components/layout/Timer.svelte';
 
 	const i18n = getContext('i18n');
 

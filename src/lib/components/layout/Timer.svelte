@@ -25,7 +25,7 @@
 
 		const timer = setInterval(() => {
 			timeRemaining -= SECOND;
-			if (timeRemaining <= 0) {
+			if (Math.floor((timeRemaining % MINUTE) / SECOND) <= 0) {
 				clearInterval(timer);
 				userSignOut();
 				$endTimestamp = -1;

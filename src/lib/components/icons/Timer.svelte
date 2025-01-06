@@ -38,7 +38,7 @@
 </script>
 
 <div
-	class="fixed top-3 right-1/2 translate-x-1/2 flex items-center space-x-3 bg-[#ffffff55] border px-5 py-3 rounded-lg shadow-md z-50
+	class="fixed top-3 right-1/2 translate-x-1/2 flex items-center space-x-3 bg-white border px-5 py-3 rounded-lg shadow-md z-50
 	{timeRemaining < MINUTE ? 'border-red-500 border-2 text-red-500 font-bold' : ''} "
 >
 	<svg

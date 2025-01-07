@@ -25,13 +25,14 @@
 
 		const timer = setInterval(() => {
 			timeRemaining -= SECOND;
-			if (Math.floor((timeRemaining % MINUTE) / SECOND) <= 0) {
+			if (Math.floor(timeRemaining / SECOND) <= 0) {
+				console.log('entered');
 				clearInterval(timer);
 				userSignOut();
 				$endTimestamp = -1;
 				termsOfUse.reset();
 				localStorage.removeItem('token');
-				location.href = '/auth';
+				// location.href = '/auth';
 			}
 		}, SECOND);
 	});

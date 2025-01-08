@@ -15,6 +15,7 @@
 		WEBUI_NAME,
 		mobile,
 		socket,
+		activeUserCount,
 		activeUserIds,
 		USAGE_POOL,
 		chatId,
@@ -86,6 +87,11 @@
 			}
 		});
 
+		_socket.on('user-count', (data) => {
+			console.log('user-count', data);
+			activeUserCount.set(data.count);
+		});
+		
 		_socket.on('user-list', (data) => {
 			console.log('user-list', data);
 			activeUserIds.set(data.user_ids);
@@ -336,5 +342,5 @@
 				: 'light'
 			: 'light'}
 	richColors
-	position="top-right"
+	position="top-center"
 />

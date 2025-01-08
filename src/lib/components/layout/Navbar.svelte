@@ -27,6 +27,7 @@
 	import { stringify } from 'postcss';
 	import PencilSquare from '../icons/PencilSquare.svelte';
 	import Plus from '../icons/Plus.svelte';
+	import Timer from '../icons/Timer.svelte';
 
 	const i18n = getContext('i18n');
 

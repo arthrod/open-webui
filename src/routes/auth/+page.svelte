@@ -10,7 +10,7 @@
 
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 	import { WEBUI_NAME, config, user, socket, mobile } from '$lib/stores';
-
+	
 	import { generateInitialsImage, canvasPixelTest } from '$lib/utils';
 
 	import Spinner from '$lib/components/common/Spinner.svelte';

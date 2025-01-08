@@ -1,8 +1,9 @@
 import { APP_NAME } from '$lib/constants';
 import { type Writable, writable } from 'svelte/store';
-import type { ModelConfig } from '$lib/apis';
-import type { Banner } from '$lib/types';
+import { persisted } from 'svelte-persisted-store'
+import type { GlobalModelConfig, ModelConfig } from '$lib/apis';import type { Banner } from '$lib/types';
 import type { Socket } from 'socket.io-client';
+import type { SubscriptionInfo } from './types';
 
 import emojiShortCodes from '$lib/emoji-shortcodes.json';
 
@@ -17,6 +18,7 @@ export const MODEL_DOWNLOAD_POOL = writable({});
 export const mobile = writable(false);
 
 export const socket: Writable<null | Socket> = writable(null);
+export const activeUserCount: Writable<null | number> = writable(null);
 export const activeUserIds: Writable<null | string[]> = writable(null);
 export const USAGE_POOL: Writable<null | string[]> = writable(null);
 
@@ -71,6 +73,18 @@ export const currentChatPage = writable(1);
 
 export const isLastActiveTab = writable(true);
 export const playingNotificationSound = writable(false);
+
+// Store on the user computer whether he accepted the terms of use or not
+// TODO : Load previous data when user connects again
+export const termsOfUse = persisted("terms", { show: false, accepted: false });
+// Tokens spent and left
+export const subscriptionInfo: Writable<SubscriptionInfo> = writable({
+	spend: 0,
+	max_budget: 10,
+	budget_duration: "1h"
+});
+// Time at which the user should be kicked from using Lucie
+export const endTimestamp = persisted("endTimestamp", -1);
 
 export type Model = OpenAIModel | OllamaModel;
 

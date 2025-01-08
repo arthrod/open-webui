@@ -1,10 +1,15 @@
+import logging
 import time
 from typing import Optional
 
+from open_webui.env import SRC_LOG_LEVELS
 from open_webui.internal.db import Base, JSONField, get_db
 from open_webui.models.chats import Chats
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import BigInteger, Column, String, Text
+
+log = logging.getLogger(__name__)
+log.setLevel(SRC_LOG_LEVELS["DB"])
 
 ####################
 # User DB Schema
@@ -29,11 +34,12 @@ class User(Base):
     info = Column(JSONField, nullable=True)
 
     oauth_sub = Column(Text, unique=True)
-
+    llm_api_key = Column(String, nullable=True) # litellm api key: TODO: Get rid of the default value
 
 class UserSettings(BaseModel):
     ui: Optional[dict] = {}
     model_config = ConfigDict(extra="allow")
+    llm_api_key: Optional[str] = None
     pass
 
 
@@ -55,6 +61,7 @@ class UserModel(BaseModel):
     oauth_sub: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+    llm_api_key: Optional[str] = None
 
 
 ####################
@@ -98,6 +105,7 @@ class UsersTable:
         profile_image_url: str = "/user.png",
         role: str = "pending",
         oauth_sub: Optional[str] = None,
+        llm_api_key: Optional[str] = None,
     ) -> Optional[UserModel]:
         with get_db() as db:
             user = UserModel(
@@ -111,6 +119,7 @@ class UsersTable:
                     "created_at": int(time.time()),
                     "updated_at": int(time.time()),
                     "oauth_sub": oauth_sub,
+                    'llm_api_key': llm_api_key,
                 }
             )
             result = User(**user.model_dump())
@@ -176,8 +185,12 @@ class UsersTable:
             return [UserModel.model_validate(user) for user in users]
 
     def get_num_users(self) -> Optional[int]:
-        with get_db() as db:
-            return db.query(User).count()
+        try:
+            with get_db() as db:  # Using the corrected `get_db`
+                return db.query(User).count()
+        except Exception as e:
+            log.error(f"Error fetching user count: {e}")
+            return None
 
     def get_first_user(self) -> UserModel:
         try:

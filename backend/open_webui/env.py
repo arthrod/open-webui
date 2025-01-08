@@ -104,9 +104,7 @@ for source in log_sources:
 log.setLevel(SRC_LOG_LEVELS["CONFIG"])
 
 
-WEBUI_NAME = os.environ.get("WEBUI_NAME", "Open WebUI")
-if WEBUI_NAME != "Open WebUI":
-    WEBUI_NAME += " (Open WebUI)"
+WEBUI_NAME = os.environ.get("WEBUI_NAME", "Lucie Chat")
 
 WEBUI_FAVICON_URL = "https://openwebui.com/favicon.png"
 
@@ -405,3 +403,9 @@ OFFLINE_MODE = os.environ.get("OFFLINE_MODE", "false").lower() == "true"
 
 if OFFLINE_MODE:
     os.environ["HF_HUB_OFFLINE"] = "1"
+
+####################################
+# LiteLLM
+####################################
+LITELLM_MASTER_KEY = os.environ.get("LITELLM_MASTER_KEY", "")
+LITELLM_HOST = os.environ.get("LITELLM_HOST", "http://litellm:4000")

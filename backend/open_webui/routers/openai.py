@@ -9,7 +9,7 @@ import aiohttp
 from aiocache import cached
 import requests
 
-
+from open_webui.models.users import UserModel
 from fastapi import Depends, FastAPI, HTTPException, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
@@ -119,7 +119,7 @@ class OpenAIConfigForm(BaseModel):
 
 @router.post("/config/update")
 async def update_config(
-    request: Request, form_data: OpenAIConfigForm, user=Depends(get_admin_user)
+    request: Request, form_data: OpenAIConfigForm, user: UserModel=Depends(get_admin_user)
 ):
     request.app.state.config.ENABLE_OPENAI_API = form_data.ENABLE_OPENAI_API
     request.app.state.config.OPENAI_API_BASE_URLS = form_data.OPENAI_API_BASE_URLS
@@ -245,7 +245,7 @@ async def speech(request: Request, user=Depends(get_verified_user)):
         raise HTTPException(status_code=401, detail=ERROR_MESSAGES.OPENAI_NOT_FOUND)
 
 
-async def get_all_models_responses(request: Request) -> list:
+async def get_all_models_responses(request: Request,user: UserModel) -> list:
     if not request.app.state.config.ENABLE_OPENAI_API:
         return []
 
@@ -265,9 +265,10 @@ async def get_all_models_responses(request: Request) -> list:
     request_tasks = []
     for idx, url in enumerate(request.app.state.config.OPENAI_API_BASE_URLS):
         if url not in request.app.state.config.OPENAI_API_CONFIGS:
+            key = user.llm_api_key if 'litellm' in url else request.app.state.config.OPENAI_API_KEYS[idx]
             request_tasks.append(
                 send_get_request(
-                    f"{url}/models", request.app.state.config.OPENAI_API_KEYS[idx]
+                    f"{url}/models", key
                 )
             )
         else:
@@ -277,11 +278,12 @@ async def get_all_models_responses(request: Request) -> list:
             model_ids = api_config.get("model_ids", [])
 
             if enable:
+                key = user.llm_api_key if 'litellm' in url else request.app.state.config.OPENAI_API_KEYS[idx]
                 if len(model_ids) == 0:
                     request_tasks.append(
                         send_get_request(
                             f"{url}/models",
-                            request.app.state.config.OPENAI_API_KEYS[idx],
+                            key,
                         )
                     )
                 else:
@@ -338,13 +340,13 @@ async def get_filtered_models(models, user):
 
 
 @cached(ttl=3)
-async def get_all_models(request: Request) -> dict[str, list]:
+async def get_all_models(request: Request,user: UserModel) -> dict[str, list]:
     log.info("get_all_models()")
 
     if not request.app.state.config.ENABLE_OPENAI_API:
         return {"data": []}
 
-    responses = await get_all_models_responses(request)
+    responses = await get_all_models_responses(request, user)
 
     def extract_data(response):
         if response and "data" in response:
@@ -397,18 +399,17 @@ async def get_all_models(request: Request) -> dict[str, list]:
 @router.get("/models")
 @router.get("/models/{url_idx}")
 async def get_models(
-    request: Request, url_idx: Optional[int] = None, user=Depends(get_verified_user)
+    request: Request, url_idx: Optional[int] = None, user:UserModel=Depends(get_verified_user)
 ):
     models = {
         "data": [],
     }
 
     if url_idx is None:
-        models = await get_all_models(request)
+        models = await get_all_models(request, user)
     else:
         url = request.app.state.config.OPENAI_API_BASE_URLS[url_idx]
-        key = request.app.state.config.OPENAI_API_KEYS[url_idx]
-
+        key = user.llm_api_key if 'litellm' in url else request.app.state.config.OPENAI_API_KEYS[url_idx]
         r = None
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(
@@ -530,7 +531,7 @@ async def verify_connection(
 async def generate_chat_completion(
     request: Request,
     form_data: dict,
-    user=Depends(get_verified_user),
+    user:UserModel=Depends(get_verified_user),
     bypass_filter: Optional[bool] = False,
 ):
     if BYPASS_MODEL_ACCESS_CONTROL:
@@ -550,6 +551,7 @@ async def generate_chat_completion(
             payload["model"] = model_info.base_model_id
             model_id = model_info.base_model_id
 
+        payload['user'] = user.email
         params = model_info.params.model_dump()
         payload = apply_model_params_to_body_openai(params, payload)
         payload = apply_model_system_prompt_to_body(params, payload, user)
@@ -601,7 +603,7 @@ async def generate_chat_completion(
         }
 
     url = request.app.state.config.OPENAI_API_BASE_URLS[idx]
-    key = request.app.state.config.OPENAI_API_KEYS[idx]
+    key = user.llm_api_key if 'litellm' in url else request.app.state.config.OPENAI_API_KEYS[idx]
 
     # Fix: O1 does not support the "max_tokens" parameter, Modify "max_tokens" to "max_completion_tokens"
     is_o1 = payload["model"].lower().startswith("o1-")
@@ -708,7 +710,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
 
     idx = 0
     url = request.app.state.config.OPENAI_API_BASE_URLS[idx]
-    key = request.app.state.config.OPENAI_API_KEYS[idx]
+    key = user.llm_api_key if 'litellm' in url else request.app.state.config.OPENAI_API_KEYS[idx]
 
     r = None
     session = None

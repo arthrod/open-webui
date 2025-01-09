@@ -154,9 +154,9 @@
 
 				// Check if Ctrl + . is pressed
 				if (isCtrlPressed && event.key === '.') {
-					event.preventDefault();
-					console.log('openSettings');
-					showSettings.set(!$showSettings);
+					// event.preventDefault();
+					// console.log('openSettings');
+					// showSettings.set(!$showSettings);
 				}
 
 				// Check if Ctrl + / is pressed

@@ -465,7 +465,7 @@
 						</div>
 					{/if}
 
-					<Commands
+					<!-- <Commands
 						bind:this={commandsElement}
 						bind:prompt
 						bind:files
@@ -482,7 +482,7 @@
 							const chatInputElement = document.getElementById('chat-input');
 							chatInputElement?.focus();
 						}}
-					/>
+					/> -->
 				</div>
 			</div>
 		</div>

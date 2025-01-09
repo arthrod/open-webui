@@ -125,7 +125,7 @@
 				</div>
 
 				<div class="flex flex-col space-y-3 w-full self-start">
-					<div class="w-full flex justify-between items-center">
+					<!-- <div class="w-full flex justify-between items-center">
 						<div class=" text-sm">{$i18n.t('Toggle settings')}</div>
 
 						<div class="flex space-x-1 text-xs">
@@ -140,7 +140,7 @@
 								.
 							</div>
 						</div>
-					</div>
+					</div> -->
 
 					<div class="w-full flex justify-between items-center">
 						<div class=" text-sm">{$i18n.t('Toggle sidebar')}</div>
@@ -210,7 +210,7 @@
 			</div>
 		</div>
 
-		<div class=" flex justify-between dark:text-gray-300 px-5">
+		<!-- <div class=" flex justify-between dark:text-gray-300 px-5">
 			<div class=" text-lg font-medium self-center">{$i18n.t('Input commands')}</div>
 		</div>
 
@@ -260,7 +260,7 @@
 					</div>
 				</div>
 			</div>
-		</div>
+		</div> -->
 	</div>
 </Modal>
 

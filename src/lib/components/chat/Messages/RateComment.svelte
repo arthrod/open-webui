@@ -231,7 +231,7 @@
 
 	<div class="mt-2 gap-1.5 flex justify-between">
 		<div class="flex items-end group">
-			<Tags
+			<!-- <Tags
 				{tags}
 				on:delete={(e) => {
 					tags = tags.filter(
@@ -243,7 +243,7 @@
 				on:add={(e) => {
 					tags = [...tags, { name: e.detail }];
 				}}
-			/>
+			/> -->
 		</div>
 
 		<button

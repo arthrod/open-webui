@@ -491,7 +491,8 @@
 			<Name>
 				<Tooltip content={model?.name ?? message.model} placement="top-start">
 					<span class="line-clamp-1">
-						{model?.name ?? message.model}
+						<!-- {model?.name ?? message.model} -->
+						Lucie
 					</span>
 				</Tooltip>
 
@@ -783,7 +784,7 @@
 							{/if}
 
 							{#if message.done}
-								{#if !readOnly}
+								<!-- {#if !readOnly}
 									{#if $user.role === 'user' ? ($user?.permissions?.chat?.edit ?? true) : true}
 										<Tooltip content={$i18n.t('Edit')} placement="bottom">
 											<button
@@ -811,7 +812,7 @@
 											</button>
 										</Tooltip>
 									{/if}
-								{/if}
+								{/if} -->
 
 								<Tooltip content={$i18n.t('Copy')} placement="bottom">
 									<button
@@ -839,7 +840,7 @@
 									</button>
 								</Tooltip>
 
-								<Tooltip content={$i18n.t('Read Aloud')} placement="bottom">
+								<!-- <Tooltip content={$i18n.t('Read Aloud')} placement="bottom">
 									<button
 										id="speak-button-{message.id}"
 										class="{isLastMessage
@@ -915,9 +916,9 @@
 											</svg>
 										{/if}
 									</button>
-								</Tooltip>
+								</Tooltip> -->
 
-								{#if $config?.features.enable_image_generation && !readOnly}
+								<!-- {#if $config?.features.enable_image_generation && !readOnly}
 									<Tooltip content={$i18n.t('Generate Image')} placement="bottom">
 										<button
 											class="{isLastMessage
@@ -979,7 +980,7 @@
 											{/if}
 										</button>
 									</Tooltip>
-								{/if}
+								{/if} -->
 
 								{#if message.usage}
 									<Tooltip

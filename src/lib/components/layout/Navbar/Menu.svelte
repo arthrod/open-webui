@@ -160,7 +160,7 @@
 			{/if}
 
 			{#if !$temporaryChatEnabled}
-				<DropdownMenu.Item
+				<!-- <DropdownMenu.Item
 					class="flex gap-2 items-center px-3 py-2 text-sm  cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
 					id="chat-share-button"
 					on:click={() => {
@@ -180,10 +180,10 @@
 						/>
 					</svg>
 					<div class="flex items-center">{$i18n.t('Share')}</div>
-				</DropdownMenu.Item>
+				</DropdownMenu.Item> -->
 			{/if}
 
-			<DropdownMenu.Item
+			<!-- <DropdownMenu.Item
 				class="flex gap-2 items-center px-3 py-2 text-sm  cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
 				id="chat-overview-button"
 				on:click={async () => {
@@ -194,9 +194,9 @@
 			>
 				<Map className=" size-4" strokeWidth="1.5" />
 				<div class="flex items-center">{$i18n.t('Overview')}</div>
-			</DropdownMenu.Item>
+			</DropdownMenu.Item> -->
 
-			<DropdownMenu.Item
+			<!-- <DropdownMenu.Item
 				class="flex gap-2 items-center px-3 py-2 text-sm  cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
 				id="chat-overview-button"
 				on:click={async () => {
@@ -207,7 +207,7 @@
 			>
 				<Cube className=" size-4" strokeWidth="1.5" />
 				<div class="flex items-center">{$i18n.t('Artifacts')}</div>
-			</DropdownMenu.Item>
+			</DropdownMenu.Item> -->
 
 			<DropdownMenu.Sub>
 				<DropdownMenu.SubTrigger
@@ -280,13 +280,13 @@
 				<div class="flex items-center">{$i18n.t('Copy')}</div>
 			</DropdownMenu.Item>
 
-			{#if !$temporaryChatEnabled}
+			<!-- {#if !$temporaryChatEnabled}
 				<hr class="border-gray-50 dark:border-gray-850 my-0.5" />
 
 				<div class="flex p-1">
 					<Tags chatId={chat.id} />
 				</div>
-			{/if}
+			{/if} -->
 		</DropdownMenu.Content>
 	</div>
 </Dropdown>

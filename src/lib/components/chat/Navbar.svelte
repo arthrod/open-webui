@@ -35,7 +35,7 @@
 
 	export let chat;
 	export let selectedModels;
-	export let showModelSelector = true;
+	export let showModelSelector = false;
 
 	let showShareChatModal = false;
 	let showDownloadChatModal = false;
@@ -79,9 +79,9 @@
 				>
 					Lucie 7B
 				</div>
-				<!-- {#if showModelSelector}
+				{#if showModelSelector}
 					<ModelSelector bind:selectedModels showSetDefault={!shareEnabled} />
-				{/if} -->
+				{/if}
 			</div>
 
 			<div class="self-start flex flex-none items-center text-gray-600 dark:text-gray-400">

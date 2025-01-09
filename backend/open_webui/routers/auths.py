@@ -504,6 +504,25 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
 
 @router.get("/signout")
 async def signout(request: Request, response: Response):
+    """
+    Sign out the current user and handle OAuth logout if enabled.
+    
+    This function performs the following actions:
+    - Deletes the user's authentication token cookie
+    - If OAuth signup is enabled, attempts to log out from the OpenID provider
+    - Handles potential errors during the OAuth logout process
+    
+    Parameters:
+        request (Request): The incoming HTTP request containing user cookies
+        response (Response): The HTTP response to modify cookies and redirect
+    
+    Returns:
+        dict: A dictionary with a status indicating successful logout, or
+        RedirectResponse: A redirect to the OpenID provider's logout endpoint
+    
+    Raises:
+        HTTPException: If there are issues fetching OpenID configuration or during logout
+    """
     response.delete_cookie("token")
 
     if ENABLE_OAUTH_SIGNUP.value:
@@ -538,6 +557,29 @@ async def signout(request: Request, response: Response):
 
 @router.post("/add", response_model=SigninResponse)
 async def add_user(form_data: AddUserForm, user=Depends(get_admin_user)):
+    """
+    Add a new user to the system with administrative privileges.
+    
+    Validates the user's email format and checks for email uniqueness before creating a new user account. Requires administrative authentication.
+    
+    Parameters:
+        form_data (AddUserForm): User registration details containing email, password, name, profile image URL, and role
+        user (User, optional): Administrative user performing the action, automatically injected via dependency
+    
+    Returns:
+        dict: A dictionary containing authentication token and user details:
+            - token (str): JWT authentication token
+            - token_type (str): Always set to "Bearer"
+            - id (str): Unique user identifier
+            - email (str): User's email address
+            - name (str): User's full name
+            - role (str): User's assigned role
+            - profile_image_url (str): URL of user's profile image
+    
+    Raises:
+        HTTPException: 400 error if email is invalid or already taken
+        HTTPException: 500 error if user creation fails
+    """
     if not validate_email_format(form_data.email.lower()):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, detail=ERROR_MESSAGES.INVALID_EMAIL_FORMAT
@@ -611,6 +653,33 @@ async def get_admin_details(request: Request, user=Depends(get_current_user)):
 
 @router.get("/admin/config")
 async def get_admin_config(request: Request, user=Depends(get_admin_user)):
+    """
+    Retrieve the current administrative configuration settings.
+    
+    This asynchronous function returns a dictionary of configuration parameters for the web application. 
+    It requires admin user authentication and provides access to various system-wide settings.
+    
+    Parameters:
+        request (Request): The incoming HTTP request object
+        user (dict, optional): The authenticated admin user, obtained via dependency injection
+    
+    Returns:
+        dict: A comprehensive dictionary containing administrative configuration settings, including:
+            - SHOW_ADMIN_DETAILS: Flag to display admin details
+            - WEBUI_URL: Base URL for the web interface
+            - ENABLE_SIGNUP: Whether user sign-up is allowed
+            - ENABLE_API_KEY: Whether API key generation is enabled
+            - ENABLE_API_KEY_ENDPOINT_RESTRICTIONS: Whether API key endpoint access is restricted
+            - API_KEY_ALLOWED_ENDPOINTS: Configured allowed endpoints for API keys
+            - ENABLE_CHANNELS: Whether channels are enabled
+            - DEFAULT_USER_ROLE: Default role assigned to new users
+            - JWT_EXPIRES_IN: Token expiration duration
+            - ENABLE_COMMUNITY_SHARING: Whether community sharing is enabled
+            - ENABLE_MESSAGE_RATING: Whether message rating is enabled
+    
+    Raises:
+        HTTPException: If the user is not an admin or lacks necessary permissions
+    """
     return {
         "SHOW_ADMIN_DETAILS": request.app.state.config.SHOW_ADMIN_DETAILS,
         "WEBUI_URL": request.app.state.config.WEBUI_URL,
@@ -644,6 +713,35 @@ class AdminConfig(BaseModel):
 async def update_admin_config(
     request: Request, form_data: AdminConfig, user=Depends(get_admin_user)
 ):
+    """
+    Update the administrative configuration settings for the web application.
+    
+    This asynchronous function allows an admin user to modify various system-wide configuration parameters. It updates settings such as admin visibility, signup permissions, API key management, user roles, JWT token expiration, and feature toggles.
+    
+    Parameters:
+        request (Request): The incoming HTTP request object.
+        form_data (AdminConfig): Configuration data containing the new settings to be applied.
+        user (User, optional): The admin user performing the configuration update. Defaults to the result of get_admin_user dependency.
+    
+    Returns:
+        dict: A dictionary containing the updated configuration settings, including:
+            - SHOW_ADMIN_DETAILS (bool): Whether admin details are visible
+            - WEBUI_URL (str): Base URL for the web interface
+            - ENABLE_SIGNUP (bool): Whether user signup is allowed
+            - ENABLE_API_KEY (bool): Whether API key generation is enabled
+            - ENABLE_API_KEY_ENDPOINT_RESTRICTIONS (bool): Whether API key endpoint restrictions are active
+            - API_KEY_ALLOWED_ENDPOINTS (str): Allowed endpoints for API keys
+            - ENABLE_CHANNELS (bool): Whether channels are enabled
+            - DEFAULT_USER_ROLE (str): Default role assigned to new users
+            - JWT_EXPIRES_IN (str): JWT token expiration time
+            - ENABLE_COMMUNITY_SHARING (bool): Whether community sharing is enabled
+            - ENABLE_MESSAGE_RATING (bool): Whether message rating is enabled
+    
+    Notes:
+        - Validates the JWT_EXPIRES_IN value using a regex pattern
+        - Restricts DEFAULT_USER_ROLE to predefined values: "pending", "user", or "admin"
+        - Updates application state configuration directly
+    """
     request.app.state.config.SHOW_ADMIN_DETAILS = form_data.SHOW_ADMIN_DETAILS
     request.app.state.config.WEBUI_URL = form_data.WEBUI_URL
     request.app.state.config.ENABLE_SIGNUP = form_data.ENABLE_SIGNUP

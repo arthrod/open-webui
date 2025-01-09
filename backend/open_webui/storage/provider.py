@@ -142,13 +142,40 @@ class StorageProvider:
         return contents, file_path
 
     def get_file(self, file_path: str) -> str:
-        """Downloads a file either from S3 or the local file system and returns the file path."""
+        """
+        Retrieves a file from the configured storage provider (S3 or local file system).
+        
+        Parameters:
+            file_path (str): The path or URI of the file to retrieve.
+        
+        Returns:
+            str: The local file path of the downloaded or accessed file.
+        
+        Raises:
+            RuntimeError: If there are issues retrieving the file from S3, such as initialization or access problems.
+        """
         if self.storage_provider == "s3":
             return self._get_file_from_s3(file_path)
         return self._get_file_from_local(file_path)
 
     def delete_file(self, file_path: str) -> None:
-        """Deletes a file either from S3 or the local file system."""
+        """
+        Delete a file from the configured storage provider.
+        
+        Deletes the specified file from both S3 (if configured) and local storage. The method extracts the filename from the full file path and performs deletion operations accordingly.
+        
+        Parameters:
+            file_path (str): The full path of the file to be deleted. The filename is extracted from this path.
+        
+        Raises:
+            RuntimeError: If S3 deletion encounters an error (e.g., client not initialized, S3 access issues)
+            FileNotFoundError: If the local file does not exist
+            PermissionError: If there are insufficient permissions to delete the file
+        
+        Notes:
+            - For S3 storage, deletion is only performed if the storage provider is set to "s3"
+            - Local storage deletion is always attempted, regardless of the storage provider
+        """
         filename = file_path.split("/")[-1]
 
         if self.storage_provider == "s3":

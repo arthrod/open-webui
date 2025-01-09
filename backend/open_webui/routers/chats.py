@@ -470,6 +470,26 @@ async def clone_chat_by_id(id: str, user=Depends(get_verified_user)):
 
 @router.post("/{id}/clone/shared", response_model=Optional[ChatResponse])
 async def clone_shared_chat_by_id(id: str, user=Depends(get_verified_user)):
+    """
+    Clone a shared chat by its share ID.
+    
+    Retrieves a shared chat using the provided share ID and creates a new chat for the authenticated user. 
+    The cloned chat includes the original chat's details with a modified title and references to the original chat.
+    
+    Parameters:
+        id (str): The unique share ID of the chat to be cloned
+        user (User, optional): The authenticated user performing the cloning operation
+    
+    Returns:
+        ChatResponse: A new chat object representing the cloned shared chat
+    
+    Raises:
+        HTTPException: 401 Unauthorized error if the shared chat is not found
+    
+    Example:
+        # Clone a shared chat
+        cloned_chat = await clone_shared_chat_by_id("share_123")
+    """
     chat = Chats.get_chat_by_share_id(id)
     if chat:
         updated_chat = {
@@ -620,6 +640,30 @@ async def get_chat_tags_by_id(id: str, user=Depends(get_verified_user)):
 async def add_tag_by_id_and_tag_name(
     id: str, form_data: TagForm, user=Depends(get_verified_user)
 ):
+    """
+    Add a tag to a specific chat by its ID.
+    
+    Adds a new tag to the specified chat for the authenticated user. Validates the tag name and ensures no duplicate tags are added.
+    
+    Parameters:
+        id (str): The unique identifier of the chat to add a tag to.
+        form_data (TagForm): Form data containing the tag name to be added.
+        user (User, optional): The authenticated user. Defaults to the result of get_verified_user.
+    
+    Returns:
+        List[Tag]: A list of tags associated with the chat after adding the new tag.
+    
+    Raises:
+        HTTPException: 400 error if tag name is 'None'.
+        HTTPException: 401 error if the chat is not found or user is unauthorized.
+    
+    Example:
+        # Add a tag named 'Important' to a chat
+        POST /chats/{chat_id}/tags
+        {
+            "name": "Important"
+        }
+    """
     chat = Chats.get_chat_by_id_and_user_id(id, user.id)
     if chat:
         tags = chat.meta.get("tags", [])

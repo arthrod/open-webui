@@ -63,6 +63,26 @@ def query_doc(
     query_embedding: list[float],
     k: int,
 ):
+    """
+    Perform a vector similarity search on a specified collection using a query embedding.
+    
+    Searches the vector database for documents most similar to the provided query embedding
+    and returns the top k results from the specified collection.
+    
+    Parameters:
+        collection_name (str): Name of the vector database collection to search
+        query_embedding (list[float]): Embedding vector representing the query
+        k (int): Maximum number of results to retrieve
+    
+    Returns:
+        VectorSearchResult: Search results containing document IDs, embeddings, and metadata
+    
+    Raises:
+        Exception: If an error occurs during the vector database search operation
+    
+    Example:
+        query_result = query_doc('documents', [0.1, 0.2, 0.3], 5)
+    """
     try:
         result = VECTOR_DB_CLIENT.search(
             collection_name=collection_name,
@@ -371,6 +391,34 @@ def get_sources_from_files(
 
 def get_model_path(model: str, update_model: bool = False):
     # Construct huggingface_hub kwargs with local_files_only to return the snapshot path
+    """
+    Retrieve the local path for a specified machine learning model from Hugging Face Hub.
+    
+    This function determines the local file path for a model, supporting both local and remote model sources. It handles model retrieval with optional update capabilities and respects offline mode settings.
+    
+    Parameters:
+        model (str): The model identifier or local path. Can be a short name (e.g., 'all-MiniLM-L6-v2') 
+                     or a full Hugging Face repository ID.
+        update_model (bool, optional): Flag to control whether model should be updated. 
+                                       Defaults to False.
+    
+    Returns:
+        str: The local file path to the model snapshot.
+    
+    Behavior:
+        - If a local path exists, returns the input path directly
+        - For short model names, prepends 'sentence-transformers/' as the repository
+        - Uses Hugging Face Hub to download/locate model snapshots
+        - Respects OFFLINE_MODE by forcing local file retrieval
+        - Logs debug information about model path resolution
+    
+    Raises:
+        Logs exceptions if model snapshot cannot be determined, falling back to input model name
+    
+    Example:
+        >>> get_model_path('all-MiniLM-L6-v2')
+        '/path/to/local/model/all-MiniLM-L6-v2'
+    """
     cache_dir = os.getenv("SENTENCE_TRANSFORMERS_HOME")
 
     local_files_only = not update_model

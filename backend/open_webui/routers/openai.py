@@ -52,6 +52,25 @@ log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 
 
 async def send_get_request(url, key=None):
+    """
+    Send an asynchronous GET request to a specified URL with optional authorization.
+    
+    This function attempts to retrieve JSON data from a given URL, with an optional authorization key.
+    It uses aiohttp for making the asynchronous HTTP request and includes a configurable timeout.
+    
+    Parameters:
+        url (str): The target URL to send the GET request to
+        key (str, optional): Authorization bearer token for the request. Defaults to None.
+    
+    Returns:
+        dict or None: JSON response from the URL if successful, None if a connection error occurs
+    
+    Raises:
+        No explicit exceptions are raised; connection errors are logged and return None
+    
+    Example:
+        response = await send_get_request("https://api.example.com/models", key="my_api_key")
+    """
     timeout = aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST)
     try:
         async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
@@ -69,6 +88,20 @@ async def cleanup_response(
     response: Optional[aiohttp.ClientResponse],
     session: Optional[aiohttp.ClientSession],
 ):
+    """
+    Asynchronously close an HTTP response and its associated client session.
+    
+    This utility function ensures proper cleanup of aiohttp resources by closing both the response and the session if they are provided.
+    
+    Parameters:
+        response (Optional[aiohttp.ClientResponse]): The HTTP response to close. Can be None.
+        session (Optional[aiohttp.ClientSession]): The client session to close. Can be None.
+    
+    Note:
+        - If the response is not None, it will be closed immediately.
+        - If the session is not None, it will be asynchronously closed.
+        - Safe to call with None values for either parameter.
+    """
     if response:
         response.close()
     if session:
@@ -77,7 +110,17 @@ async def cleanup_response(
 
 def openai_o1_handler(payload):
     """
-    Handle O1 specific parameters
+    Modify payload parameters for OpenAI O1 model compatibility.
+    
+    This function prepares the payload for the O1 model by making two key adjustments:
+    1. Converts "max_tokens" to "max_completion_tokens" to match O1 model specifications
+    2. Transforms any initial system message to a user message, as O1 does not support system messages
+    
+    Parameters:
+        payload (dict): The original request payload for the OpenAI API
+    
+    Returns:
+        dict: Modified payload compatible with O1 model requirements
     """
     if "max_tokens" in payload:
         # Remove "max_tokens" from the payload
@@ -102,6 +145,22 @@ router = APIRouter()
 
 @router.get("/config")
 async def get_config(request: Request, user=Depends(get_admin_user)):
+    """
+    Retrieve the current OpenAI API configuration settings.
+    
+    This asynchronous function returns a dictionary containing the current configuration for OpenAI API integration. Access is restricted to admin users.
+    
+    Parameters:
+        request (Request): The incoming HTTP request containing application state
+        user (dict, optional): Admin user authentication dependency
+    
+    Returns:
+        dict: A configuration dictionary with the following keys:
+            - ENABLE_OPENAI_API (bool): Flag indicating if OpenAI API is enabled
+            - OPENAI_API_BASE_URLS (list): List of configured OpenAI API base URLs
+            - OPENAI_API_KEYS (list): List of configured OpenAI API keys
+            - OPENAI_API_CONFIGS (dict): Additional OpenAI API configuration settings
+    """
     return {
         "ENABLE_OPENAI_API": request.app.state.config.ENABLE_OPENAI_API,
         "OPENAI_API_BASE_URLS": request.app.state.config.OPENAI_API_BASE_URLS,
@@ -121,6 +180,29 @@ class OpenAIConfigForm(BaseModel):
 async def update_config(
     request: Request, form_data: OpenAIConfigForm, user=Depends(get_admin_user)
 ):
+    """
+    Update the configuration settings for OpenAI API integration.
+    
+    This asynchronous function allows an admin user to modify the OpenAI API configuration, including enabling/disabling the API, 
+    setting base URLs, API keys, and additional configurations.
+    
+    Parameters:
+        request (Request): The incoming HTTP request containing the application state.
+        form_data (OpenAIConfigForm): A form containing the new configuration settings.
+        user (dict, optional): The admin user performing the configuration update. Defaults to the result of get_admin_user dependency.
+    
+    Returns:
+        dict: A dictionary containing the updated configuration settings, including:
+            - ENABLE_OPENAI_API (bool): Flag to enable or disable OpenAI API
+            - OPENAI_API_BASE_URLS (list): List of OpenAI API base URLs
+            - OPENAI_API_KEYS (list): List of corresponding API keys
+            - OPENAI_API_CONFIGS (dict): Additional API configurations
+    
+    Notes:
+        - Ensures that the number of API keys matches the number of base URLs
+        - Truncates or pads API keys list to match base URLs length
+        - Removes any configuration entries for URLs no longer in the base URLs list
+    """
     request.app.state.config.ENABLE_OPENAI_API = form_data.ENABLE_OPENAI_API
     request.app.state.config.OPENAI_API_BASE_URLS = form_data.OPENAI_API_BASE_URLS
     request.app.state.config.OPENAI_API_KEYS = form_data.OPENAI_API_KEYS
@@ -161,6 +243,30 @@ async def update_config(
 
 @router.post("/audio/speech")
 async def speech(request: Request, user=Depends(get_verified_user)):
+    """
+    Generate text-to-speech audio from input text using OpenAI's speech API.
+    
+    Generates an MP3 audio file from text input by sending a request to the OpenAI speech API. 
+    Implements caching to avoid regenerating identical audio files and supports multiple API configurations.
+    
+    Parameters:
+        request (Request): The incoming HTTP request containing the text-to-speech payload
+        user (User, optional): Verified user making the request, used for optional user info headers
+    
+    Returns:
+        FileResponse: An MP3 audio file generated from the input text
+    
+    Raises:
+        HTTPException: If there are connection issues, API errors, or configuration problems
+            - 401: If OpenAI API configuration is not found
+            - 500: If server connection fails or external API returns an error
+    
+    Notes:
+        - Caches generated audio files using SHA256 hash of request body
+        - Supports optional user information headers
+        - Handles streaming response from OpenAI API
+        - Saves both audio file and original request body for reference
+    """
     idx = None
     try:
         idx = request.app.state.config.OPENAI_API_BASE_URLS.index(
@@ -246,6 +352,33 @@ async def speech(request: Request, user=Depends(get_verified_user)):
 
 
 async def get_all_models_responses(request: Request) -> list:
+    """
+    Asynchronously retrieve model responses from configured OpenAI API URLs.
+    
+    This function handles fetching model information from multiple OpenAI API endpoints, with support for custom configurations and API key management.
+    
+    Parameters:
+        request (Request): The incoming HTTP request containing application state configuration.
+    
+    Returns:
+        list: A list of model responses from each configured API URL. Each response can be a list of models or a dictionary containing model data.
+    
+    Behavior:
+        - Checks if OpenAI API is enabled
+        - Synchronizes the number of API keys and URLs
+        - Supports custom model configurations per URL
+        - Handles cases with predefined model lists or dynamic model fetching
+        - Applies optional prefix to model IDs
+        - Returns empty list if OpenAI API is disabled
+    
+    Raises:
+        No explicit exceptions, but may raise network-related errors during API requests.
+    
+    Notes:
+        - Uses asynchronous tasks to fetch models concurrently
+        - Supports skipping model fetching for disabled API configurations
+        - Logs debug information about retrieved model responses
+    """
     if not request.app.state.config.ENABLE_OPENAI_API:
         return []
 
@@ -326,6 +459,26 @@ async def get_all_models_responses(request: Request) -> list:
 
 async def get_filtered_models(models, user):
     # Filter models based on user access control
+    """
+    Filter models based on user access control.
+    
+    This function filters a list of models to return only those that the user has permission to access. 
+    It checks each model against the user's access rights, considering both model ownership and explicit access control settings.
+    
+    Parameters:
+        models (dict): A dictionary containing a list of models under the 'data' key.
+        user (User): The user object attempting to access the models.
+    
+    Returns:
+        list: A filtered list of models that the user is authorized to view.
+    
+    Notes:
+        - Models are filtered based on two criteria:
+          1. The user is the owner of the model (model_info.user_id matches user.id)
+          2. The user has been granted read access through the model's access control settings
+        - Uses the Models.get_model_by_id() method to retrieve model information
+        - Utilizes the has_access() function to check specific access permissions
+    """
     filtered_models = []
     for model in models.get("data", []):
         model_info = Models.get_model_by_id(model["id"])
@@ -339,6 +492,30 @@ async def get_filtered_models(models, user):
 
 @cached(ttl=3)
 async def get_all_models(request: Request) -> dict[str, list]:
+    """
+    Retrieves and merges OpenAI models from configured API endpoints.
+    
+    This asynchronous function fetches models from multiple OpenAI API URLs, filters and transforms the model data, and caches the results. It supports configuration-based model retrieval and filtering.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state and configuration.
+    
+    Returns:
+        dict[str, list]: A dictionary containing a list of processed OpenAI models with additional metadata.
+            Each model includes:
+            - name: Model name (defaults to model ID)
+            - owned_by: Set to "openai"
+            - openai: Original model data
+            - urlIdx: Index of the source API URL
+    
+    Raises:
+        No explicit exceptions, but logs potential errors during model retrieval.
+    
+    Notes:
+        - Skips model retrieval if OpenAI API is disabled in configuration
+        - Filters out certain models based on predefined criteria
+        - Caches retrieved models in application state for subsequent access
+    """
     log.info("get_all_models()")
 
     if not request.app.state.config.ENABLE_OPENAI_API:
@@ -347,6 +524,17 @@ async def get_all_models(request: Request) -> dict[str, list]:
     responses = await get_all_models_responses(request)
 
     def extract_data(response):
+        """
+        Extracts and returns data from a response object or list.
+        
+        This utility function handles different response formats by attempting to retrieve the 'data' key or returning the input directly if it's a list.
+        
+        Parameters:
+            response (dict or list): The response object to extract data from
+        
+        Returns:
+            list or None: The extracted data list, or None if no data could be extracted
+        """
         if response and "data" in response:
             return response["data"]
         if isinstance(response, list):
@@ -354,6 +542,31 @@ async def get_all_models(request: Request) -> dict[str, list]:
         return None
 
     def merge_models_lists(model_lists):
+        """
+        Merge lists of models from different sources, filtering and enriching model information.
+        
+        This function consolidates model lists from multiple sources, applying specific filtering criteria
+        and adding metadata to each model entry. It ensures that only relevant models are included
+        and enhances each model with additional context.
+        
+        Parameters:
+            model_lists (list): A list of model lists from different API sources.
+        
+        Returns:
+            list: A merged and filtered list of models, each augmented with additional metadata.
+        
+        Key Filtering Criteria:
+            - Excludes models from OpenAI's base URLs that match certain deprecated or specific model names
+            - Adds URL index, ownership information, and ensures each model has a name
+            - Handles potential None or error-containing model lists
+        
+        Example:
+            input_lists = [
+                [{"id": "gpt-3.5-turbo", "object": "model"}, ...],
+                [{"id": "claude-2", "object": "model"}, ...]
+            ]
+            result = merge_models_lists(input_lists)
+        """
         log.debug(f"merge_models_lists {model_lists}")
         merged_list = []
 
@@ -399,6 +612,28 @@ async def get_all_models(request: Request) -> dict[str, list]:
 async def get_models(
     request: Request, url_idx: Optional[int] = None, user=Depends(get_verified_user)
 ):
+    """
+    Retrieve available AI models from a specified OpenAI API endpoint.
+    
+    This asynchronous function fetches a list of AI models, with optional filtering based on the provided URL index and user role.
+    
+    Parameters:
+        request (Request): The incoming HTTP request containing application state and configuration.
+        url_idx (int, optional): Index of the OpenAI API URL to retrieve models from. If None, retrieves models from all configured URLs.
+        user (User): Authenticated user making the request, obtained through dependency injection.
+    
+    Returns:
+        dict: A dictionary containing a list of available AI models, potentially filtered based on user role.
+    
+    Raises:
+        HTTPException: If there are connection issues or unexpected errors during model retrieval.
+        - 500 status code for server connection errors or unexpected exceptions
+    
+    Notes:
+        - For OpenAI API, filters out certain model types like babbage, dall-e, davinci, etc.
+        - Supports user role-based model access control when BYPASS_MODEL_ACCESS_CONTROL is False.
+        - Includes optional user information headers when ENABLE_FORWARD_USER_INFO_HEADERS is True.
+    """
     models = {
         "data": [],
     }
@@ -489,6 +724,29 @@ class ConnectionVerificationForm(BaseModel):
 async def verify_connection(
     form_data: ConnectionVerificationForm, user=Depends(get_admin_user)
 ):
+    """
+    Verify the connection to an OpenAI-compatible API endpoint.
+    
+    Attempts to establish a connection to the specified API URL using the provided authentication key by making a GET request to the '/models' endpoint.
+    
+    Parameters:
+        form_data (ConnectionVerificationForm): Contains the API URL and authentication key
+        user (dict, optional): Admin user performing the connection verification
+    
+    Returns:
+        dict: JSON response containing available models from the API endpoint
+    
+    Raises:
+        HTTPException: 
+            - 500 status code if connection fails due to client errors or unexpected issues
+            - Includes detailed error messages from the API or connection process
+    
+    Notes:
+        - Uses aiohttp for asynchronous HTTP requests
+        - Sets a timeout for the connection attempt
+        - Logs any exceptions encountered during the connection verification
+        - Requires admin user authentication
+    """
     url = form_data.url
     key = form_data.key
 
@@ -533,6 +791,28 @@ async def generate_chat_completion(
     user=Depends(get_verified_user),
     bypass_filter: Optional[bool] = False,
 ):
+    """
+    Generate a chat completion by sending a request to the OpenAI API with the specified payload and user context.
+    
+    This function handles complex chat completion generation with support for:
+    - Model-specific parameter overrides
+    - User access control
+    - Streaming and non-streaming responses
+    - Different API configurations
+    - Error handling and logging
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state
+        form_data (dict): The payload containing chat completion parameters
+        user (User, optional): The authenticated user making the request
+        bypass_filter (bool, optional): Flag to bypass model access control checks
+    
+    Returns:
+        Union[dict, StreamingResponse]: The chat completion response or a streaming response
+    
+    Raises:
+        HTTPException: If there are issues with model access, API connection, or request processing
+    """
     if BYPASS_MODEL_ACCESS_CONTROL:
         bypass_filter = True
 
@@ -701,7 +981,26 @@ async def generate_chat_completion(
 @router.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
     """
-    Deprecated: proxy all requests to OpenAI API
+    Proxy endpoint for forwarding requests to OpenAI API with user authentication and streaming support.
+    
+    This method is deprecated and serves as a pass-through for API requests to OpenAI, handling both streaming and non-streaming responses.
+    
+    Parameters:
+        path (str): The API endpoint path to be proxied
+        request (Request): The incoming HTTP request containing method, body, and headers
+        user (User, optional): Authenticated user making the request, retrieved via dependency injection
+    
+    Returns:
+        Union[dict, StreamingResponse]: JSON response for non-streaming requests or a streaming response for event-stream content
+    
+    Raises:
+        HTTPException: If there's an error connecting to the external API or processing the request
+    
+    Notes:
+        - Supports forwarding user information via headers if ENABLE_FORWARD_USER_INFO_HEADERS is True
+        - Handles both streaming (SSE) and non-streaming API responses
+        - Automatically manages client session and response cleanup
+        - Logs any exceptions during the proxy request
     """
 
     body = await request.body()

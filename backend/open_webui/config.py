@@ -466,6 +466,28 @@ OAUTH_ALLOWED_DOMAINS = PersistentConfig(
 
 
 def load_oauth_providers():
+    """
+    Dynamically load OAuth provider configurations based on environment variables.
+    
+    This function populates the OAUTH_PROVIDERS dictionary with configuration details
+    for Google, Microsoft, and generic OpenID Connect (OIDC) authentication providers.
+    Providers are added only if their respective client credentials are available.
+    
+    For each provider, the configuration includes:
+    - Client ID and Client Secret
+    - Server metadata URL for discovery
+    - OAuth scopes
+    - Redirect URI
+    
+    Providers supported:
+    - Google
+    - Microsoft
+    - Generic OIDC provider
+    
+    Side effects:
+    - Modifies the global OAUTH_PROVIDERS dictionary
+    - Clears existing OAUTH_PROVIDERS entries before populating
+    """
     OAUTH_PROVIDERS.clear()
     if GOOGLE_CLIENT_ID.value and GOOGLE_CLIENT_SECRET.value:
         OAUTH_PROVIDERS["google"] = {

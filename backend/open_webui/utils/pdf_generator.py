@@ -40,7 +40,26 @@ class PDFGenerator:
             return ""
 
     def _build_html_message(self, message: Dict[str, Any]) -> str:
-        """Build HTML for a single message."""
+        """
+        Builds an HTML representation of a single chat message.
+        
+        Parameters:
+            message (Dict[str, Any]): A dictionary containing message details.
+                Expected keys:
+                - 'role' (str, optional): Message sender's role. Defaults to 'user'.
+                - 'content' (str, optional): Message text content. Defaults to empty string.
+                - 'timestamp' (float, optional): Message timestamp.
+                - 'model' (str, optional): AI model name for assistant messages.
+        
+        Returns:
+            str: HTML-formatted message with role, model, timestamp, and content.
+        
+        Notes:
+            - Converts role to title case (e.g., 'user' → 'User')
+            - Displays model name only for assistant messages
+            - Formats timestamp using `format_timestamp` method
+            - Preserves raw content without markdown conversion
+        """
         role = message.get("role", "user")
         content = message.get("content", "")
         timestamp = message.get("timestamp")
@@ -74,7 +93,14 @@ class PDFGenerator:
         return html_message
 
     def _generate_html_body(self) -> str:
-        """Generate the full HTML body for the PDF."""
+        """
+        Generates the complete HTML structure for the PDF document.
+        
+        This method creates an HTML document with a responsive viewport, incorporating the chat title and pre-generated HTML messages. The HTML is structured with nested div elements and includes the title as an h2 heading.
+        
+        Returns:
+            str: A fully formed HTML document string containing the chat title and messages, ready for PDF conversion.
+        """
         return f"""
         <html>
             <head>
@@ -93,7 +119,24 @@ class PDFGenerator:
 
     def generate_chat_pdf(self) -> bytes:
         """
-        Generate a PDF from chat messages.
+        Generate a PDF document from chat messages with comprehensive font and internationalization support.
+        
+        This method creates a PDF file from a collection of chat messages, handling various font requirements and supporting multiple languages. It dynamically locates font directories, adds necessary font files, and generates a PDF with HTML-formatted chat messages.
+        
+        Parameters:
+            None (uses instance attributes)
+        
+        Returns:
+            bytes: A byte representation of the generated PDF document
+        
+        Raises:
+            Exception: If any error occurs during PDF generation process
+        
+        Notes:
+            - Supports multiple font families: NotoSans, NotoSansKR, NotoSansJP, NotoSansSC, Twemoji
+            - Handles different installation scenarios (pip install, editable install)
+            - Automatically sets page breaks and font configurations
+            - Converts chat messages to HTML before PDF rendering
         """
         try:
             global FONTS_DIR

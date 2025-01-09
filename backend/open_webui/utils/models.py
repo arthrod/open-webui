@@ -30,6 +30,26 @@ log.setLevel(SRC_LOG_LEVELS["MAIN"])
 
 
 async def get_all_base_models(request: Request):
+    """
+    Retrieve base models from OpenAI, Ollama, and custom function sources.
+    
+    This asynchronous function aggregates models from different providers based on application configuration. It supports retrieving models from OpenAI, Ollama, and custom function models.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state and configuration.
+    
+    Returns:
+        list: A comprehensive list of models with standardized metadata, including:
+            - Models from OpenAI (if enabled)
+            - Models from Ollama (if enabled)
+            - Custom function models
+            Each model includes properties like id, name, object type, creation timestamp, and ownership.
+    
+    Notes:
+        - Requires ENABLE_OPENAI_API and ENABLE_OLLAMA_API configuration flags to be set
+        - Ollama models are enriched with additional metadata for consistency
+        - Combines models from multiple sources into a single list
+    """
     function_models = []
     openai_models = []
     ollama_models = []
@@ -59,6 +79,28 @@ async def get_all_base_models(request: Request):
 
 
 async def get_all_models(request):
+    """
+    Retrieve and process all available models with their associated actions.
+    
+    This asynchronous function aggregates models from various sources including base models, arena models, and custom models. It performs the following key operations:
+    - Retrieves base models using get_all_base_models()
+    - Adds arena models if enabled in configuration
+    - Processes custom models, updating or adding them to the model list
+    - Resolves and attaches action items to each model based on global and enabled action IDs
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state and configuration
+    
+    Returns:
+        list: A list of model dictionaries, each containing model details and associated actions
+    
+    Raises:
+        Exception: If an action cannot be found during model processing
+    
+    Side Effects:
+        - Updates request.app.state.MODELS with a dictionary of models indexed by their IDs
+        - Logs the number of models retrieved
+    """
     models = await get_all_base_models(request)
 
     # If there are no models, return an empty list
@@ -168,6 +210,24 @@ async def get_all_models(request):
 
     # Process action_ids to get the actions
     def get_action_items_from_module(function, module):
+        """
+        Extracts action items from a given module, handling both modules with explicit actions and those without.
+        
+        Parameters:
+            function (object): The function object containing metadata about the module.
+            module (module): The Python module to extract action items from.
+        
+        Returns:
+            list: A list of action item dictionaries, each containing:
+                - 'id': Unique identifier for the action
+                - 'name': Display name of the action
+                - 'description': Description of the action
+                - 'icon_url': Optional URL for the action's icon
+        
+        Notes:
+            - If the module has an 'actions' attribute, it generates action items with compound IDs.
+            - If no actions are defined, it creates a default action item using the function's metadata.
+        """
         actions = []
         if hasattr(module, "actions"):
             actions = module.actions
@@ -193,6 +253,27 @@ async def get_all_models(request):
             ]
 
     def get_function_module_by_id(function_id):
+        """
+        Retrieve a function module by its unique identifier, utilizing application state caching.
+        
+        This method checks if a function module is already loaded in the application's state cache. 
+        If not found, it dynamically loads the module using the provided function ID and stores it 
+        in the application state for future quick access.
+        
+        Parameters:
+            function_id (str): A unique identifier for the function module to be retrieved.
+        
+        Returns:
+            module: The loaded Python module corresponding to the given function ID.
+        
+        Side Effects:
+            - Modifies request.app.state.FUNCTIONS dictionary by adding newly loaded function modules
+            - Uses load_function_module_by_id() to dynamically import modules
+        
+        Notes:
+            - Implements a simple caching mechanism to improve performance of repeated module loads
+            - Assumes the existence of a load_function_module_by_id() function in the current context
+        """
         if function_id in request.app.state.FUNCTIONS:
             function_module = request.app.state.FUNCTIONS[function_id]
         else:
@@ -223,6 +304,23 @@ async def get_all_models(request):
 
 
 def check_model_access(user, model):
+    """
+    Check if a user has access to a specific model.
+    
+    This function verifies model access rights based on the model type and user permissions.
+    
+    Parameters:
+        user (User): The user attempting to access the model
+        model (dict): A dictionary containing model information
+    
+    Raises:
+        Exception: If the model is not found or the user lacks access rights
+    
+    Notes:
+        - For arena models, access is checked using the model's access control metadata
+        - For non-arena models, access is determined by user ownership or explicit access rights
+        - Raises a generic "Model not found" exception to prevent information disclosure
+    """
     if model.get("arena"):
         if not has_access(
             user.id,

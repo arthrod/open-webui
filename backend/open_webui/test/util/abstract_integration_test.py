@@ -115,6 +115,24 @@ class AbstractPostgresTest(AbstractIntegrationTest):
             pytest.fail(f"Could not setup test environment: {ex}")
 
     def _check_db_connection(self):
+        """
+        Check the database connection by executing a simple query with retry mechanism.
+        
+        This method attempts to establish a database connection by executing a simple SELECT query.
+        It will retry the connection up to 10 times with a 3-second delay between attempts.
+        
+        Raises:
+            Exception: If the database connection cannot be established after 10 retry attempts.
+        
+        Side Effects:
+            - Commits the session if the query is successful
+            - Rolls back the session if an exception occurs
+            - Logs warning messages for connection failures
+        
+        Notes:
+            - Uses SQLAlchemy's Session to execute a test query
+            - Implements exponential backoff with fixed 3-second intervals
+        """
         from open_webui.internal.db import Session
 
         retries = 10
@@ -139,6 +157,28 @@ class AbstractPostgresTest(AbstractIntegrationTest):
         cls.docker_client.containers.get(cls.DOCKER_CONTAINER_NAME).remove(force=True)
 
     def teardown_method(self):
+        """
+        Clean up the database state after each test method by committing any pending changes and truncating specified tables.
+        
+        This method ensures a clean database environment for subsequent tests by:
+        1. Committing any pending database session changes
+        2. Truncating predefined tables to reset their state
+        
+        Tables truncated:
+            - auth
+            - chat
+            - chatidtag
+            - document
+            - memory
+            - model
+            - prompt
+            - tag
+            - user
+        
+        Note:
+            - Uses SQLAlchemy's Session to manage database transactions
+            - Commits changes before and after truncation to ensure data integrity
+        """
         from open_webui.internal.db import Session
 
         # rollback everything not yet committed

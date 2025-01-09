@@ -139,6 +139,21 @@ class GroupTable:
             ]
 
     def get_group_by_id(self, id: str) -> Optional[GroupModel]:
+        """
+        Retrieve a group from the database by its unique identifier.
+        
+        Parameters:
+            id (str): The unique identifier of the group to retrieve.
+        
+        Returns:
+            GroupModel: A validated group model if found, or None if the group does not exist or an error occurs.
+        
+        Behavior:
+            - Queries the database for a group matching the provided id
+            - Uses SQLAlchemy's first() method to fetch the initial matching record
+            - Validates and converts the database Group object to a Pydantic GroupModel
+            - Returns None if no group is found or an exception is raised during retrieval
+        """
         try:
             with get_db() as db:
                 group = db.query(Group).filter_by(id=id).first()
@@ -147,6 +162,19 @@ class GroupTable:
             return None
 
     def get_group_user_ids_by_id(self, id: str) -> Optional[str]:
+        """
+        Retrieve the list of user IDs associated with a specific group.
+        
+        Parameters:
+            id (str): The unique identifier of the group to fetch user IDs for.
+        
+        Returns:
+            Optional[str]: A list of user IDs if the group exists, or None if the group is not found.
+        
+        Example:
+            group_users = Groups.get_group_user_ids_by_id("group123")
+            # Returns list of user IDs or None
+        """
         group = self.get_group_by_id(id)
         if group:
             return group.user_ids
@@ -156,6 +184,26 @@ class GroupTable:
     def update_group_by_id(
         self, id: str, form_data: GroupUpdateForm, overwrite: bool = False
     ) -> Optional[GroupModel]:
+        """
+        Update an existing group by its unique identifier.
+        
+        Parameters:
+            id (str): The unique identifier of the group to update
+            form_data (GroupUpdateForm): The update form containing group modification details
+            overwrite (bool, optional): Flag to determine update behavior. Defaults to False.
+        
+        Returns:
+            Optional[GroupModel]: The updated group model if successful, None otherwise
+        
+        Raises:
+            Exception: Logs and suppresses any database update errors
+        
+        Notes:
+            - Uses SQLAlchemy to perform a partial update on the group
+            - Automatically sets the 'updated_at' timestamp to the current time
+            - Excludes None values from the update to allow partial updates
+            - Commits the transaction and retrieves the updated group
+        """
         try:
             with get_db() as db:
                 db.query(Group).filter_by(id=id).update(

@@ -59,6 +59,38 @@ async def generate_chat_completion(
     user: Any,
     bypass_filter: bool = False,
 ):
+    """
+    Generate a chat completion based on the provided request, form data, and user information.
+    
+    This asynchronous function handles chat completion requests with advanced model selection, access control, and routing capabilities. It supports multiple model types, including arena-managed, pipeline-based, Ollama, and OpenAI models.
+    
+    Parameters:
+        request (Request): The incoming HTTP request object.
+        form_data (dict): A dictionary containing chat completion parameters.
+        user (Any): The user making the request.
+        bypass_filter (bool, optional): Flag to bypass model access control. Defaults to False.
+    
+    Returns:
+        Union[dict, StreamingResponse]: A chat completion response, which can be a standard dictionary or a streaming response depending on the request configuration.
+    
+    Raises:
+        Exception: If the model is not found, access is denied, or processing fails.
+    
+    Features:
+        - Model access control
+        - Dynamic model selection for arena-managed models
+        - Support for pipeline, Ollama, and OpenAI model types
+        - Streaming and non-streaming response modes
+        - Input filtering and preprocessing
+    
+    Example:
+        # Typical usage in an async context
+        response = await generate_chat_completion(
+            request, 
+            {"model": "gpt-3.5-turbo", "messages": [...], "stream": False}, 
+            current_user
+        )
+    """
     if BYPASS_MODEL_ACCESS_CONTROL:
         bypass_filter = True
 
@@ -109,6 +141,22 @@ async def generate_chat_completion(
         if form_data.get("stream") == True:
 
             async def stream_wrapper(stream):
+                """
+                Wraps a streaming response, prepending the selected model ID and yielding streaming chunks.
+                
+                This asynchronous generator function transforms a streaming response by first emitting the selected model ID as a JSON-encoded event, then yielding subsequent chunks from the original stream.
+                
+                Parameters:
+                    stream (AsyncGenerator): An asynchronous generator producing streaming response chunks
+                
+                Yields:
+                    str: JSON-encoded model ID event followed by streaming response chunks
+                
+                Notes:
+                    - Used in streaming chat completion responses
+                    - Prepends model selection metadata to the stream
+                    - Compatible with server-sent events (SSE) format
+                """
                 yield f"data: {json.dumps({'selected_model_id': selected_model_id})}\n\n"
                 async for chunk in stream:
                     yield chunk
@@ -161,6 +209,29 @@ chat_completion = generate_chat_completion
 
 
 async def chat_completed(request: Request, form_data: dict, user: Any):
+    """
+    Process and apply outlet filters to a completed chat message.
+    
+    Validates the model, processes outlet filters, and applies global and model-specific filter functions with priority-based execution.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state
+        form_data (dict): The chat message form data to be processed
+        user (Any): The user object performing the chat action
+    
+    Returns:
+        dict: Processed chat message data after applying all outlet filters
+    
+    Raises:
+        Exception: If the model is not found or if any filter function encounters an error
+    
+    Notes:
+        - Loads models if not already loaded
+        - Applies global and model-specific filter functions
+        - Supports both synchronous and asynchronous filter functions
+        - Dynamically handles function parameters based on function signatures
+        - Provides additional context like model, event emitters, and user information to filter functions
+    """
     if not request.app.state.MODELS:
         await get_all_models(request)
     models = request.app.state.MODELS
@@ -196,6 +267,22 @@ async def chat_completed(request: Request, form_data: dict, user: Any):
     )
 
     def get_priority(function_id):
+        """
+        Retrieve the priority of a function based on its unique identifier.
+        
+        This function attempts to fetch a function from the Functions registry using the provided function ID and returns its priority value. If the function is not found or lacks a priority specification, it defaults to 0.
+        
+        Parameters:
+            function_id (str): The unique identifier of the function to retrieve priority for.
+        
+        Returns:
+            int: The priority value of the function. Defaults to 0 if no priority is specified or the function is not found.
+        
+        Notes:
+            - Uses the Functions.get_function_by_id() method to retrieve the function
+            - Checks for the presence of a 'valves' attribute
+            - Handles cases where function or valves might be None
+        """
         function = Functions.get_function_by_id(function_id)
         if function is not None and hasattr(function, "valves"):
             # TODO: Fix FunctionModel to include vavles
@@ -290,6 +377,29 @@ async def chat_completed(request: Request, form_data: dict, user: Any):
 
 
 async def chat_action(request: Request, action_id: str, form_data: dict, user: Any):
+    """
+    Execute a specific chat action with dynamic parameter handling and event tracking.
+    
+    Processes a chat action by dynamically loading and invoking a function module based on the provided action ID. Supports sub-actions, model validation, and flexible parameter injection.
+    
+    Parameters:
+        request (Request): The incoming HTTP request object
+        action_id (str): Identifier for the action to be executed, optionally including a sub-action
+        form_data (dict): Form data containing chat and message context
+        user (Any): User object representing the current user
+    
+    Returns:
+        Any: Result of the executed action function, or an Exception if execution fails
+    
+    Raises:
+        Exception: If the action or model is not found, or if function execution fails
+    
+    Notes:
+        - Dynamically loads function modules from application state
+        - Supports both synchronous and asynchronous action functions
+        - Injects contextual parameters like model, event emitters, and user information
+        - Handles optional sub-actions through dot-separated action IDs
+    """
     if "." in action_id:
         action_id, sub_action_id = action_id.split(".")
     else:

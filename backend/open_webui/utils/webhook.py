@@ -10,6 +10,31 @@ log.setLevel(SRC_LOG_LEVELS["WEBHOOK"])
 
 
 def post_webhook(url: str, message: str, event_data: dict) -> bool:
+    """
+    Send a message to a specified webhook URL with service-specific payload formatting.
+    
+    Parameters:
+        url (str): The webhook URL for the target service.
+        message (str): The primary message content to be sent.
+        event_data (dict): Additional contextual data associated with the event.
+    
+    Returns:
+        bool: True if the webhook was successfully sent, False otherwise.
+    
+    Supports multiple webhook services with specialized payload formatting:
+        - Slack: Simple text payload
+        - Google Chat: Simple text payload
+        - Discord: Text payload with 2000 character truncation
+        - Microsoft Teams: Detailed MessageCard format with action and user details
+        - Default: Uses provided event_data as payload
+    
+    Handles potential network or transmission errors gracefully, logging exceptions.
+    
+    Example:
+        post_webhook("https://hooks.slack.com/services/xxx", 
+                     "Alert: System update", 
+                     {"action": "update", "user": "{}"})
+    """
     try:
         log.debug(f"post_webhook: {url}, {message}, {event_data}")
         payload = {}

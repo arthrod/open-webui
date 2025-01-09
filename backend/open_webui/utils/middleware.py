@@ -76,9 +76,56 @@ log.setLevel(SRC_LOG_LEVELS["MAIN"])
 
 
 async def chat_completion_filter_functions_handler(request, body, model, extra_params):
+    """
+    Asynchronously handle filter functions for chat completion requests.
+    
+    This function processes a series of filter functions applied to the chat completion request body. It retrieves and applies global and model-specific filter functions, dynamically managing their execution and parameters.
+    
+    Parameters:
+        request (Request): The incoming HTTP request object
+        body (dict): The request body to be filtered
+        model (dict): The model configuration dictionary
+        extra_params (dict): Additional parameters for function processing
+    
+    Returns:
+        tuple: A tuple containing:
+            - Modified request body after applying filter functions
+            - An empty dictionary for additional metadata
+    
+    Key Behaviors:
+        - Retrieves filter function IDs from global and model-specific sources
+        - Sorts filter functions by priority
+        - Dynamically loads and executes filter function modules
+        - Handles file skipping for specific filter functions
+        - Supports both synchronous and asynchronous filter functions
+        - Manages function valves and user-specific configurations
+        - Provides robust error handling during function execution
+    
+    Raises:
+        Exception: If an error occurs during filter function processing
+    """
     skip_files = None
 
     def get_filter_function_ids(model):
+        """
+        Retrieve filter function IDs for a given model, sorted by priority.
+        
+        This function collects filter function IDs from global filter functions and model metadata, 
+        filters them based on active status, and sorts them by their defined priority.
+        
+        Parameters:
+            model (dict): A model configuration dictionary containing optional metadata.
+        
+        Returns:
+            list: A list of filter function IDs sorted by their priority in ascending order.
+        
+        Notes:
+            - Global filter functions are always considered.
+            - Additional filter IDs can be specified in the model's metadata.
+            - Only active filter functions are included in the final list.
+            - Priority is determined by the 'priority' valve attribute of each function.
+            - Duplicate filter IDs are removed.
+        """
         def get_priority(function_id):
             function = Functions.get_function_by_id(function_id)
             if function is not None and hasattr(function, "valves"):
@@ -171,6 +218,31 @@ async def chat_completion_filter_functions_handler(request, body, model, extra_p
 async def chat_completion_tools_handler(
     request: Request, body: dict, user: UserModel, models, extra_params: dict
 ) -> tuple[dict, dict]:
+    """
+    Handle tool function calling for chat completions with advanced processing and source tracking.
+    
+    Asynchronously processes tool function calls by:
+    - Extracting tool IDs from request metadata
+    - Retrieving available tools for the current user
+    - Generating a function calling payload using a configurable prompt template
+    - Executing tool functions based on model-generated instructions
+    - Capturing tool outputs and generating source references
+    
+    Parameters:
+        request (Request): The incoming HTTP request
+        body (dict): The original request body containing chat messages
+        user (UserModel): The authenticated user
+        models (dict): Available chat models
+        extra_params (dict): Additional parameters for tool processing
+    
+    Returns:
+        tuple[dict, dict]: A tuple containing:
+            - Modified request body
+            - Dictionary of tool sources and outputs
+    
+    Raises:
+        Various exceptions during tool function calling and processing
+    """
     async def get_content_from_response(response) -> Optional[str]:
         content = None
         if hasattr(response, "body_iterator"):
@@ -186,6 +258,26 @@ async def chat_completion_tools_handler(
         return content
 
     def get_tools_function_calling_payload(messages, task_model_id, content):
+        """
+        Generates a payload for tool function calling with context from chat history.
+        
+        Parameters:
+            messages (list): A list of chat messages containing conversation history.
+            task_model_id (str): The identifier of the model to be used for function calling.
+            content (str): System message content for guiding function calling.
+        
+        Returns:
+            dict: A structured payload for tool function calling, including:
+                - 'model': The specified task model ID
+                - 'messages': A list containing system and user messages with conversation context
+                - 'stream': Set to False for synchronous response
+                - 'metadata': Task type set to FUNCTION_CALLING
+        
+        Notes:
+            - Retrieves the last user message from the conversation history
+            - Formats the last 4 messages in a readable history format
+            - Prepares a prompt that includes conversation history and the latest user query
+        """
         user_message = get_last_user_message(messages)
         history = "\n".join(
             f"{message['role'].upper()}: \"\"\"{message['content']}\"\"\""
@@ -339,6 +431,31 @@ async def chat_completion_tools_handler(
 async def chat_web_search_handler(
     request: Request, form_data: dict, extra_params: dict, user
 ):
+    """
+    Asynchronously handle web search functionality for chat completions.
+    
+    This function generates search queries from user messages, performs web searches,
+    and updates the form data with search results while emitting real-time status events.
+    
+    Parameters:
+        request (Request): The incoming HTTP request
+        form_data (dict): Chat form data containing messages and model information
+        extra_params (dict): Additional parameters including event emitter
+        user: The authenticated user performing the web search
+    
+    Returns:
+        dict: Updated form data with web search results, or None if no search performed
+    
+    Raises:
+        Exception: If query generation or web search encounters errors
+    
+    Notes:
+        - Generates search queries using an AI model
+        - Performs web search using the generated query
+        - Supports fallback to user message if query generation fails
+        - Uses thread pooling for web search to prevent blocking
+        - Emits real-time events for search status updates
+    """
     event_emitter = extra_params["__event_emitter__"]
     await event_emitter(
         {
@@ -489,6 +606,30 @@ async def chat_web_search_handler(
 async def chat_completion_files_handler(
     request: Request, body: dict, user: UserModel
 ) -> tuple[dict, dict[str, list]]:
+    """
+    Asynchronously handle file-based retrieval for chat completions by generating queries and extracting relevant sources.
+    
+    This function processes files attached to a chat request, generates retrieval queries, and retrieves contextually relevant sources using embedding and optional reranking techniques.
+    
+    Parameters:
+        request (Request): The incoming HTTP request containing application state and configuration.
+        body (dict): The request payload containing chat messages, model, and metadata.
+        user (UserModel): The authenticated user making the request.
+    
+    Returns:
+        tuple[dict, dict[str, list]]: A tuple containing:
+            - The original request body
+            - A dictionary with retrieved sources
+    
+    Raises:
+        Exception: If query generation or source retrieval fails.
+    
+    Key Behaviors:
+        - Generates retrieval queries from chat messages if files are present
+        - Supports fallback to last user message if no queries are generated
+        - Uses embedding and optional hybrid search for source retrieval
+        - Configurable top-k results and relevance thresholding
+    """
     sources = []
 
     if files := body.get("metadata", {}).get("files", None):
@@ -538,6 +679,18 @@ async def chat_completion_files_handler(
 
 
 def apply_params_to_form_data(form_data, model):
+    """
+    Apply model-specific parameters to form data for chat completion requests.
+    
+    This function modifies the form data by extracting and applying parameters based on the model type. For Ollama models, it handles specific options like format and keep_alive. For other models, it applies standard parameters such as seed, stop, temperature, top_p, and frequency penalty.
+    
+    Parameters:
+        form_data (dict): The original form data dictionary to be modified
+        model (dict): Model configuration dictionary indicating the model type
+    
+    Returns:
+        dict: Updated form data with model-specific parameters applied
+    """
     params = form_data.pop("params", {})
     if model.get("ollama"):
         form_data["options"] = params
@@ -566,6 +719,32 @@ def apply_params_to_form_data(form_data, model):
 
 
 async def process_chat_payload(request, form_data, metadata, user, model):
+    """
+    Process and prepare the chat payload for model completion, integrating various features like web search, filter functions, tools, and file-based retrieval.
+    
+    This asynchronous function orchestrates the preparation of a chat payload by:
+    1. Applying model-specific parameters
+    2. Handling web search if enabled
+    3. Executing filter functions
+    4. Processing tool calls
+    5. Retrieving and integrating file-based sources
+    6. Generating context for retrieval-augmented generation (RAG)
+    
+    Parameters:
+        request (Request): The incoming HTTP request
+        form_data (dict): The initial form data containing chat messages and configuration
+        metadata (dict): Metadata associated with the request
+        user (UserModel): The authenticated user making the request
+        model (dict): The selected AI model configuration
+    
+    Returns:
+        tuple: A tuple containing:
+            - Updated form_data with integrated sources and modified messages
+            - List of additional events to be processed
+    
+    Raises:
+        Exception: If errors occur during payload processing steps
+    """
     form_data = apply_params_to_form_data(form_data, model)
     log.debug(f"form_data: {form_data}")
 
@@ -749,6 +928,31 @@ async def process_chat_payload(request, form_data, metadata, user, model):
 async def process_chat_response(
     request, response, form_data, user, events, metadata, tasks
 ):
+    """
+    Process and handle the response from a chat completion, managing streaming and non-streaming responses with event emission and background tasks.
+    
+    This asynchronous function handles various aspects of chat response processing, including:
+    - Event emission for real-time updates
+    - Saving messages to the database
+    - Generating chat titles and tags
+    - Sending webhook notifications
+    - Managing streaming and non-streaming response types
+    
+    Parameters:
+        request (Request): The incoming HTTP request
+        response (StreamingResponse or dict): The chat completion response
+        form_data (dict): Form data associated with the chat request
+        user (UserModel): The user model of the current user
+        events (list): List of events to be processed
+        metadata (dict): Metadata containing chat and message identifiers
+        tasks (dict, optional): Background tasks to be performed (e.g., title generation)
+    
+    Returns:
+        StreamingResponse or dict: Processed response with event handling and background tasks
+    
+    Raises:
+        Various exceptions during JSON parsing, event emission, and database operations
+    """
     async def background_tasks_handler():
         message_map = Chats.get_messages_by_chat_id(metadata["chat_id"])
         message = message_map.get(metadata["message_id"]) if message_map else None
@@ -929,6 +1133,26 @@ async def process_chat_response(
 
         # Handle as a background task
         async def post_response_handler(response, events):
+            """
+            Handle post-response processing for chat completions, including real-time event emission, message saving, and webhook notifications.
+            
+            This asynchronous function manages the streaming response from a chat completion, processing each line of the response, updating the chat message content, and emitting real-time events. It supports features like incremental content saving, webhook notifications for inactive users, and background task handling.
+            
+            Parameters:
+                response (StreamingResponse): The streaming response from the chat completion.
+                events (list): A list of initial events to process.
+            
+            Key Behaviors:
+                - Emits real-time events for chat completion progress
+                - Saves message content incrementally or in full
+                - Handles streaming response parsing
+                - Sends webhook notifications for inactive users
+                - Manages background tasks and error scenarios
+            
+            Raises:
+                asyncio.CancelledError: If the task is cancelled during processing
+                Exception: For any unexpected errors during response handling
+            """
             message = Chats.get_message_by_id_and_message_id(
                 metadata["chat_id"], metadata["message_id"]
             )
@@ -1079,6 +1303,18 @@ async def process_chat_response(
 
         # Fallback to the original response
         async def stream_wrapper(original_generator, events):
+            """
+            Wraps a generator to prepend events and format streaming data for server-sent events (SSE).
+            
+            This asynchronous generator function takes an original generator and a list of events, converting them into a format suitable for server-sent events. It first yields JSON-encoded events with SSE formatting, then streams the original generator's data.
+            
+            Parameters:
+                original_generator (AsyncGenerator): The original data generator to be wrapped
+                events (list): A list of events to be prepended to the generator output
+            
+            Yields:
+                str: Formatted server-sent events data, including initial events and streaming data
+            """
             def wrap_item(item):
                 return f"data: {item}\n\n"
 

@@ -9,11 +9,31 @@ from typing import Callable, Optional
 
 def get_message_list(messages, message_id):
     """
-    Reconstructs a list of messages in order up to the specified message_id.
-
-    :param message_id: ID of the message to reconstruct the chain
-    :param messages: Message history dict containing all messages
-    :return: List of ordered messages starting from the root to the given message
+    Reconstructs a list of messages in order up to a specified message ID.
+    
+    This function traverses the message history to build a chronological list of messages
+    starting from the root message and ending at the specified message. It follows the
+    parent-child relationships defined by the 'parentId' attribute.
+    
+    Args:
+        messages (dict): A dictionary containing all messages, with message IDs as keys.
+        message_id (str): The ID of the target message to reconstruct the message chain.
+    
+    Returns:
+        list: An ordered list of messages from the root to the specified message.
+        str: An error message if the specified message ID is not found in the history.
+    
+    Raises:
+        No explicit exceptions are raised.
+    
+    Example:
+        messages = {
+            'msg1': {'id': 'msg1', 'parentId': None, 'content': 'First message'},
+            'msg2': {'id': 'msg2', 'parentId': 'msg1', 'content': 'Reply to first message'},
+            'msg3': {'id': 'msg3', 'parentId': 'msg2', 'content': 'Another reply'}
+        }
+        result = get_message_list(messages, 'msg3')
+        # Returns: [{'id': 'msg1', ...}, {'id': 'msg2', ...}, {'id': 'msg3', ...}]
     """
 
     # Find the message by its id
@@ -36,6 +56,23 @@ def get_message_list(messages, message_id):
 
 
 def get_messages_content(messages: list[dict]) -> str:
+    """
+    Converts a list of message dictionaries into a formatted string representation.
+    
+    Parameters:
+        messages (list[dict]): A list of message dictionaries containing role and content information.
+    
+    Returns:
+        str: A string with each message formatted as "ROLE: content", with messages separated by newlines.
+    
+    Example:
+        messages = [
+            {'role': 'user', 'content': 'Hello'},
+            {'role': 'assistant', 'content': 'Hi there!'}
+        ]
+        result = get_messages_content(messages)
+        # result will be: "USER: Hello\nASSISTANT: Hi there!"
+    """
     return "\n".join(
         [
             f"{message['role'].upper()}: {get_content_from_message(message)}"
@@ -69,6 +106,25 @@ def get_last_user_message(messages: list[dict]) -> Optional[str]:
 
 
 def get_last_assistant_message_item(messages: list[dict]) -> Optional[dict]:
+    """
+    Retrieves the last message from the assistant role in a list of messages.
+    
+    Parameters:
+        messages (list[dict]): A list of message dictionaries containing conversation history.
+    
+    Returns:
+        Optional[dict]: The last message dictionary with the role "assistant", or None if no assistant message is found.
+    
+    Example:
+        messages = [
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi there!"},
+            {"role": "user", "content": "How are you?"},
+            {"role": "assistant", "content": "I'm doing well, thanks!"}
+        ]
+        last_assistant_message = get_last_assistant_message_item(messages)
+        # Returns: {"role": "assistant", "content": "I'm doing well, thanks!"}
+    """
     for message in reversed(messages):
         if message["role"] == "assistant":
             return message
@@ -76,6 +132,23 @@ def get_last_assistant_message_item(messages: list[dict]) -> Optional[dict]:
 
 
 def get_last_assistant_message(messages: list[dict]) -> Optional[str]:
+    """
+    Retrieves the content of the last assistant message from a list of messages.
+    
+    Parameters:
+        messages (list[dict]): A list of message dictionaries containing conversation history.
+    
+    Returns:
+        Optional[str]: The content of the last assistant message, or None if no assistant message is found.
+    
+    Example:
+        messages = [
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi there!"},
+            {"role": "user", "content": "How are you?"}
+        ]
+        last_assistant_message = get_last_assistant_message(messages)  # Returns "Hi there!"
+    """
     for message in reversed(messages):
         if message["role"] == "assistant":
             return get_content_from_message(message)
@@ -143,6 +216,24 @@ def openai_chat_message_template(model: str):
 def openai_chat_chunk_message_template(
     model: str, message: Optional[str] = None, usage: Optional[dict] = None
 ) -> dict:
+    """
+    Creates a template for an OpenAI chat completion chunk message.
+    
+    Parameters:
+        model (str): The name of the language model used for the chat completion.
+        message (Optional[str], optional): The content of the message delta. Defaults to None.
+        usage (Optional[dict], optional): Usage statistics for the chat completion. Defaults to None.
+    
+    Returns:
+        dict: A structured template for a chat completion chunk with optional message delta and usage information.
+    
+    Example:
+        chunk_template = openai_chat_chunk_message_template(
+            model="gpt-3.5-turbo", 
+            message="Hello", 
+            usage={"total_tokens": 10}
+        )
+    """
     template = openai_chat_message_template(model)
     template["object"] = "chat.completion.chunk"
     if message:
@@ -158,6 +249,29 @@ def openai_chat_chunk_message_template(
 def openai_chat_completion_message_template(
     model: str, message: Optional[str] = None, usage: Optional[dict] = None
 ) -> dict:
+    """
+    Creates a template for an OpenAI chat completion message with optional message content and usage information.
+    
+    Parameters:
+        model (str): The name of the language model used for the chat completion.
+        message (Optional[str], optional): The content of the assistant's message. Defaults to None.
+        usage (Optional[dict], optional): Usage statistics for the chat completion. Defaults to None.
+    
+    Returns:
+        dict: A structured template representing an OpenAI chat completion message with the following key components:
+            - A base message template from `openai_chat_message_template`
+            - Object type set to "chat.completion"
+            - Optional message content for the assistant
+            - Finish reason set to "stop"
+            - Optional usage statistics
+    
+    Example:
+        template = openai_chat_completion_message_template(
+            "gpt-3.5-turbo", 
+            message="Hello, how can I help you?", 
+            usage={"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}
+        )
+    """
     template = openai_chat_message_template(model)
     template["object"] = "chat.completion"
     if message is not None:
@@ -173,6 +287,22 @@ def get_gravatar_url(email):
     # Trim leading and trailing whitespace from
     # an email address and force all characters
     # to lower case
+    """
+    Generate a Gravatar URL for a given email address.
+    
+    This function creates a Gravatar avatar URL by computing the SHA-256 hash of a normalized email address.
+    
+    Parameters:
+        email (str): The email address to generate a Gravatar URL for.
+    
+    Returns:
+        str: A Gravatar avatar URL using the MD5 hash of the email address.
+    
+    Notes:
+        - Trims whitespace and converts email to lowercase before hashing
+        - Uses the 'mp' (mystery person) default image if no Gravatar is found
+        - Generates a consistent avatar based on the email's unique hash
+    """
     address = str(email).strip().lower()
 
     # Create a SHA256 hash of the final string

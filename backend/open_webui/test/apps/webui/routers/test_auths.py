@@ -6,6 +6,16 @@ class TestAuths(AbstractPostgresTest):
     BASE_PATH = "/api/v1/auths"
 
     def setup_class(cls):
+        """
+        Set up the test class by importing and initializing authentication and user models.
+        
+        This method is a class-level setup method that imports the Auths and Users models 
+        and assigns them as class attributes for use in subsequent test methods.
+        
+        Attributes:
+            cls.users (Users): Class attribute for the Users model
+            cls.auths (Auths): Class attribute for the Auths model
+        """
         super().setup_class()
         from open_webui.models.auths import Auths
         from open_webui.models.users import Users
@@ -26,6 +36,23 @@ class TestAuths(AbstractPostgresTest):
         }
 
     def test_update_profile(self):
+        """
+        Test the user profile update functionality.
+        
+        This method verifies that a user can successfully update their profile information
+        through the API endpoint. It performs the following steps:
+        - Creates a new user with initial profile details
+        - Mocks the user session
+        - Sends a POST request to update the user's name and profile image
+        - Validates that the response is successful (status code 200)
+        - Checks that the database reflects the updated profile information
+        
+        Parameters:
+            self (TestAuths): The test class instance containing authentication test methods
+        
+        Raises:
+            AssertionError: If the profile update fails or database is not updated correctly
+        """
         from open_webui.utils.auth import get_password_hash
 
         user = self.auths.insert_new_auth(
@@ -47,6 +74,21 @@ class TestAuths(AbstractPostgresTest):
         assert db_user.profile_image_url == "/user2.png"
 
     def test_update_password(self):
+        """
+        Test the password update functionality for a user.
+        
+        This method verifies that a user can successfully change their password by:
+        1. Creating a new user with an initial password
+        2. Sending a request to update the password
+        3. Confirming that the old password no longer works
+        4. Verifying that the new password allows authentication
+        
+        Parameters:
+            self (TestAuths): The test class instance containing authentication methods and client
+        
+        Raises:
+            AssertionError: If the password update process fails or authentication checks do not pass
+        """
         from open_webui.utils.auth import get_password_hash
 
         user = self.auths.insert_new_auth(
@@ -74,6 +116,26 @@ class TestAuths(AbstractPostgresTest):
         assert new_auth is not None
 
     def test_signin(self):
+        """
+        Test the sign-in process for a user.
+        
+        This method verifies the authentication workflow by:
+        1. Creating a new user with hashed credentials
+        2. Attempting to sign in with the created user's email and password
+        3. Asserting successful authentication with correct response status and user details
+        
+        Parameters:
+            None (uses self and class-level test setup)
+        
+        Asserts:
+            - Response status code is 200 (successful sign-in)
+            - Returned user data matches the created user
+            - User token is generated and non-empty
+            - Token type is "Bearer"
+        
+        Raises:
+            AssertionError: If any authentication or response validation fails
+        """
         from open_webui.utils.auth import get_password_hash
 
         user = self.auths.insert_new_auth(

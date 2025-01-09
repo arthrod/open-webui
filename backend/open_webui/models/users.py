@@ -147,6 +147,23 @@ class UsersTable:
             return None
 
     def get_user_by_oauth_sub(self, sub: str) -> Optional[UserModel]:
+        """
+        Retrieve a user by their OAuth subscription identifier.
+        
+        Parameters:
+            sub (str): The OAuth subscription identifier to search for.
+        
+        Returns:
+            Optional[UserModel]: The user model if found, otherwise None.
+        
+        Raises:
+            No explicit exceptions are raised; errors result in returning None.
+        
+        Description:
+            Queries the database to find a user with the matching OAuth subscription ID.
+            Uses a database session to perform a single query filtering by oauth_sub.
+            Returns a validated UserModel if a matching user is found, otherwise returns None.
+        """
         try:
             with get_db() as db:
                 user = db.query(User).filter_by(oauth_sub=sub).first()
@@ -157,6 +174,30 @@ class UsersTable:
     def get_users(
         self, skip: Optional[int] = None, limit: Optional[int] = None
     ) -> list[UserModel]:
+        """
+        Retrieve a list of users from the database with optional pagination.
+        
+        Fetches users ordered by creation time in descending order, with optional skip and limit parameters
+        for pagination control.
+        
+        Parameters:
+            skip (Optional[int], optional): Number of users to skip before starting to return results.
+                Defaults to None.
+            limit (Optional[int], optional): Maximum number of users to return. Defaults to None.
+        
+        Returns:
+            list[UserModel]: A list of user models, sorted by creation time from newest to oldest.
+        
+        Example:
+            # Retrieve first 10 users
+            users = users_table.get_users(limit=10)
+        
+            # Retrieve users starting from the 20th user
+            users = users_table.get_users(skip=20)
+        
+            # Retrieve 5 users after skipping the first 10
+            users = users_table.get_users(skip=10, limit=5)
+        """
         with get_db() as db:
 
             query = db.query(User).order_by(User.created_at.desc())
@@ -171,15 +212,50 @@ class UsersTable:
             return [UserModel.model_validate(user) for user in users]
 
     def get_users_by_user_ids(self, user_ids: list[str]) -> list[UserModel]:
+        """
+        Retrieve users from the database based on a list of user IDs.
+        
+        Parameters:
+            user_ids (list[str]): A list of user IDs to fetch.
+        
+        Returns:
+            list[UserModel]: A list of UserModel instances corresponding to the provided user IDs. 
+            Returns an empty list if no users are found matching the given IDs.
+        
+        Example:
+            # Fetch users with specific IDs
+            user_ids = ['user1', 'user2', 'user3']
+            users = users_table.get_users_by_user_ids(user_ids)
+        """
         with get_db() as db:
             users = db.query(User).filter(User.id.in_(user_ids)).all()
             return [UserModel.model_validate(user) for user in users]
 
     def get_num_users(self) -> Optional[int]:
+        """
+        Retrieve the total number of users in the database.
+        
+        Returns:
+            Optional[int]: The total count of users in the database, or None if an error occurs during the query.
+        
+        Raises:
+            SQLAlchemyError: Potential database-related exceptions are implicitly handled, returning None in case of errors.
+        """
         with get_db() as db:
             return db.query(User).count()
 
     def get_first_user(self) -> UserModel:
+        """
+        Retrieve the first user from the database based on creation timestamp.
+        
+        This method queries the database to find the earliest created user, sorted by the 'created_at' timestamp.
+        
+        Returns:
+            UserModel: The first user in the database, converted to a Pydantic model, or None if no users exist or an error occurs.
+        
+        Raises:
+            No explicit exceptions are raised; errors result in returning None.
+        """
         try:
             with get_db() as db:
                 user = db.query(User).order_by(User.created_at).first()
@@ -188,6 +264,21 @@ class UsersTable:
             return None
 
     def get_user_webhook_url_by_id(self, id: str) -> Optional[str]:
+        """
+        Retrieve the webhook URL from a user's settings by their user ID.
+        
+        This method attempts to fetch the webhook URL from the user's settings, navigating through nested dictionaries.
+        If the user is not found, the settings are None, or the webhook URL is not configured, it returns None.
+        
+        Parameters:
+            id (str): The unique identifier of the user.
+        
+        Returns:
+            Optional[str]: The configured webhook URL if found, otherwise None.
+        
+        Raises:
+            No explicit exceptions are raised; any errors result in returning None.
+        """
         try:
             with get_db() as db:
                 user = db.query(User).filter_by(id=id).first()
@@ -204,6 +295,24 @@ class UsersTable:
             return None
 
     def update_user_role_by_id(self, id: str, role: str) -> Optional[UserModel]:
+        """
+        Update a user's role by their unique identifier.
+        
+        Parameters:
+            id (str): The unique identifier of the user to update.
+            role (str): The new role to assign to the user.
+        
+        Returns:
+            Optional[UserModel]: The updated user model if the role update is successful, 
+            otherwise None if an error occurs during the update process.
+        
+        Raises:
+            No explicit exceptions are raised; errors are silently handled by returning None.
+        
+        Example:
+            # Update a user's role to 'admin'
+            updated_user = users_table.update_user_role_by_id('user123', 'admin')
+        """
         try:
             with get_db() as db:
                 db.query(User).filter_by(id=id).update({"role": role})

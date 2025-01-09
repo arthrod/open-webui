@@ -51,6 +51,23 @@ class JSONField(types.TypeDecorator):
 # This is required to ensure the peewee migration is handled before the alembic migration
 def handle_peewee_migration(DATABASE_URL):
     # db = None
+    """
+    Handle database migration using Peewee for a given database URL.
+    
+    This function attempts to register a database connection, run migrations, and ensure proper database connection management.
+    
+    Parameters:
+        DATABASE_URL (str): The database connection URL to be used for migration.
+    
+    Raises:
+        Exception: If there is an error initializing the database connection or running migrations.
+    
+    Notes:
+        - Converts PostgreSQL connection URL to a format compatible with Peewee
+        - Uses a migration router to run database migrations
+        - Ensures database connection is closed after migration
+        - Logs any errors encountered during the migration process
+    """
     try:
         # Replace the postgresql:// with postgres:// to handle the peewee migration
         db = register_connection(DATABASE_URL.replace("postgresql://", "postgres://"))

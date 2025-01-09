@@ -99,6 +99,24 @@ class FileForm(BaseModel):
 
 class FilesTable:
     def insert_new_file(self, user_id: str, form_data: FileForm) -> Optional[FileModel]:
+        """
+        Insert a new file record into the database.
+        
+        Parameters:
+            user_id (str): The unique identifier of the user creating the file
+            form_data (FileForm): A form containing file details for insertion
+        
+        Returns:
+            Optional[FileModel]: The newly created file model if successful, None otherwise
+        
+        Raises:
+            Exception: If database insertion fails, prints error and returns None
+        
+        Notes:
+            - Automatically sets created_at and updated_at timestamps to current time
+            - Converts FileForm data to FileModel and then to database File object
+            - Commits the new file record to the database
+        """
         with get_db() as db:
             file = FileModel(
                 **{

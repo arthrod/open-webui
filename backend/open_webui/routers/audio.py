@@ -67,7 +67,26 @@ from pydub.utils import mediainfo
 
 
 def is_mp4_audio(file_path):
-    """Check if the given file is an MP4 audio file."""
+    """
+    Check if the given file is an MP4 audio file based on its codec information.
+    
+    This function verifies whether a file is an MP4 audio file by examining its media metadata using the mediainfo utility. It checks for specific codec characteristics typical of MP4 audio files.
+    
+    Parameters:
+        file_path (str): The path to the file to be checked.
+    
+    Returns:
+        bool: True if the file is an MP4 audio file, False otherwise.
+    
+    Raises:
+        No explicit exceptions, but prints a message if the file is not found.
+    
+    Notes:
+        - Checks for AAC codec
+        - Verifies codec type is audio
+        - Confirms codec tag string is 'mp4a'
+        - Returns False for non-existent files
+    """
     if not os.path.isfile(file_path):
         print(f"File not found: {file_path}")
         return False
@@ -83,13 +102,47 @@ def is_mp4_audio(file_path):
 
 
 def convert_mp4_to_wav(file_path, output_path):
-    """Convert MP4 audio file to WAV format."""
+    """
+    Convert an MP4 audio file to WAV format using pydub's AudioSegment.
+    
+    This function reads an MP4 audio file and exports it as a WAV file, allowing for audio format conversion.
+    
+    Parameters:
+        file_path (str): Path to the source MP4 audio file to be converted
+        output_path (str): Destination path where the converted WAV file will be saved
+    
+    Raises:
+        FileNotFoundError: If the source file does not exist
+        Exception: For any audio processing or export errors
+    
+    Side Effects:
+        - Prints a conversion confirmation message to console
+        - Creates a new WAV file at the specified output path
+    """
     audio = AudioSegment.from_file(file_path, format="mp4")
     audio.export(output_path, format="wav")
     print(f"Converted {file_path} to {output_path}")
 
 
 def set_faster_whisper_model(model: str, auto_update: bool = False):
+    """
+    Initialize a Faster Whisper model for speech-to-text transcription.
+    
+    This function sets up a WhisperModel with specified configuration, handling potential initialization errors and supporting optional model updates.
+    
+    Parameters:
+        model (str): Path or name of the Whisper model to load.
+        auto_update (bool, optional): Whether to allow automatic model updates. Defaults to False.
+    
+    Returns:
+        WhisperModel or None: Configured Whisper model for speech transcription, or None if model initialization fails.
+    
+    Notes:
+        - Uses CUDA device if available, otherwise falls back to CPU
+        - Attempts to load model with local files first
+        - Retries model initialization with forced download if initial attempt fails
+        - Logs a warning if model initialization encounters issues
+    """
     whisper_model = None
     if model:
         from faster_whisper import WhisperModel
@@ -147,6 +200,23 @@ class AudioConfigUpdateForm(BaseModel):
 
 @router.get("/config")
 async def get_audio_config(request: Request, user=Depends(get_admin_user)):
+    """
+    Retrieve the current audio configuration for text-to-speech (TTS) and speech-to-text (STT) settings.
+    
+    This asynchronous function returns a comprehensive configuration dictionary containing settings for various TTS and STT engines. Access is restricted to admin users.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state configuration
+        user (dict, optional): Admin user authentication, automatically validated by the get_admin_user dependency
+    
+    Returns:
+        dict: A nested dictionary with two main keys 'tts' and 'stt', each containing multiple configuration parameters:
+            - TTS configuration includes API URLs, keys, engine, model, voice, and Azure-specific settings
+            - STT configuration includes API URLs, keys, engine, model, and Whisper model settings
+    
+    Raises:
+        HTTPException: If the user is not authenticated as an admin
+    """
     return {
         "tts": {
             "OPENAI_API_BASE_URL": request.app.state.config.TTS_OPENAI_API_BASE_URL,
@@ -173,6 +243,26 @@ async def get_audio_config(request: Request, user=Depends(get_admin_user)):
 async def update_audio_config(
     request: Request, form_data: AudioConfigUpdateForm, user=Depends(get_admin_user)
 ):
+    """
+    Update the application's audio configuration for text-to-speech (TTS) and speech-to-text (STT) settings.
+    
+    This asynchronous function allows an admin user to modify various configuration parameters for audio processing engines. It updates both TTS and STT settings in the application's state, including API keys, engine selection, models, and additional engine-specific parameters.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing the application state.
+        form_data (AudioConfigUpdateForm): A form containing the new configuration settings for TTS and STT.
+        user (dict, optional): The admin user, automatically validated by the get_admin_user dependency.
+    
+    Returns:
+        dict: A dictionary containing the updated configuration settings for both TTS and STT, including:
+            - TTS settings: API URLs, keys, engine, model, voice, split settings, Azure-specific parameters
+            - STT settings: API URLs, keys, engine, model, Whisper model
+    
+    Notes:
+        - Requires admin user authentication
+        - If STT engine is empty, initializes a Whisper model with the specified configuration
+        - Directly modifies the application's state configuration
+    """
     request.app.state.config.TTS_OPENAI_API_BASE_URL = form_data.tts.OPENAI_API_BASE_URL
     request.app.state.config.TTS_OPENAI_API_KEY = form_data.tts.OPENAI_API_KEY
     request.app.state.config.TTS_API_KEY = form_data.tts.API_KEY
@@ -219,6 +309,25 @@ async def update_audio_config(
 
 
 def load_speech_pipeline(request):
+    """
+    Load and initialize the speech synthesis pipeline and speaker embeddings dataset.
+    
+    This function sets up the text-to-speech (TTS) pipeline using the Microsoft SpeechT5 model 
+    and loads speaker embeddings from the CMU Arctic dataset. It ensures that the pipeline 
+    and dataset are only loaded once and cached in the application state.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing the application state.
+    
+    Side Effects:
+        - Initializes `request.app.state.speech_synthesiser` with a Hugging Face text-to-speech pipeline
+        - Initializes `request.app.state.speech_speaker_embeddings_dataset` with speaker embeddings dataset
+    
+    Notes:
+        - Uses the 'microsoft/speecht5_tts' model for text-to-speech synthesis
+        - Loads speaker embeddings from the 'Matthijs/cmu-arctic-xvectors' dataset
+        - Lazy loading is implemented to avoid redundant model and dataset loading
+    """
     from transformers import pipeline
     from datasets import load_dataset
 
@@ -235,6 +344,27 @@ def load_speech_pipeline(request):
 
 @router.post("/speech")
 async def speech(request: Request, user=Depends(get_verified_user)):
+    """
+    Asynchronously generate speech using the configured Text-to-Speech (TTS) engine.
+    
+    This function supports multiple TTS engines including OpenAI, ElevenLabs, Azure, and Transformers. It handles caching of generated speech files to improve performance and reduce redundant API calls.
+    
+    Parameters:
+        request (Request): The incoming HTTP request containing TTS configuration and payload
+        user (User, optional): The verified user making the request, obtained via dependency injection
+    
+    Returns:
+        FileResponse: An MP3 audio file containing the synthesized speech
+    
+    Raises:
+        HTTPException: For various error conditions such as invalid payload, unsupported voice, or external service errors
+    
+    Notes:
+        - Supports caching of generated speech files using a hash of the input text and TTS configuration
+        - Handles different API requirements for each supported TTS engine
+        - Logs exceptions and provides detailed error messages
+        - Optionally forwards user information headers for external API calls
+    """
     body = await request.body()
     name = hashlib.sha256(
         body
@@ -453,6 +583,28 @@ async def speech(request: Request, user=Depends(get_verified_user)):
 
 
 def transcribe(request: Request, file_path):
+    """
+    Transcribe an audio file using the configured speech-to-text (STT) engine.
+    
+    This function supports two STT engines: a local Whisper model and OpenAI's transcription service.
+    For the local Whisper model, it uses the faster-whisper library to generate a transcript.
+    For OpenAI, it sends the audio file to the OpenAI API for transcription.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state and configuration.
+        file_path (str): The path to the audio file to be transcribed.
+    
+    Returns:
+        dict: A dictionary containing the transcribed text with the key 'text'.
+    
+    Raises:
+        Exception: If there are issues with transcription, such as API connection errors or file processing problems.
+    
+    Side Effects:
+        - Saves the transcript as a JSON file in the same directory as the input audio file.
+        - Logs the detected language and transcription details.
+        - May convert MP4 audio files to WAV format for OpenAI transcription.
+    """
     print("transcribe", file_path)
     filename = os.path.basename(file_path)
     file_dir = os.path.dirname(file_path)
@@ -523,6 +675,27 @@ def transcribe(request: Request, file_path):
 
 
 def compress_audio(file_path):
+    """
+    Compress an audio file if it exceeds the maximum allowed file size.
+    
+    This function reduces the audio file's size by:
+    - Downsampling to 16kHz
+    - Converting to mono channel
+    - Exporting as low-bitrate OPUS format
+    
+    Parameters:
+        file_path (str): Path to the input audio file to be compressed
+    
+    Returns:
+        str: Path to the compressed audio file or original file if no compression was needed
+    
+    Raises:
+        Exception: If the compressed file still exceeds the maximum file size
+    
+    Side Effects:
+        - Creates a new compressed audio file in the same directory as the original
+        - Logs debug information about compression
+    """
     if os.path.getsize(file_path) > MAX_FILE_SIZE:
         file_dir = os.path.dirname(file_path)
         audio = AudioSegment.from_file(file_path)
@@ -546,6 +719,34 @@ def transcription(
     file: UploadFile = File(...),
     user=Depends(get_verified_user),
 ):
+    """
+    Transcribe an uploaded audio file to text using the configured speech-to-text (STT) engine.
+    
+    This endpoint handles audio file uploads, validates the file type, compresses the audio if necessary, 
+    and generates a text transcription using the specified STT engine.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing configuration context
+        file (UploadFile): The uploaded audio file to be transcribed
+        user (dict, optional): Verified user information, obtained through dependency injection
+    
+    Returns:
+        dict: A dictionary containing the transcription data and the filename
+            - 'text': Transcribed text from the audio file
+            - 'filename': Name of the processed audio file
+    
+    Raises:
+        HTTPException: 
+            - 400 Bad Request if the file type is not supported
+            - 400 Bad Request if audio compression or transcription fails
+    
+    Notes:
+        - Supports audio file types: MP3, WAV, OGG, M4A
+        - Generates a unique filename for each uploaded file
+        - Stores uploaded files temporarily in the cache directory
+        - Compresses audio files before transcription
+        - Logs any exceptions during processing
+    """
     log.info(f"file.content_type: {file.content_type}")
 
     if file.content_type not in ["audio/mpeg", "audio/wav", "audio/ogg", "audio/x-m4a"]:
@@ -600,6 +801,29 @@ def transcription(
 
 
 def get_available_models(request: Request) -> list[dict]:
+    """
+    Retrieve available TTS models based on the configured TTS engine.
+    
+    This function fetches available text-to-speech models from either OpenAI or ElevenLabs 
+    depending on the current TTS engine configuration.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state and configuration.
+    
+    Returns:
+        list[dict]: A list of available TTS models, where each model is represented as a dictionary 
+                   with 'id' or 'name' and 'id' keys. Returns an empty list if no models are found 
+                   or an error occurs during retrieval.
+    
+    Raises:
+        Logs an error if there's a problem fetching models from the ElevenLabs API, but does not 
+        raise an exception to the caller.
+    
+    Notes:
+        - For OpenAI, returns hardcoded models: 'tts-1' and 'tts-1-hd'
+        - For ElevenLabs, makes an API call to fetch available models using the configured API key
+        - Handles potential network or API request errors gracefully
+    """
     available_models = []
     if request.app.state.config.TTS_ENGINE == "openai":
         available_models = [{"id": "tts-1"}, {"id": "tts-1-hd"}]
@@ -626,11 +850,48 @@ def get_available_models(request: Request) -> list[dict]:
 
 @router.get("/models")
 async def get_models(request: Request, user=Depends(get_verified_user)):
+    """
+    Retrieve available text-to-speech (TTS) models for the configured TTS engine.
+    
+    This asynchronous endpoint allows authenticated users to fetch a list of available TTS models based on the current configuration.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application context
+        user (dict, optional): Verified user information obtained through dependency injection
+    
+    Returns:
+        dict: A dictionary containing a list of available TTS models under the 'models' key
+    
+    Raises:
+        HTTPException: If there's an error retrieving models from the configured TTS engine
+    """
     return {"models": get_available_models(request)}
 
 
 def get_available_voices(request) -> dict:
-    """Returns {voice_id: voice_name} dict"""
+    """
+    Retrieve available voices for the configured text-to-speech (TTS) engine.
+    
+    This function dynamically fetches available voices based on the current TTS engine configuration. Supported engines include OpenAI, ElevenLabs, and Azure.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state and configuration.
+    
+    Returns:
+        dict: A dictionary mapping voice IDs to voice names. The structure varies by TTS engine:
+        - OpenAI: Static predefined voices
+        - ElevenLabs: Dynamically fetched voices from API
+        - Azure: Voices retrieved from Microsoft Cognitive Services
+    
+    Raises:
+        Handles potential API request exceptions silently, logging errors for Azure voice retrieval.
+    
+    Notes:
+        - For OpenAI, returns a fixed set of predefined voices
+        - For ElevenLabs, uses get_elevenlabs_voices() to fetch voices
+        - For Azure, makes a direct API call to list available voices
+        - Gracefully handles potential API or configuration errors
+    """
     available_voices = {}
     if request.app.state.config.TTS_ENGINE == "openai":
         available_voices = {
@@ -674,11 +935,24 @@ def get_available_voices(request) -> dict:
 @lru_cache
 def get_elevenlabs_voices(api_key: str) -> dict:
     """
-    Note, set the following in your .env file to use Elevenlabs:
-    AUDIO_TTS_ENGINE=elevenlabs
-    AUDIO_TTS_API_KEY=sk_...  # Your Elevenlabs API key
-    AUDIO_TTS_VOICE=EXAVITQu4vr4xnSDxMaL  # From https://api.elevenlabs.io/v1/voices
-    AUDIO_TTS_MODEL=eleven_multilingual_v2
+    Fetches available voices from the ElevenLabs TTS API.
+    
+    This function retrieves a list of voices from the ElevenLabs API using the provided API key.
+    
+    Parameters:
+        api_key (str): ElevenLabs API key for authentication
+    
+    Returns:
+        dict: A dictionary mapping voice IDs to voice names, where:
+            - Keys are unique voice identifiers
+            - Values are human-readable voice names
+    
+    Raises:
+        RuntimeError: If there is an error connecting to or retrieving voices from the ElevenLabs API
+    
+    Example:
+        voices = get_elevenlabs_voices('your_api_key')
+        # Returns: {'voice_id1': 'Voice Name 1', 'voice_id2': 'Voice Name 2'}
     """
 
     try:
@@ -706,6 +980,23 @@ def get_elevenlabs_voices(api_key: str) -> dict:
 
 @router.get("/voices")
 async def get_voices(request: Request, user=Depends(get_verified_user)):
+    """
+    Retrieve available voices for the configured text-to-speech (TTS) engine.
+    
+    This asynchronous endpoint fetches the list of available voices based on the current TTS configuration and returns them in a structured format.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing configuration context
+        user (dict, optional): Verified user information, obtained through dependency injection
+    
+    Returns:
+        dict: A dictionary containing a list of voices, where each voice is represented by:
+            - 'id': Unique identifier for the voice
+            - 'name': Human-readable name of the voice
+    
+    Raises:
+        HTTPException: If there's an error retrieving voices from the TTS engine
+    """
     return {
         "voices": [
             {"id": k, "name": v} for k, v in get_available_voices(request).items()

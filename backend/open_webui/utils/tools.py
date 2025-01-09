@@ -38,6 +38,35 @@ def apply_extra_params_to_tool_function(
 def get_tools(
     request: Request, tool_ids: list[str], user: UserModel, extra_params: dict
 ) -> dict[str, dict]:
+    """
+    Retrieve and prepare tools for execution based on provided tool IDs and user context.
+    
+    This function dynamically loads and configures tools from the application's tool registry, preparing them for use with specific user parameters and extra context.
+    
+    Parameters:
+        request (Request): The FastAPI request object providing access to application state
+        tool_ids (list[str]): List of tool identifiers to retrieve and prepare
+        user (UserModel): The current user's model containing authentication and context information
+        extra_params (dict): Additional parameters to be passed to tool functions during execution
+    
+    Returns:
+        dict[str, dict]: A dictionary of prepared tools, keyed by function name, containing:
+            - toolkit_id: The original tool's identifier
+            - callable: A configured function ready for execution
+            - spec: The tool's OpenAI function specification
+            - pydantic_model: A Pydantic model representing the tool's input schema
+            - file_handler: Optional file handling capability of the tool
+            - citation: Optional citation information for the tool
+    
+    Raises:
+        Potential warnings for tool name collisions during loading
+    
+    Notes:
+        - Dynamically loads tool modules if not already in application state
+        - Configures tool valves and user-specific parameters
+        - Filters out internal parameters from tool specifications
+        - Wraps original tool functions with extra parameter injection
+    """
     tools_dict = {}
 
     for tool_id in tool_ids:

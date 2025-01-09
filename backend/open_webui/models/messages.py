@@ -98,6 +98,23 @@ class MessageTable:
     def insert_new_message(
         self, form_data: MessageForm, channel_id: str, user_id: str
     ) -> Optional[MessageModel]:
+        """
+        Insert a new message into the database.
+        
+        Creates a new message with a unique identifier, timestamps, and details from the provided message form. 
+        Stores the message in the database and returns the created message model.
+        
+        Parameters:
+            form_data (MessageForm): The form data containing message content, parent ID, additional data, and metadata
+            channel_id (str): The ID of the channel where the message is being sent
+            user_id (str): The ID of the user sending the message
+        
+        Returns:
+            Optional[MessageModel]: The created message model, or None if message creation fails
+        
+        Raises:
+            SQLAlchemyError: If there are database-related issues during message insertion
+        """
         with get_db() as db:
             id = str(uuid.uuid4())
 
@@ -123,6 +140,26 @@ class MessageTable:
             return MessageModel.model_validate(result) if result else None
 
     def get_message_by_id(self, id: str) -> Optional[MessageResponse]:
+        """
+        Retrieve a message by its unique identifier with associated reactions and replies.
+        
+        Fetches a message from the database and enriches it with additional metadata including reactions, replies, and reply statistics.
+        
+        Parameters:
+            id (str): The unique identifier of the message to retrieve.
+        
+        Returns:
+            MessageResponse: A comprehensive message object containing:
+                - Original message details
+                - Total number of replies
+                - Timestamp of the latest reply (if any)
+                - List of reactions to the message
+            None if no message is found with the given ID.
+        
+        Example:
+            message = Messages.get_message_by_id("msg_123")
+            # Returns a MessageResponse with message details, or None
+        """
         with get_db() as db:
             message = db.get(Message, id)
             if not message:
@@ -141,6 +178,19 @@ class MessageTable:
             )
 
     def get_replies_by_message_id(self, id: str) -> list[MessageModel]:
+        """
+        Retrieve all replies to a specific message, ordered by creation time in descending order.
+        
+        Parameters:
+            id (str): The unique identifier of the parent message for which replies are to be fetched.
+        
+        Returns:
+            list[MessageModel]: A list of message models representing the replies to the specified message, 
+            sorted from most recent to oldest.
+        
+        Raises:
+            SQLAlchemyError: Potential database query errors (implicitly handled by context manager).
+        """
         with get_db() as db:
             all_messages = (
                 db.query(Message)
@@ -151,6 +201,19 @@ class MessageTable:
             return [MessageModel.model_validate(message) for message in all_messages]
 
     def get_reply_user_ids_by_message_id(self, id: str) -> list[str]:
+        """
+        Retrieve the list of user IDs who replied to a specific message.
+        
+        Parameters:
+            id (str): The unique identifier of the parent message.
+        
+        Returns:
+            list[str]: A list of user IDs who have replied to the specified message.
+        
+        Example:
+            # Get user IDs who replied to a message with ID 'abc123'
+            reply_users = Messages.get_reply_user_ids_by_message_id('abc123')
+        """
         with get_db() as db:
             return [
                 message.user_id
@@ -160,6 +223,26 @@ class MessageTable:
     def get_messages_by_channel_id(
         self, channel_id: str, skip: int = 0, limit: int = 50
     ) -> list[MessageModel]:
+        """
+        Retrieve messages for a specific channel with pagination support.
+        
+        Fetches a list of top-level messages (without parent messages) from a given channel, sorted by creation time in descending order.
+        
+        Parameters:
+            channel_id (str): Unique identifier of the channel to retrieve messages from
+            skip (int, optional): Number of messages to skip for pagination. Defaults to 0.
+            limit (int, optional): Maximum number of messages to return. Defaults to 50.
+        
+        Returns:
+            list[MessageModel]: A list of messages from the specified channel, converted to Pydantic models
+        
+        Example:
+            # Retrieve first 50 messages from a channel
+            messages = Messages.get_messages_by_channel_id('channel123')
+            
+            # Retrieve next 50 messages (pagination)
+            next_messages = Messages.get_messages_by_channel_id('channel123', skip=50)
+        """
         with get_db() as db:
             all_messages = (
                 db.query(Message)
@@ -174,6 +257,27 @@ class MessageTable:
     def get_messages_by_parent_id(
         self, channel_id: str, parent_id: str, skip: int = 0, limit: int = 50
     ) -> list[MessageModel]:
+        """
+        Retrieve messages that are replies to a specific parent message within a channel.
+        
+        Fetches a list of child messages for a given parent message, with optional pagination. If the number of child messages is less than the specified limit, the parent message is also included in the results.
+        
+        Parameters:
+            channel_id (str): The ID of the channel containing the messages
+            parent_id (str): The ID of the parent message to retrieve replies for
+            skip (int, optional): Number of messages to skip for pagination. Defaults to 0.
+            limit (int, optional): Maximum number of messages to retrieve. Defaults to 50.
+        
+        Returns:
+            list[MessageModel]: A list of message models representing replies to the parent message, 
+            optionally including the parent message if the number of replies is less than the limit.
+        
+        Behavior:
+            - Returns an empty list if the parent message does not exist
+            - Orders messages by creation time in descending order
+            - Applies pagination using skip and limit parameters
+            - Includes parent message if total replies are fewer than the limit
+        """
         with get_db() as db:
             message = db.get(Message, parent_id)
 
@@ -198,6 +302,25 @@ class MessageTable:
     def update_message_by_id(
         self, id: str, form_data: MessageForm
     ) -> Optional[MessageModel]:
+        """
+        Update an existing message by its unique identifier.
+        
+        Parameters:
+            id (str): The unique identifier of the message to update
+            form_data (MessageForm): A form containing the updated message details
+        
+        Returns:
+            Optional[MessageModel]: The updated message model if found and successfully updated, otherwise None
+        
+        Raises:
+            SQLAlchemy exceptions may be raised for database-related errors during the update process
+        
+        Notes:
+            - Updates the message's content, data, and metadata
+            - Sets the updated_at timestamp to the current nanosecond timestamp
+            - Commits the changes to the database
+            - Refreshes the message object to reflect the latest database state
+        """
         with get_db() as db:
             message = db.get(Message, id)
             message.content = form_data.content
@@ -211,6 +334,25 @@ class MessageTable:
     def add_reaction_to_message(
         self, id: str, user_id: str, name: str
     ) -> Optional[MessageReactionModel]:
+        """
+        Add a reaction to a specific message.
+        
+        Adds a new message reaction for a given user and message with a specified reaction name.
+        
+        Parameters:
+            id (str): The unique identifier of the message to which the reaction is being added.
+            user_id (str): The unique identifier of the user adding the reaction.
+            name (str): The name/type of the reaction (e.g., 'like', 'heart', etc.).
+        
+        Returns:
+            Optional[MessageReactionModel]: The created message reaction model if successful, None otherwise.
+        
+        Raises:
+            SQLAlchemyError: If there are database-related issues during reaction creation.
+        
+        Example:
+            reaction = Messages.add_reaction_to_message('msg123', 'user456', 'heart')
+        """
         with get_db() as db:
             reaction_id = str(uuid.uuid4())
             reaction = MessageReactionModel(
@@ -227,6 +369,26 @@ class MessageTable:
             return MessageReactionModel.model_validate(result) if result else None
 
     def get_reactions_by_message_id(self, id: str) -> list[Reactions]:
+        """
+        Retrieve all reactions for a specific message.
+        
+        Aggregates reactions by their name, collecting unique user IDs and counting total reactions.
+        
+        Parameters:
+            id (str): The unique identifier of the message to fetch reactions for.
+        
+        Returns:
+            list[Reactions]: A list of reaction objects, each containing the reaction name, 
+            list of user IDs who made the reaction, and total reaction count.
+        
+        Example:
+            # Retrieve reactions for a message with ID 'msg123'
+            reactions = Messages.get_reactions_by_message_id('msg123')
+            # Result might look like: [
+            #     Reactions(name='👍', user_ids=['user1', 'user2'], count=2),
+            #     Reactions(name='❤️', user_ids=['user3'], count=1)
+            # ]
+        """
         with get_db() as db:
             all_reactions = db.query(MessageReaction).filter_by(message_id=id).all()
 
@@ -246,6 +408,24 @@ class MessageTable:
     def remove_reaction_by_id_and_user_id_and_name(
         self, id: str, user_id: str, name: str
     ) -> bool:
+        """
+        Remove a specific reaction from a message.
+        
+        Deletes a message reaction based on the message ID, user ID, and reaction name.
+        
+        Parameters:
+            id (str): The unique identifier of the message
+            user_id (str): The unique identifier of the user who added the reaction
+            name (str): The name/type of the reaction to remove
+        
+        Returns:
+            bool: Always returns True after successfully deleting the reaction
+        
+        Note:
+            - Uses a database session to perform the deletion
+            - Commits the transaction immediately after deletion
+            - Will silently remove the reaction if it exists, or do nothing if no matching reaction is found
+        """
         with get_db() as db:
             db.query(MessageReaction).filter_by(
                 message_id=id, user_id=user_id, name=name
@@ -254,18 +434,65 @@ class MessageTable:
             return True
 
     def delete_reactions_by_id(self, id: str) -> bool:
+        """
+        Delete all reactions associated with a specific message.
+        
+        Parameters:
+            id (str): The unique identifier of the message whose reactions are to be deleted.
+        
+        Returns:
+            bool: Always returns True after successfully deleting the reactions.
+        
+        Side Effects:
+            Removes all MessageReaction entries linked to the specified message ID from the database.
+        """
         with get_db() as db:
             db.query(MessageReaction).filter_by(message_id=id).delete()
             db.commit()
             return True
 
     def delete_replies_by_id(self, id: str) -> bool:
+        """
+        Delete all replies associated with a specific message.
+        
+        Parameters:
+            id (str): The unique identifier of the parent message whose replies are to be deleted.
+        
+        Returns:
+            bool: Always returns True after deleting the replies.
+        
+        Side Effects:
+            Permanently removes all messages in the database that have the specified message ID as their parent.
+            Commits the deletion transaction to the database.
+        """
         with get_db() as db:
             db.query(Message).filter_by(parent_id=id).delete()
             db.commit()
             return True
 
     def delete_message_by_id(self, id: str) -> bool:
+        """
+        Delete a message and all its associated reactions from the database.
+        
+        This method removes a specific message identified by its ID and all reactions linked to that message. 
+        The deletion is performed within a database transaction, ensuring that both the message and its reactions 
+        are completely removed.
+        
+        Parameters:
+            id (str): The unique identifier of the message to be deleted.
+        
+        Returns:
+            bool: Always returns True after successful deletion of the message and its reactions.
+        
+        Side Effects:
+            - Removes the message with the specified ID from the Message table
+            - Removes all reactions associated with the message from the MessageReaction table
+            - Commits the transaction to persist the deletions
+        
+        Note:
+            This method does not check for the existence of the message before deletion.
+            If the message does not exist, no error will be raised, and the method will still return True.
+        """
         with get_db() as db:
             db.query(Message).filter_by(id=id).delete()
 

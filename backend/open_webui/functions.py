@@ -53,6 +53,21 @@ log.setLevel(SRC_LOG_LEVELS["MAIN"])
 
 def get_function_module_by_id(request: Request, pipe_id: str):
     # Check if function is already loaded
+    """
+    Retrieve a function module by its unique identifier, loading it if not already present in the application state.
+    
+    This function manages the caching and initialization of function modules, ensuring that each module is loaded only once and its valves are properly configured.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing the application state
+        pipe_id (str): The unique identifier of the function module to retrieve
+    
+    Returns:
+        module: The loaded function module with optional valve configuration
+    
+    Raises:
+        Exception: If the function module cannot be loaded or initialized
+    """
     if pipe_id not in request.app.state.FUNCTIONS:
         function_module, _, _ = load_function_module_by_id(pipe_id)
         request.app.state.FUNCTIONS[pipe_id] = function_module
@@ -66,6 +81,31 @@ def get_function_module_by_id(request: Request, pipe_id: str):
 
 
 async def get_function_models(request):
+    """
+    Retrieve a list of function models for active pipes.
+    
+    This asynchronous function collects and processes function models from active pipes, handling both single pipes and manifold (multi-function) pipes. It generates a standardized list of pipe models with metadata.
+    
+    Parameters:
+        request (Request): The incoming HTTP request object used for context and module retrieval.
+    
+    Returns:
+        list: A list of pipe models, each containing:
+            - id (str): Unique identifier for the pipe
+            - name (str): Name of the pipe
+            - object (str): Always set to "model"
+            - created (datetime): Creation timestamp of the pipe
+            - owned_by (str): Owner of the pipe (set to "openai")
+            - pipe (dict): Pipe type information
+    
+    Raises:
+        Exception: Logs and captures any errors during pipe processing, continuing with other pipes.
+    
+    Notes:
+        - Handles both single pipes and manifold pipes with multiple sub-pipes
+        - Supports pipes defined as static lists or callable functions
+        - Logs debug information about pipe processing
+    """
     pipes = Functions.get_functions_by_type("pipe", active_only=True)
     pipe_models = []
 
@@ -134,6 +174,32 @@ async def get_function_models(request):
 async def generate_function_chat_completion(
     request, form_data, user, models: dict = {}
 ):
+    """
+    Generate a chat completion for a function module with advanced streaming and processing capabilities.
+    
+    This asynchronous function handles the execution of function pipes, supporting various response types and streaming modes. It dynamically processes function parameters, manages user valves, and provides flexible response handling.
+    
+    Parameters:
+        request (Request): The incoming HTTP request object.
+        form_data (dict): Data containing model configuration, messages, and other parameters.
+        user (User): The authenticated user making the request.
+        models (dict, optional): Additional model configurations. Defaults to an empty dictionary.
+    
+    Returns:
+        StreamingResponse or dict: A streaming response for stream mode or a complete chat completion message.
+        Supports multiple response types including strings, generators, async generators, and streaming responses.
+    
+    Key Features:
+        - Dynamic function parameter generation
+        - User valve management
+        - Support for streaming and non-streaming responses
+        - Error handling and logging
+        - Flexible message processing
+        - Compatibility with various function module types
+    
+    Raises:
+        Exception: Captures and logs any errors during function execution.
+    """
     async def execute_pipe(pipe, params):
         if inspect.iscoroutinefunction(pipe):
             return await pipe(**params)
@@ -141,6 +207,20 @@ async def generate_function_chat_completion(
             return pipe(**params)
 
     async def get_message_content(res: str | Generator | AsyncGenerator) -> str:
+        """
+        Extracts and converts message content from various response types.
+        
+        Parameters:
+            res (str | Generator | AsyncGenerator): The response to process, which can be a string, generator, or async generator.
+        
+        Returns:
+            str: A concatenated string representation of the response content.
+        
+        Handles different input types:
+            - For strings, returns the string directly
+            - For generators, joins all elements as strings
+            - For async generators, asynchronously joins all elements as strings
+        """
         if isinstance(res, str):
             return res
         if isinstance(res, Generator):
@@ -149,6 +229,22 @@ async def generate_function_chat_completion(
             return "".join([str(stream) async for stream in res])
 
     def process_line(form_data: dict, line):
+        """
+        Process a line of output for streaming chat responses, converting various input types to a consistent JSON-formatted data stream.
+        
+        Parameters:
+            form_data (dict): Form data containing model configuration
+            line (Any): Input line to be processed, which can be a BaseModel, dict, bytes, or string
+        
+        Returns:
+            str: Formatted data stream line with JSON-encoded content, ready for server-sent events (SSE)
+        
+        Notes:
+            - Handles conversion of BaseModel and dict instances to JSON
+            - Decodes bytes to UTF-8 strings
+            - Applies OpenAI chat chunk message template for non-data lines
+            - Ensures consistent "data: " prefix for streaming responses
+        """
         if isinstance(line, BaseModel):
             line = line.model_dump_json()
             line = f"data: {line}"
@@ -167,12 +263,49 @@ async def generate_function_chat_completion(
             return f"data: {json.dumps(line)}\n\n"
 
     def get_pipe_id(form_data: dict) -> str:
+        """
+        Extract the pipe ID from the form data.
+        
+        This function parses the 'model' field from the input dictionary, handling cases where the model name might include additional details after a dot.
+        
+        Parameters:
+            form_data (dict): A dictionary containing form submission data with a 'model' key.
+        
+        Returns:
+            str: The primary pipe identifier, extracted by splitting on the first dot if present.
+        
+        Example:
+            >>> get_pipe_id({"model": "my_pipe.additional_info"})
+            'my_pipe'
+            >>> get_pipe_id({"model": "simple_pipe"})
+            'simple_pipe'
+        """
         pipe_id = form_data["model"]
         if "." in pipe_id:
             pipe_id, _ = pipe_id.split(".", 1)
         return pipe_id
 
     def get_function_params(function_module, form_data, user, extra_params=None):
+        """
+        Prepare function parameters for executing a function module with user-specific and extra parameters.
+        
+        Parameters:
+            function_module (object): The function module containing the pipe function to be executed.
+            form_data (dict): Request form data to be included as the 'body' parameter.
+            user (User): The current user object.
+            extra_params (dict, optional): Additional parameters to be passed to the function. Defaults to None.
+        
+        Returns:
+            dict: A dictionary of parameters to be used when calling the function module's pipe, including:
+                - 'body': The original form data
+                - Any extra parameters that match the function's signature
+                - User-specific valves if applicable
+        
+        Notes:
+            - Filters extra parameters to only include those matching the function's signature
+            - If the function module has a UserValves class, attempts to populate user-specific valve configurations
+            - Handles potential errors in valve configuration by falling back to default UserValves
+        """
         if extra_params is None:
             extra_params = {}
 
@@ -261,6 +394,27 @@ async def generate_function_chat_completion(
     if form_data.get("stream", False):
 
         async def stream_content():
+            """
+            Stream the output of a function pipe with robust handling of different response types.
+            
+            This asynchronous generator function executes a pipe function and yields its content in a streaming format compatible with OpenAI chat completion protocols. It supports multiple response types including:
+            - StreamingResponse objects
+            - Dictionaries
+            - Strings
+            - Iterators
+            - Async generators
+            
+            Handles various edge cases and error scenarios, converting outputs to JSON-formatted server-sent events (SSE).
+            
+            Yields:
+                Streaming data chunks formatted as JSON server-sent events, including:
+                - Successful response data
+                - Error messages
+                - Completion markers
+            
+            Raises:
+                Logs and yields any exceptions encountered during pipe execution
+            """
             try:
                 res = await execute_pipe(pipe, params)
 

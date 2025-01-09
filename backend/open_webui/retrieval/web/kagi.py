@@ -12,14 +12,27 @@ log.setLevel(SRC_LOG_LEVELS["RAG"])
 def search_kagi(
     api_key: str, query: str, count: int, filter_list: Optional[list[str]] = None
 ) -> list[SearchResult]:
-    """Search using Kagi's Search API and return the results as a list of SearchResult objects.
-
+    """
+    Search using Kagi's Search API and return the results as a list of SearchResult objects.
+    
     The Search API will inherit the settings in your account, including results personalization and snippet length.
-
+    
     Args:
-        api_key (str): A Kagi Search API key
-        query (str): The query to search for
-        count (int): The number of results to return
+        api_key (str): A Kagi Search API key for authentication
+        query (str): The search query to perform
+        count (int): Maximum number of search results to retrieve
+        filter_list (Optional[list[str]], optional): List of strings to filter search results. Defaults to None.
+    
+    Returns:
+        list[SearchResult]: A list of search results matching the query, filtered and processed
+    
+    Raises:
+        requests.HTTPError: If the API request fails or returns an error status code
+    
+    Example:
+        >>> results = search_kagi("your_api_key", "python programming", 5)
+        >>> for result in results:
+        ...     print(result.title)
     """
     url = "https://kagi.com/api/v0/search"
     headers = {

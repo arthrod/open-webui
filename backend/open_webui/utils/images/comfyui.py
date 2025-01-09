@@ -17,6 +17,24 @@ default_headers = {"User-Agent": "Mozilla/5.0"}
 
 
 def queue_prompt(prompt, client_id, base_url, api_key):
+    """
+    Queue a prompt for processing on a ComfyUI image generation server.
+    
+    Sends a JSON payload containing the prompt and client ID to the specified server endpoint, 
+    with an authorization header for secure access.
+    
+    Parameters:
+        prompt (dict): The workflow and configuration for image generation
+        client_id (str): Unique identifier for the client session
+        base_url (str): Base URL of the ComfyUI server
+        api_key (str): Authentication token for accessing the server
+    
+    Returns:
+        dict: Server response containing details about the queued prompt, typically including a prompt ID
+    
+    Raises:
+        Exception: If there is an error during the request, such as network issues or authentication problems
+    """
     log.info("queue_prompt")
     p = {"prompt": prompt, "client_id": client_id}
     data = json.dumps(p).encode("utf-8")
@@ -35,6 +53,25 @@ def queue_prompt(prompt, client_id, base_url, api_key):
 
 
 def get_image(filename, subfolder, folder_type, base_url, api_key):
+    """
+    Retrieve an image from the server using specified parameters.
+    
+    Sends an HTTP GET request to fetch an image file from a specified URL with authentication.
+    
+    Parameters:
+        filename (str): Name of the image file to retrieve
+        subfolder (str): Subfolder path where the image is located
+        folder_type (str): Type or category of the folder containing the image
+        base_url (str): Base URL of the image server
+        api_key (str): Authentication token for accessing the image server
+    
+    Returns:
+        bytes: Raw image data retrieved from the server
+    
+    Raises:
+        urllib.error.URLError: If there is a network-related error during image retrieval
+        urllib.error.HTTPError: If the server returns an error response
+    """
     log.info("get_image")
     data = {"filename": filename, "subfolder": subfolder, "type": folder_type}
     url_values = urllib.parse.urlencode(data)
@@ -54,6 +91,21 @@ def get_image_url(filename, subfolder, folder_type, base_url):
 
 
 def get_history(prompt_id, base_url, api_key):
+    """
+    Retrieve the processing history for a specific prompt from the ComfyUI server.
+    
+    Parameters:
+        prompt_id (str): Unique identifier of the prompt to retrieve history for
+        base_url (str): Base URL of the ComfyUI server
+        api_key (str): Authorization token for accessing the server
+    
+    Returns:
+        dict: JSON-parsed history data for the specified prompt
+    
+    Raises:
+        urllib.error.URLError: If there is a network-related error during the request
+        json.JSONDecodeError: If the server response cannot be parsed as JSON
+    """
     log.info("get_history")
 
     req = urllib.request.Request(
@@ -65,6 +117,29 @@ def get_history(prompt_id, base_url, api_key):
 
 
 def get_images(ws, prompt, client_id, base_url, api_key):
+    """
+    Retrieve generated images from a WebSocket connection after queuing a prompt.
+    
+    This function manages the process of generating images by:
+    1. Queuing a prompt and obtaining a prompt ID
+    2. Waiting for the execution to complete via WebSocket
+    3. Retrieving the image history
+    4. Extracting image URLs from the generated outputs
+    
+    Parameters:
+        ws (WebSocket): Active WebSocket connection for receiving execution updates
+        prompt (dict): Workflow prompt to be processed
+        client_id (str): Unique client identifier for the request
+        base_url (str): Base URL of the image generation service
+        api_key (str): Authorization key for accessing the service
+    
+    Returns:
+        dict: A dictionary containing a list of generated image URLs under the 'data' key
+    
+    Raises:
+        json.JSONDecodeError: If WebSocket message cannot be parsed
+        WebSocketException: If WebSocket communication fails
+    """
     prompt_id = queue_prompt(prompt, client_id, base_url, api_key)["prompt_id"]
     output_images = []
     while True:
@@ -119,6 +194,31 @@ class ComfyUIGenerateImageForm(BaseModel):
 async def comfyui_generate_image(
     model: str, payload: ComfyUIGenerateImageForm, client_id, base_url, api_key
 ):
+    """
+    Asynchronously generate images using ComfyUI workflow with dynamic configuration.
+    
+    This function dynamically updates a ComfyUI workflow based on input parameters, establishes a WebSocket connection, and retrieves generated images.
+    
+    Parameters:
+        model (str): The machine learning model to use for image generation.
+        payload (ComfyUIGenerateImageForm): Structured form containing workflow and generation parameters.
+        client_id (str): Unique client identifier for the WebSocket connection.
+        base_url (str): Base URL of the ComfyUI server.
+        api_key (str): Authentication key for accessing the ComfyUI service.
+    
+    Returns:
+        list or None: A list of generated image data, or None if image generation fails.
+    
+    Raises:
+        WebSocketException: If WebSocket connection cannot be established.
+        RuntimeError: If workflow processing or image retrieval encounters an error.
+    
+    Notes:
+        - Supports dynamic workflow modification for various generation parameters
+        - Automatically generates random seed if not provided
+        - Handles different node types like model, prompt, dimensions, steps
+        - Logs detailed information about workflow and generation process
+    """
     ws_url = base_url.replace("http://", "ws://").replace("https://", "wss://")
     workflow = json.loads(payload.workflow.workflow)
 

@@ -155,6 +155,25 @@ class ChatTable:
             return ChatModel.model_validate(result) if result else None
 
     def update_chat_by_id(self, id: str, chat: dict) -> Optional[ChatModel]:
+        """
+        Update an existing chat record by its ID with new chat data.
+        
+        Parameters:
+            id (str): The unique identifier of the chat to be updated
+            chat (dict): A dictionary containing updated chat information, potentially including a new title
+        
+        Returns:
+            Optional[ChatModel]: The updated chat model if successful, None otherwise
+        
+        Raises:
+            Exception: Silently handles any database or validation errors, returning None
+        
+        Notes:
+            - Updates the chat's content and title
+            - Automatically sets the updated_at timestamp to the current time
+            - Uses a default title of "New Chat" if no title is provided
+            - Commits changes to the database and refreshes the chat item
+        """
         try:
             with get_db() as db:
                 chat_item = db.get(Chat, id)
@@ -169,6 +188,19 @@ class ChatTable:
             return None
 
     def update_chat_title_by_id(self, id: str, title: str) -> Optional[ChatModel]:
+        """
+        Update the title of a chat by its unique identifier.
+        
+        Parameters:
+            id (str): The unique identifier of the chat to update
+            title (str): The new title to set for the chat
+        
+        Returns:
+            Optional[ChatModel]: The updated chat model if successful, None if the chat is not found
+        
+        Raises:
+            None explicitly, but potential database-related exceptions may be raised by underlying methods
+        """
         chat = self.get_chat_by_id(id)
         if chat is None:
             return None
@@ -181,6 +213,26 @@ class ChatTable:
     def update_chat_tags_by_id(
         self, id: str, tags: list[str], user
     ) -> Optional[ChatModel]:
+        """
+        Update the tags associated with a specific chat.
+        
+        This method performs a comprehensive tag management operation for a chat:
+        1. Retrieves the chat by its ID
+        2. Deletes all existing tags for the chat and user
+        3. Removes any orphaned tags that are no longer associated with any chats
+        4. Adds new tags to the chat, skipping the "none" tag
+        
+        Parameters:
+            id (str): The unique identifier of the chat to update
+            tags (list[str]): A list of new tag names to associate with the chat
+            user: The user object associated with the chat
+        
+        Returns:
+            Optional[ChatModel]: The updated chat model, or None if the chat is not found
+        
+        Raises:
+            Potential database-related exceptions during tag deletion and insertion
+        """
         chat = self.get_chat_by_id(id)
         if chat is None:
             return None
@@ -199,6 +251,20 @@ class ChatTable:
         return self.get_chat_by_id(id)
 
     def get_chat_title_by_id(self, id: str) -> Optional[str]:
+        """
+        Retrieve the title of a chat by its unique identifier.
+        
+        Parameters:
+            id (str): The unique identifier of the chat.
+        
+        Returns:
+            Optional[str]: The title of the chat if found, otherwise "New Chat" as a default title.
+            Returns None if the chat does not exist.
+        
+        Notes:
+            - Uses the `get_chat_by_id` method to fetch the chat record.
+            - Defaults to "New Chat" if no title is specified in the chat's metadata.
+        """
         chat = self.get_chat_by_id(id)
         if chat is None:
             return None
@@ -206,6 +272,22 @@ class ChatTable:
         return chat.chat.get("title", "New Chat")
 
     def get_messages_by_chat_id(self, id: str) -> Optional[dict]:
+        """
+        Retrieve the messages from a chat's history by its unique identifier.
+        
+        Parameters:
+            id (str): The unique identifier of the chat.
+        
+        Returns:
+            Optional[dict]: A dictionary containing chat messages if the chat exists, 
+            or an empty dictionary if no messages are found. Returns None if the chat 
+            does not exist.
+        
+        Example:
+            # Retrieve messages for a specific chat
+            messages = chat_table.get_messages_by_chat_id("chat_123")
+            # messages will be a dictionary of messages or an empty dictionary
+        """
         chat = self.get_chat_by_id(id)
         if chat is None:
             return None
@@ -215,6 +297,21 @@ class ChatTable:
     def get_message_by_id_and_message_id(
         self, id: str, message_id: str
     ) -> Optional[dict]:
+        """
+        Retrieve a specific message from a chat's history by its chat ID and message ID.
+        
+        Parameters:
+            id (str): The unique identifier of the chat.
+            message_id (str): The unique identifier of the message within the chat.
+        
+        Returns:
+            Optional[dict]: The message dictionary if found, otherwise an empty dictionary.
+            Returns None if the chat does not exist.
+        
+        Example:
+            # Retrieve a specific message from a chat
+            message = chat_table.get_message_by_id_and_message_id('chat123', 'msg456')
+        """
         chat = self.get_chat_by_id(id)
         if chat is None:
             return None
@@ -224,6 +321,23 @@ class ChatTable:
     def upsert_message_to_chat_by_id_and_message_id(
         self, id: str, message_id: str, message: dict
     ) -> Optional[ChatModel]:
+        """
+        Upsert a message to a chat's history by chat ID and message ID.
+        
+        This method updates an existing message or adds a new message to the chat's history. If the message already exists, it merges the new message data with the existing message. If the message does not exist, it adds the new message to the chat history.
+        
+        Parameters:
+            id (str): The unique identifier of the chat.
+            message_id (str): The unique identifier of the message.
+            message (dict): The message data to be added or updated.
+        
+        Returns:
+            Optional[ChatModel]: The updated chat model if successful, None if the chat is not found.
+        
+        Side Effects:
+            - Updates the chat's history in the database
+            - Sets the current message ID to the most recently upserted message
+        """
         chat = self.get_chat_by_id(id)
         if chat is None:
             return None
@@ -247,6 +361,27 @@ class ChatTable:
     def add_message_status_to_chat_by_id_and_message_id(
         self, id: str, message_id: str, status: dict
     ) -> Optional[ChatModel]:
+        """
+        Add a status entry to a specific message's status history within a chat.
+        
+        Parameters:
+            id (str): The unique identifier of the chat.
+            message_id (str): The unique identifier of the message within the chat.
+            status (dict): A dictionary containing the status information to be added.
+        
+        Returns:
+            Optional[ChatModel]: The updated chat model if the status is successfully added, 
+            or None if the chat or message is not found.
+        
+        Raises:
+            None explicitly, but may raise database-related exceptions during update.
+        
+        Example:
+            status = {"type": "read", "timestamp": "2024-01-15T10:30:00Z"}
+            updated_chat = chat_table.add_message_status_to_chat_by_id_and_message_id(
+                "chat_123", "msg_456", status
+            )
+        """
         chat = self.get_chat_by_id(id)
         if chat is None:
             return None
@@ -263,6 +398,25 @@ class ChatTable:
         return self.update_chat_by_id(id, chat)
 
     def insert_shared_chat_by_chat_id(self, chat_id: str) -> Optional[ChatModel]:
+        """
+        Create a shared version of a chat by generating a new chat entry with a unique identifier.
+        
+        This method allows a chat to be shared by creating a copy of the original chat with a new ID and a special user identifier. If the chat is already shared, it returns the existing shared chat.
+        
+        Parameters:
+            chat_id (str): The unique identifier of the original chat to be shared.
+        
+        Returns:
+            Optional[ChatModel]: A new shared chat model if successful, None otherwise.
+        
+        Raises:
+            SQLAlchemy exceptions: Potential database-related errors during chat sharing process.
+        
+        Side Effects:
+            - Creates a new chat entry in the database
+            - Updates the original chat with a share_id
+            - Generates a new unique identifier for the shared chat
+        """
         with get_db() as db:
             # Get the existing chat to share
             chat = db.get(Chat, chat_id)
@@ -467,6 +621,20 @@ class ChatTable:
             return None
 
     def get_chat_by_share_id(self, id: str) -> Optional[ChatModel]:
+        """
+        Retrieve a chat by its share ID, verifying if the shared link is still active.
+        
+        This method checks if a chat with the given share ID exists and, if found, retrieves the full chat details.
+        
+        Parameters:
+            id (str): The unique share ID of the chat to retrieve
+        
+        Returns:
+            Optional[ChatModel]: The complete chat model if the shared link is active, otherwise None
+        
+        Raises:
+            None: Silently handles any database-related exceptions and returns None
+        """
         try:
             with get_db() as db:
                 # it is possible that the shared link was deleted. hence,

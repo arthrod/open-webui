@@ -30,10 +30,8 @@ services:
 
   postgres:
     image: postgres:latest
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: keys_db
+    env_file:
+      - .env
     volumes:
       - ./litellm/postgres_data:/var/lib/postgresql/data
     restart: always

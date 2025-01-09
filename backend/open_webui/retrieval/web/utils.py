@@ -87,6 +87,33 @@ def get_web_loader(
     requests_per_second: int = 2,
 ):
     # Check if the URL is valid
+    """
+    Retrieve a web loader for scraping content from specified URL(s) with configurable SSL verification and request rate.
+    
+    Parameters:
+        urls (Union[str, Sequence[str]]): A single URL or a sequence of URLs to load web content from
+        verify_ssl (bool, optional): Whether to verify SSL certificates during web requests. Defaults to True
+        requests_per_second (int, optional): Maximum number of web requests per second. Defaults to 2
+    
+    Returns:
+        SafeWebBaseLoader: A configured web loader capable of scraping content from the provided URL(s)
+    
+    Raises:
+        ValueError: If the provided URL(s) are invalid or cannot be validated
+    
+    Example:
+        # Load content from a single URL
+        loader = get_web_loader("https://example.com")
+        documents = loader.lazy_load()
+    
+        # Load content from multiple URLs with custom settings
+        loader = get_web_loader(
+            ["https://example1.com", "https://example2.com"],
+            verify_ssl=False,
+            requests_per_second=1
+        )
+        documents = loader.lazy_load()
+    """
     if not validate_url(urls):
         raise ValueError(ERROR_MESSAGES.INVALID_URL)
     return SafeWebBaseLoader(

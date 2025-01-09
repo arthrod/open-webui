@@ -17,6 +17,23 @@ depends_on = None
 
 def upgrade():
     # Add 'type' column to the 'channel' table
+    """
+    Upgrade the database schema by adding new columns and creating new tables.
+    
+    This function performs the following database migrations:
+    - Adds a 'type' column to the 'channel' table (nullable)
+    - Adds a 'parent_id' column to the 'message' table for supporting message threads (nullable)
+    - Creates a new 'message_reaction' table to track message reactions
+    - Creates a new 'channel_member' table to track channel memberships
+    
+    The migration supports:
+    - Adding a type classification for channels
+    - Enabling message threading functionality
+    - Tracking user reactions to messages
+    - Recording user membership in channels
+    
+    Note: This is an Alembic upgrade migration that can be reversed using the corresponding downgrade() function.
+    """
     op.add_column(
         "channel",
         sa.Column(
@@ -64,6 +81,17 @@ def upgrade():
 
 def downgrade():
     # Revert 'type' column addition to the 'channel' table
+    """
+    Reverts database schema changes by removing added columns and tables.
+    
+    This function is part of an Alembic database migration that rolls back schema modifications:
+    - Removes the 'type' column from the 'channel' table
+    - Removes the 'parent_id' column from the 'message' table
+    - Drops the 'message_reaction' table completely
+    - Drops the 'channel_member' table completely
+    
+    Typically used to undo the changes made in the corresponding upgrade migration.
+    """
     op.drop_column("channel", "type")
     op.drop_column("message", "parent_id")
     op.drop_table("message_reaction")

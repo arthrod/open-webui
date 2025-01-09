@@ -251,6 +251,32 @@ def add_file_to_knowledge_by_id(
     form_data: KnowledgeFileIdForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Add a file to a specific knowledge base by its ID.
+    
+    Adds a file to a knowledge base after performing several validation checks. The function ensures that:
+    - The knowledge base exists
+    - The user has permission to modify the knowledge base
+    - The file exists and has been processed
+    - The file is not already associated with the knowledge base
+    
+    Parameters:
+        request (Request): The incoming HTTP request
+        id (str): The ID of the knowledge base
+        form_data (KnowledgeFileIdForm): Form containing the file ID to be added
+        user (User, optional): The authenticated user, retrieved via dependency injection
+    
+    Returns:
+        KnowledgeFilesResponse: Updated knowledge base with associated files
+    
+    Raises:
+        HTTPException: With status codes 400 for various validation failures:
+        - Knowledge base not found
+        - Unauthorized access
+        - File not found
+        - File not processed
+        - File already associated with knowledge base
+    """
     knowledge = Knowledges.get_knowledge_by_id(id=id)
 
     if not knowledge:
@@ -330,6 +356,24 @@ def update_file_from_knowledge_by_id(
     form_data: KnowledgeFileIdForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Update a file within a knowledge base by its ID.
+    
+    Allows users to re-process an existing file in a knowledge base, removing its previous vector database content and re-adding it.
+    
+    Parameters:
+        request (Request): The incoming HTTP request
+        id (str): The ID of the knowledge base
+        form_data (KnowledgeFileIdForm): Form containing the file ID to update
+        user (User, optional): The authenticated user performing the update
+    
+    Returns:
+        KnowledgeFilesResponse: Updated knowledge base with associated files
+    
+    Raises:
+        HTTPException: 400 error if knowledge base or file is not found,
+                       or if the user lacks permission to update the knowledge base
+    """
     knowledge = Knowledges.get_knowledge_by_id(id=id)
     if not knowledge:
         raise HTTPException(
@@ -394,6 +438,30 @@ def remove_file_from_knowledge_by_id(
     form_data: KnowledgeFileIdForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Remove a file from a specific knowledge base.
+    
+    Removes a file from a knowledge base by its ID, ensuring proper user authorization and handling vector database cleanup.
+    
+    Parameters:
+        id (str): The unique identifier of the knowledge base.
+        form_data (KnowledgeFileIdForm): Form containing the file ID to be removed.
+        user (User, optional): The authenticated user performing the operation. Defaults to the result of get_verified_user.
+    
+    Returns:
+        KnowledgeFilesResponse: Updated knowledge base with remaining files after file removal.
+    
+    Raises:
+        HTTPException: 
+            - 400 Bad Request if knowledge base or file is not found
+            - 400 Bad Request if user lacks permission to modify the knowledge base
+            - 400 Bad Request if file removal fails
+    
+    Side Effects:
+        - Removes file content from vector database
+        - Updates knowledge base file list
+        - Deletes file reference from knowledge base
+    """
     knowledge = Knowledges.get_knowledge_by_id(id=id)
     if not knowledge:
         raise HTTPException(
@@ -489,6 +557,25 @@ async def delete_knowledge_by_id(id: str, user=Depends(get_verified_user)):
 
 @router.post("/{id}/reset", response_model=Optional[KnowledgeResponse])
 async def reset_knowledge_by_id(id: str, user=Depends(get_verified_user)):
+    """
+    Reset a knowledge base by clearing its associated files and vector database collection.
+    
+    This function allows a user to reset a knowledge base by removing all associated file IDs and deleting the corresponding vector database collection. Only the knowledge base owner or an admin can perform this action.
+    
+    Parameters:
+        id (str): The unique identifier of the knowledge base to reset.
+        user (User, optional): The authenticated user performing the reset. Defaults to the result of get_verified_user dependency.
+    
+    Returns:
+        Knowledge: The updated knowledge base with an empty list of file IDs.
+    
+    Raises:
+        HTTPException: 400 error if the knowledge base is not found or the user lacks permission to reset it.
+    
+    Side Effects:
+        - Deletes the vector database collection associated with the knowledge base
+        - Clears the file_ids for the specified knowledge base
+    """
     knowledge = Knowledges.get_knowledge_by_id(id=id)
     if not knowledge:
         raise HTTPException(
@@ -526,7 +613,30 @@ def add_files_to_knowledge_batch(
     user=Depends(get_verified_user),
 ):
     """
-    Add multiple files to a knowledge base
+    Add multiple files to a knowledge base in a batch operation.
+    
+    Allows users to process and add multiple files to an existing knowledge base simultaneously. Validates user permissions, retrieves file metadata, and processes files in batch. Supports partial success scenarios where some files may fail processing.
+    
+    Parameters:
+        request (Request): The incoming HTTP request context
+        id (str): The unique identifier of the knowledge base
+        form_data (list[KnowledgeFileIdForm]): List of file identifiers to be added
+        user (User, optional): Authenticated user performing the operation
+    
+    Returns:
+        KnowledgeFilesResponse: Updated knowledge base with processed files and optional warnings
+    
+    Raises:
+        HTTPException: 
+            - 400 if knowledge base is not found
+            - 400 if user lacks permissions
+            - 400 if file processing encounters critical errors
+    
+    Notes:
+        - Supports batch processing with partial success
+        - Logs errors during file processing
+        - Only adds successfully processed files to knowledge base
+        - Provides warning details for failed file processing
     """
     knowledge = Knowledges.get_knowledge_by_id(id=id)
     if not knowledge:

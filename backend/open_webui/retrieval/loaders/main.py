@@ -86,6 +86,30 @@ class TikaLoader:
         self.mime_type = mime_type
 
     def load(self) -> list[Document]:
+        """
+        Load and extract text from a file using the Tika server.
+        
+        Reads the file from the specified file path and sends its content to a Tika server for text extraction.
+        
+        Parameters:
+            self.file_path (str): Path to the file to be processed
+            self.mime_type (str, optional): MIME type of the file, used in request headers
+            self.url (str): Base URL of the Tika server
+        
+        Returns:
+            list[Document]: A list containing a single Document object with extracted text and metadata
+        
+        Raises:
+            Exception: If the Tika server request fails, with the reason for the failure
+        
+        Side Effects:
+            - Logs the extracted text at debug level
+            - Opens and reads the file in binary mode
+        
+        Example:
+            loader = TikaLoader(file_path='document.pdf', url='http://tika-server/')
+            documents = loader.load()
+        """
         with open(self.file_path, "rb") as f:
             data = f.read()
 

@@ -14,6 +14,26 @@ def convert_response_ollama_to_openai(ollama_response: dict) -> dict:
 
 
 async def convert_streaming_response_ollama_to_openai(ollama_streaming_response):
+    """
+    Converts an Ollama streaming response to an OpenAI-compatible streaming response format.
+    
+    This asynchronous generator function processes streaming responses from Ollama, transforming them into a format compatible with OpenAI's streaming API.
+    
+    Args:
+        ollama_streaming_response: A streaming response object from Ollama containing body iterator.
+    
+    Yields:
+        str: JSON-encoded data chunks representing the streaming response, including:
+            - Partial message content
+            - Usage statistics when the response is complete
+            - A final "[DONE]" marker
+    
+    Notes:
+        - Calculates response and prompt token rates
+        - Handles potential division by zero by returning "N/A"
+        - Computes approximate total duration in hours, minutes, and seconds
+        - Compatible with OpenAI-style streaming response format
+    """
     async for data in ollama_streaming_response.body_iterator:
         data = json.loads(data)
 

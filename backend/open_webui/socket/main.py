@@ -74,6 +74,26 @@ else:
 
 
 async def periodic_usage_pool_cleanup():
+    """
+    Periodically clean up the usage pool by removing expired session connections and emitting updated usage information.
+    
+    This asynchronous function manages the cleanup of inactive WebSocket connections in the usage pool. It runs in an infinite loop, periodically checking and removing sessions that have exceeded the timeout duration. 
+    
+    Key behaviors:
+    - Acquires a lock to prevent concurrent cleanup operations
+    - Removes session IDs that have been inactive beyond the specified timeout
+    - Removes models with no active connections
+    - Emits updated usage information after cleanup
+    - Continues running until an error occurs with lock renewal
+    
+    Raises:
+        Exception: If unable to renew the cleanup lock during the process
+    
+    Notes:
+        - Uses global variables USAGE_POOL, TIMEOUT_DURATION
+        - Requires external lock acquisition functions (aquire_func, renew_func, release_func)
+        - Emits WebSocket event 'usage' with current models in use
+    """
     if not aquire_func():
         log.debug("Usage pool cleanup lock already exists. Not running it.")
         return
@@ -122,12 +142,40 @@ app = socketio.ASGIApp(
 
 def get_models_in_use():
     # List models that are currently in use
+    """
+    Retrieves a list of models currently in use.
+    
+    Returns:
+        list: A list of model names that are currently active in the usage pool.
+    
+    Note:
+        This function provides a snapshot of models being utilized at the time of calling,
+        based on the global USAGE_POOL dictionary.
+    """
     models_in_use = list(USAGE_POOL.keys())
     return models_in_use
 
 
 @sio.on("usage")
 async def usage(sid, data):
+    """
+    Track and broadcast the usage of a specific model by a client.
+    
+    This function records the current usage of a model by a specific client session and updates
+    the global usage pool. It then broadcasts the current models in use to all connected clients.
+    
+    Parameters:
+        sid (str): The session ID of the client reporting usage.
+        data (dict): A dictionary containing the model identifier.
+            - model (str): The unique identifier of the model being used.
+    
+    Side Effects:
+        - Updates the global USAGE_POOL with the current session's usage timestamp.
+        - Emits a "usage" event to all connected clients with the current models in use.
+    
+    Example:
+        await usage('session123', {'model': 'gpt-4'})
+    """
     model_id = data["model"]
     # Record the timestamp for the last update
     current_time = int(time.time())
@@ -144,6 +192,24 @@ async def usage(sid, data):
 
 @sio.event
 async def connect(sid, environ, auth):
+    """
+    Handles WebSocket connection events for authenticated users.
+    
+    Authenticates a user via token, manages session and user pools, and broadcasts connection updates.
+    
+    Parameters:
+        sid (str): The unique session ID for the WebSocket connection
+        environ (dict): Environment details of the connection
+        auth (dict): Authentication credentials containing a token
+    
+    Side Effects:
+        - Populates SESSION_POOL with user information
+        - Updates USER_POOL with session IDs for the connected user
+        - Emits events to broadcast updated user list and model usage
+    
+    Returns:
+        None: Manages connection state without returning a value
+    """
     user = None
     if auth and "token" in auth:
         data = decode_token(auth["token"])
@@ -166,6 +232,28 @@ async def connect(sid, environ, auth):
 @sio.on("user-join")
 async def user_join(sid, data):
 
+    """
+    Handle user join event for WebSocket connection.
+    
+    Authenticates and processes a user joining the WebSocket server by validating their authentication token, retrieving user details, and managing session and user pools.
+    
+    Parameters:
+        sid (str): The Socket.IO session ID for the connecting client
+        data (dict): Connection data containing authentication information
+    
+    Returns:
+        dict or None: A dictionary with user ID and name if successfully joined, None otherwise
+    
+    Behavior:
+        - Validates the authentication token
+        - Retrieves user details from the database
+        - Adds user to session and user pools
+        - Automatically joins user's existing channels
+        - Broadcasts updated user list to connected clients
+    
+    Raises:
+        No explicit exceptions, silently returns if authentication or user retrieval fails
+    """
     auth = data["auth"] if "auth" in data else None
     if not auth or "token" not in auth:
         return
@@ -198,6 +286,31 @@ async def user_join(sid, data):
 
 @sio.on("join-channels")
 async def join_channel(sid, data):
+    """
+    Handles user channel joining based on authentication token.
+    
+    Authenticates the user and joins all channels associated with their user ID.
+    
+    Parameters:
+        sid (str): The socket connection session ID
+        data (dict): A dictionary containing authentication information
+    
+    Behavior:
+        - Validates the presence of an authentication token
+        - Decodes the authentication token
+        - Retrieves the user associated with the token
+        - Fetches all channels for the authenticated user
+        - Adds the socket connection to each channel's room
+    
+    Requires:
+        - Valid authentication token
+        - Existing user in the system
+        - User must have associated channels
+    
+    Side Effects:
+        - Socket connection enters rooms for each user's channels
+        - Logs debug information about retrieved channels
+    """
     auth = data["auth"] if "auth" in data else None
     if not auth or "token" not in auth:
         return
@@ -219,6 +332,24 @@ async def join_channel(sid, data):
 
 @sio.on("channel-events")
 async def channel_events(sid, data):
+    """
+    Handle channel-specific events, primarily focusing on typing notifications.
+    
+    This asynchronous function manages events within a specific channel, with special handling for typing indicators. It ensures that only participants of the channel can trigger events and broadcasts typing notifications to all channel members.
+    
+    Parameters:
+        sid (str): The session ID of the client triggering the event
+        data (dict): Event data containing channel information and event details
+    
+    Behavior:
+        - Verifies the sender is a participant in the specified channel
+        - Supports 'typing' event type for sending typing indicators
+        - Broadcasts typing events to all participants in the channel
+        - Includes user information from the session pool in the event payload
+    
+    Raises:
+        No explicit exceptions are raised within the function
+    """
     room = f"channel:{data['channel_id']}"
     participants = sio.manager.get_participants(
         namespace="/",
@@ -247,11 +378,39 @@ async def channel_events(sid, data):
 
 @sio.on("user-list")
 async def user_list(sid):
+    """
+    Emit the list of currently connected user IDs to the requesting client.
+    
+    This function broadcasts the current list of active user IDs stored in the USER_POOL 
+    to the client that requested the user list via the "user-list" event.
+    
+    Parameters:
+        sid (str): The session ID of the client requesting the user list.
+    
+    Side Effects:
+        - Sends a WebSocket event "user-list" with the current list of user IDs.
+    """
     await sio.emit("user-list", {"user_ids": list(USER_POOL.keys())})
 
 
 @sio.event
 async def disconnect(sid):
+    """
+    Handle user disconnection from the WebSocket server.
+    
+    This asynchronous function is triggered when a user disconnects. It performs the following tasks:
+    - Removes the session from the SESSION_POOL
+    - Updates the USER_POOL by removing the specific session ID
+    - Deletes the user from USER_POOL if no active sessions remain
+    - Broadcasts an updated list of active users to all connected clients
+    
+    Parameters:
+        sid (str): The session ID of the disconnecting user
+    
+    Side Effects:
+        - Modifies SESSION_POOL and USER_POOL global dictionaries
+        - Emits a "user-list" event with current active user IDs
+    """
     if sid in SESSION_POOL:
         user = SESSION_POOL[sid]
         del SESSION_POOL[sid]
@@ -269,6 +428,33 @@ async def disconnect(sid):
 
 
 def get_event_emitter(request_info):
+    """
+    Generates an event emitter function for WebSocket chat events with multi-session support.
+    
+    This function creates an asynchronous event emitter that broadcasts chat events to all sessions
+    associated with a specific user, updates message statuses, and manages message content modifications.
+    
+    Parameters:
+        request_info (dict): A dictionary containing request metadata including:
+            - user_id (str): Unique identifier for the user
+            - session_id (str): Current WebSocket session ID
+            - chat_id (str): Identifier for the chat
+            - message_id (str): Unique identifier for the message
+    
+    Returns:
+        __event_emitter__ (callable): An asynchronous function that emits chat events and updates
+        message content based on event type.
+    
+    Event Types Handled:
+        - 'status': Updates message status in the chat
+        - 'message': Appends content to an existing message
+        - 'replace': Replaces the entire message content
+    
+    Side Effects:
+        - Emits WebSocket events to all user sessions
+        - Modifies chat message content in the database
+        - Updates message status in the chat
+    """
     async def __event_emitter__(event_data):
         user_id = request_info["user_id"]
         session_ids = list(
@@ -325,6 +511,20 @@ def get_event_emitter(request_info):
 
 
 def get_event_call(request_info):
+    """
+    Create an event call function for WebSocket communication with specific request details.
+    
+    This function generates an asynchronous event call handler that sends chat events to a specific WebSocket session and waits for a response.
+    
+    Parameters:
+        request_info (dict): A dictionary containing request details with the following keys:
+            - chat_id (str): Unique identifier for the chat
+            - message_id (str): Unique identifier for the message
+            - session_id (str): WebSocket session identifier
+    
+    Returns:
+        callable: An asynchronous function that can be called with event data and returns a response from the specified WebSocket session
+    """
     async def __event_call__(event_data):
         response = await sio.call(
             "chat-events",
@@ -341,6 +541,15 @@ def get_event_call(request_info):
 
 
 def get_user_id_from_session_pool(sid):
+    """
+    Retrieve the user ID associated with a given session ID from the session pool.
+    
+    Parameters:
+        sid (str): The session ID to look up in the session pool.
+    
+    Returns:
+        str or None: The user ID if the session exists in the pool, otherwise None.
+    """
     user = SESSION_POOL.get(sid)
     if user:
         return user["id"]
@@ -348,6 +557,20 @@ def get_user_id_from_session_pool(sid):
 
 
 def get_user_ids_from_room(room):
+    """
+    Retrieve the list of active user IDs in a specific room.
+    
+    This function extracts user IDs from the current active sessions in a given room. It uses the Socket.IO manager to get session participants and maps these sessions to their corresponding user IDs.
+    
+    Parameters:
+        room (str): The name of the room to retrieve active user IDs from.
+    
+    Returns:
+        list: A list of unique user IDs currently active in the specified room.
+    
+    Raises:
+        KeyError: If a session ID does not have a corresponding entry in the SESSION_POOL.
+    """
     active_session_ids = sio.manager.get_participants(
         namespace="/",
         room=room,
@@ -362,6 +585,15 @@ def get_user_ids_from_room(room):
 
 
 def get_active_status_by_user_id(user_id):
+    """
+    Check if a user is currently active in the system.
+    
+    Parameters:
+        user_id (str): The unique identifier of the user to check for active status.
+    
+    Returns:
+        bool: True if the user is currently in the USER_POOL (active), False otherwise.
+    """
     if user_id in USER_POOL:
         return True
     return False

@@ -79,6 +79,28 @@ class OAuthManager:
         return self.oauth.create_client(provider_name)
 
     def get_user_role(self, user, user_data):
+        """
+        Determine the user's role based on system state and OAuth configuration.
+        
+        This method handles role assignment through multiple scenarios:
+        - First user is always an admin
+        - Supports OAuth-based role management with configurable role claims
+        - Fallback to default role configuration when OAuth role management is disabled
+        
+        Parameters:
+            user (Users, optional): Existing user object, if available
+            user_data (dict): OAuth user data containing role claims
+        
+        Returns:
+            str: Assigned user role - one of "admin", "user", or "pending"
+        
+        Key Behaviors:
+            - Assigns "admin" for the first user in the system
+            - Extracts roles from nested OAuth claims
+            - Matches roles against allowed and admin role configurations
+            - Defaults to "pending" if no matching roles are found
+            - Respects system-wide role management settings
+        """
         if user and Users.get_num_users() == 1:
             # If the user is the only user, assign the role "admin" - actually repairs role for single user on login
             return "admin"
@@ -125,6 +147,24 @@ class OAuthManager:
         return role
 
     def update_user_groups(self, user, user_data, default_permissions):
+        """
+        Update user group memberships based on OAuth group claims.
+        
+        This method synchronizes a user's group memberships by comparing OAuth-provided group claims
+        with the user's current group memberships. It performs two primary operations:
+        1. Removes the user from groups they no longer belong to according to OAuth claims
+        2. Adds the user to new groups specified in the OAuth claims
+        
+        Parameters:
+            user (UserModel): The authenticated user whose group memberships are being updated
+            user_data (dict): OAuth user data containing group claims
+            default_permissions (list): Default permissions to assign if group permissions are not set
+        
+        Notes:
+            - Uses the group claim specified in auth_manager_config.OAUTH_GROUPS_CLAIM
+            - Preserves existing group descriptions and permissions
+            - Handles cases where groups might not have predefined permissions
+        """
         oauth_claim = auth_manager_config.OAUTH_GROUPS_CLAIM
 
         user_oauth_groups: list[str] = user_data.get(oauth_claim, list())
@@ -180,6 +220,21 @@ class OAuthManager:
                 )
 
     async def handle_login(self, provider, request):
+        """
+        Initiate OAuth login process for a specified provider.
+        
+        Handles the initial step of OAuth authentication by redirecting the user to the provider's authorization page.
+        
+        Parameters:
+            provider (str): The name of the OAuth provider (e.g., 'google', 'github')
+            request (Request): The incoming HTTP request object
+        
+        Returns:
+            RedirectResponse: A redirect response to the OAuth provider's authorization endpoint
+        
+        Raises:
+            HTTPException: 404 error if the provider is not configured or a valid OAuth client cannot be created
+        """
         if provider not in OAUTH_PROVIDERS:
             raise HTTPException(404)
         # If the provider has a custom redirect URL, use that, otherwise automatically generate one
@@ -192,6 +247,33 @@ class OAuthManager:
         return await client.authorize_redirect(request, redirect_uri)
 
     async def handle_callback(self, provider, request, response):
+        """
+        Handle OAuth authentication callback for a specific provider.
+        
+        Performs the following steps:
+        - Validates the OAuth provider
+        - Retrieves access token and user information
+        - Validates required user claims (sub, email)
+        - Checks email domain restrictions
+        - Handles user account retrieval or creation
+        - Manages user roles and group memberships
+        - Creates JWT token and sets authentication cookies
+        - Redirects user to frontend
+        
+        Parameters:
+            provider (str): OAuth provider name
+            request (Request): Incoming HTTP request
+            response (Response): HTTP response to modify
+        
+        Returns:
+            RedirectResponse: Redirects user to frontend with JWT token
+        
+        Raises:
+            HTTPException: For various authentication and authorization failures
+                - 404: Invalid OAuth provider
+                - 400: Invalid credentials or missing claims
+                - 403: OAuth signup disabled
+        """
         if provider not in OAUTH_PROVIDERS:
             raise HTTPException(404)
         client = self.get_client(provider)

@@ -20,6 +20,23 @@ def get_task_model_id(
     default_model_id: str, task_model: str, task_model_external: str, models
 ) -> str:
     # Set the task model
+    """
+    Determines the appropriate model ID for a task based on user-defined models and ownership.
+    
+    Parameters:
+        default_model_id (str): The default model ID to use if no custom model is selected
+        task_model (str): A custom task model provided by the user for Ollama-owned models
+        task_model_external (str): A custom task model provided by the user for non-Ollama models
+        models (dict): A dictionary containing available model configurations
+    
+    Returns:
+        str: The selected model ID for the task, prioritizing custom models based on model ownership
+    
+    Notes:
+        - For Ollama-owned models, uses the custom task_model if provided and available
+        - For non-Ollama models, uses the custom task_model_external if provided and available
+        - Falls back to default_model_id if no suitable custom model is found
+    """
     task_model_id = default_model_id
     # Check if the user has a custom task model and use that model
     if models[task_model_id]["owned_by"] == "ollama":
@@ -36,6 +53,25 @@ def prompt_template(
     template: str, user_name: Optional[str] = None, user_location: Optional[str] = None
 ) -> str:
     # Get the current date
+    """
+    Formats a template string by replacing placeholders with current date, time, weekday, user name, and user location.
+    
+    Parameters:
+        template (str): The input template string containing placeholders to be replaced.
+        user_name (Optional[str], optional): Name of the user. Defaults to "Unknown" if not provided.
+        user_location (Optional[str], optional): Location of the user. Defaults to "Unknown" if not provided.
+    
+    Returns:
+        str: The template with placeholders replaced by actual values.
+    
+    Placeholders replaced:
+        - {{CURRENT_DATE}}: Current date in YYYY-MM-DD format
+        - {{CURRENT_TIME}}: Current time in HH:MM:SS AM/PM format
+        - {{CURRENT_DATETIME}}: Combined date and time
+        - {{CURRENT_WEEKDAY}}: Current day of the week
+        - {{USER_NAME}}: User's name or "Unknown"
+        - {{USER_LOCATION}}: User's location or "Unknown"
+    """
     current_date = datetime.now()
 
     # Format the date to YYYY-MM-DD

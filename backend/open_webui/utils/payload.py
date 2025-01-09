@@ -138,12 +138,20 @@ def convert_messages_openai_to_ollama(messages: list[dict]) -> list[dict]:
 def convert_payload_openai_to_ollama(openai_payload: dict) -> dict:
     """
     Converts a payload formatted for OpenAI's API to be compatible with Ollama's API endpoint for chat completions.
-
-    Args:
-        openai_payload (dict): The payload originally designed for OpenAI API usage.
-
+    
+    This function transforms an OpenAI API payload into a format that can be used with Ollama's chat API, handling model selection, message conversion, streaming options, and various parameter mappings.
+    
+    Parameters:
+        openai_payload (dict): The payload originally designed for OpenAI API usage, containing model details, messages, and optional parameters.
+    
     Returns:
-        dict: A modified payload compatible with the Ollama API.
+        dict: A modified payload compatible with the Ollama API, with translated model, messages, and configuration options.
+    
+    Notes:
+        - Converts messages using `convert_messages_openai_to_ollama`
+        - Maps parameters like temperature, top_p, max_tokens to Ollama equivalents
+        - Handles penalties and additional options transformation
+        - Preserves streaming configuration
     """
     ollama_payload = {}
 

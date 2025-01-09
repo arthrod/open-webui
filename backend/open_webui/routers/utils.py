@@ -71,6 +71,29 @@ async def download_chat_as_pdf(
 
 @router.get("/db/download")
 async def download_db(user=Depends(get_admin_user)):
+    """
+    Download the SQLite database file for administrative purposes.
+    
+    This endpoint allows admin users to download the database file, with strict access controls:
+    - Requires admin user authentication
+    - Checks if admin export is globally enabled
+    - Only supports SQLite database exports
+    
+    Parameters:
+        user (dict): Authenticated admin user, obtained via dependency injection
+    
+    Returns:
+        FileResponse: The SQLite database file as a downloadable response
+    
+    Raises:
+        HTTPException: 401 if admin export is disabled
+        HTTPException: 400 if the database is not SQLite
+    
+    Note:
+        - Requires ENABLE_ADMIN_EXPORT to be True
+        - Only works with SQLite database backend
+        - Filename of the downloaded file is 'webui.db'
+    """
     if not ENABLE_ADMIN_EXPORT:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

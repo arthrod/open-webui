@@ -24,12 +24,44 @@ class TestUsers(AbstractPostgresTest):
     BASE_PATH = "/api/v1/users"
 
     def setup_class(cls):
+        """
+        Set up the test class by initializing the base class and importing the Users model.
+        
+        This method is a class method called during test class initialization. It performs two key actions:
+        - Calls the parent class's setup method to perform base initialization
+        - Imports the Users model and assigns it as a class attribute for use in test methods
+        
+        Args:
+            cls (type): The test class being initialized
+        """
         super().setup_class()
         from open_webui.models.users import Users
 
         cls.users = Users
 
     def setup_method(self):
+        """
+        Prepares the test environment by inserting two predefined users into the database before each test method.
+        
+        This method is called before each test method in the test class. It first calls the parent class's setup method and then inserts two test users with specific attributes into the database.
+        
+        The inserted users have the following details:
+        - User 1:
+            - ID: "1"
+            - Name: "user 1"
+            - Email: "user1@openwebui.com"
+            - Profile Image: "/user1.png"
+            - Role: "user"
+        
+        - User 2:
+            - ID: "2"
+            - Name: "user 2"
+            - Email: "user2@openwebui.com"
+            - Profile Image: "/user2.png"
+            - Role: "user"
+        
+        These predefined users are used as a consistent test data set for various user management test scenarios.
+        """
         super().setup_method()
         self.users.insert_new_user(
             id="1",

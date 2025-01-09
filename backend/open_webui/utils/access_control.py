@@ -10,8 +10,20 @@ def get_permissions(
 ) -> Dict[str, Any]:
     """
     Get all permissions for a user by combining the permissions of all groups the user is a member of.
-    If a permission is defined in multiple groups, the most permissive value is used (True > False).
-    Permissions are nested in a dict with the permission key as the key and a boolean as the value.
+    
+    This function aggregates permissions from all groups a user belongs to, using a recursive merging strategy that prioritizes the most permissive values. Nested permission dictionaries are deeply merged, with boolean values resolved to the most permissive option (True takes precedence over False).
+    
+    Parameters:
+        user_id (str): The unique identifier of the user whose permissions are being retrieved.
+        default_permissions (Dict[str, Any]): A dictionary of default permissions to use as the initial permission set.
+    
+    Returns:
+        Dict[str, Any]: A comprehensive permissions dictionary combining group-level permissions with default permissions.
+    
+    Notes:
+        - Permissions are merged recursively for nested dictionary structures
+        - If a permission exists in multiple groups, the most permissive value is retained
+        - The function creates a deep copy of default_permissions to prevent unintended modifications
     """
 
     def combine_permissions(
@@ -82,6 +94,37 @@ def has_access(
     type: str = "write",
     access_control: Optional[dict] = None,
 ) -> bool:
+    """
+    Determine if a user has access to a resource based on specified access type.
+    
+    Parameters:
+        user_id (str): The unique identifier of the user requesting access.
+        type (str, optional): The type of access to check. Defaults to "write".
+        access_control (dict, optional): A dictionary defining access control rules. 
+            If None, defaults to read-only access.
+    
+    Returns:
+        bool: True if the user has access, False otherwise.
+    
+    Description:
+        Checks user access by:
+        - Returning True for read access if no access control is specified
+        - Checking if the user is directly permitted by user ID
+        - Checking if any of the user's groups are permitted
+    
+    Examples:
+        # Allow read access by default
+        has_access("user123")  # Returns True
+    
+        # Specific access control
+        access_rules = {
+            "write": {
+                "user_ids": ["admin123"],
+                "group_ids": ["editors"]
+            }
+        }
+        has_access("user123", "write", access_rules)  # Depends on user's groups/ID
+    """
     if access_control is None:
         return type == "read"
 
@@ -100,6 +143,32 @@ def has_access(
 def get_users_with_access(
     type: str = "write", access_control: Optional[dict] = None
 ) -> List[UserModel]:
+    """
+    Retrieve users with access to a resource based on specified access type and control settings.
+    
+    Determines user access by checking both explicitly permitted user IDs and group memberships. 
+    If no access control is provided, returns all users in the system.
+    
+    Parameters:
+        type (str, optional): Access type to check, defaults to "write".
+        access_control (dict, optional): Dictionary defining access permissions for groups and users.
+    
+    Returns:
+        List[UserModel]: List of users with access to the specified resource.
+    
+    Examples:
+        # Get all users with write access
+        users = get_users_with_access()
+    
+        # Get users with access based on specific access control
+        custom_access = {
+            "write": {
+                "group_ids": ["admin_group"],
+                "user_ids": ["special_user"]
+            }
+        }
+        users = get_users_with_access(type="write", access_control=custom_access)
+    """
     if access_control is None:
         return Users.get_users()
 

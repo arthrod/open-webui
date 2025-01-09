@@ -40,6 +40,25 @@ class PgvectorClient:
     def __init__(self) -> None:
 
         # if no pgvector uri, use the existing database connection
+        """
+        Initialize a PostgreSQL database client with vector support.
+        
+        This method sets up the database connection, ensures the pgvector extension is available,
+        checks vector length consistency, creates necessary tables and indexes, and handles
+        potential initialization errors.
+        
+        Behavior:
+        - Uses existing database connection if no PGVECTOR_DB_URL is provided
+        - Creates a new SQLAlchemy session with connection pooling if PGVECTOR_DB_URL is set
+        - Enables the pgvector extension
+        - Validates vector column configuration
+        - Creates document_chunk table and related indexes
+        - Commits transaction on successful initialization
+        - Rolls back and raises exception on initialization failures
+        
+        Raises:
+            Exception: If database initialization encounters critical errors
+        """
         if not PGVECTOR_DB_URL:
             from open_webui.internal.db import Session
 
@@ -88,8 +107,21 @@ class PgvectorClient:
 
     def check_vector_length(self) -> None:
         """
-        Check if the VECTOR_LENGTH matches the existing vector column dimension in the database.
-        Raises an exception if there is a mismatch.
+        Checks the vector column dimension in the database to ensure consistency with the predefined VECTOR_LENGTH.
+        
+        This method performs the following validations:
+        - Reflects the metadata for the 'document_chunk' table
+        - Verifies the existence of the 'vector' column
+        - Confirms the column is of Vector type
+        - Compares the database vector dimension with the VECTOR_LENGTH constant
+        
+        Raises:
+            Exception: If the vector column dimension does not match VECTOR_LENGTH,
+                       if the vector column is not of Vector type, or
+                       if the vector column is missing from the table.
+        
+        Note:
+            No action is taken if the 'document_chunk' table does not exist yet.
         """
         metadata = MetaData()
         metadata.reflect(bind=self.session.bind, only=["document_chunk"])
@@ -120,6 +152,29 @@ class PgvectorClient:
 
     def adjust_vector_length(self, vector: List[float]) -> List[float]:
         # Adjust vector to have length VECTOR_LENGTH
+        """
+        Adjust the input vector to match the predefined vector length.
+        
+        Ensures that the input vector conforms to the expected VECTOR_LENGTH by either:
+        - Padding with zeros if the vector is shorter than VECTOR_LENGTH
+        - Raising an exception if the vector exceeds the maximum allowed length
+        
+        Parameters:
+            vector (List[float]): The input vector to be adjusted
+        
+        Returns:
+            List[float]: A vector with length exactly matching VECTOR_LENGTH
+        
+        Raises:
+            Exception: If the input vector length is greater than VECTOR_LENGTH
+        
+        Example:
+            # Padding a short vector
+            adjusted_vector = adjust_vector_length([1.0, 2.0])  # Returns [1.0, 2.0, 0.0, ..., 0.0]
+            
+            # Raising an error for an oversized vector
+            adjust_vector_length([1.0] * 2000)  # Raises an exception
+        """
         current_length = len(vector)
         if current_length < VECTOR_LENGTH:
             # Pad the vector with zeros

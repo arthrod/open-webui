@@ -35,6 +35,22 @@ async def get_users(
     limit: Optional[int] = None,
     user=Depends(get_admin_user),
 ):
+    """
+    Retrieve a list of users with optional pagination.
+    
+    This endpoint allows administrators to fetch a list of users, with optional skip and limit parameters for pagination.
+    
+    Parameters:
+        skip (Optional[int], optional): Number of users to skip before starting to return results. Defaults to None.
+        limit (Optional[int], optional): Maximum number of users to return. Defaults to None.
+        user (User, optional): The authenticated admin user making the request. Automatically injected via dependency.
+    
+    Returns:
+        List[UserResponse]: A list of user objects matching the pagination criteria.
+    
+    Raises:
+        HTTPException: 403 Forbidden if the user is not an administrator.
+    """
     return Users.get_users(skip, limit)
 
 
@@ -206,6 +222,28 @@ class UserResponse(BaseModel):
 async def get_user_by_id(user_id: str, user=Depends(get_verified_user)):
     # Check if user_id is a shared chat
     # If it is, get the user_id from the chat
+    """
+    Retrieve user information by user ID, with support for shared chat identifiers.
+    
+    This function allows fetching user details by their ID, with special handling for shared chat identifiers. If a shared chat ID is provided, it first resolves the actual user ID from the chat record.
+    
+    Parameters:
+        user_id (str): The unique identifier of the user or a shared chat identifier
+        user (dict, optional): The authenticated verified user, automatically injected by dependency injection
+    
+    Returns:
+        UserResponse: A response model containing user details including name, profile image URL, and active status
+    
+    Raises:
+        HTTPException: 400 error if the user or chat cannot be found
+    
+    Examples:
+        # Retrieve user by direct user ID
+        GET /users/123
+    
+        # Retrieve user by shared chat ID
+        GET /users/shared-chat456
+    """
     if user_id.startswith("shared-"):
         chat_id = user_id.replace("shared-", "")
         chat = Chats.get_chat_by_id(chat_id)

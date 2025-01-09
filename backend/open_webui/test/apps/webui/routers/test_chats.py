@@ -11,6 +11,17 @@ class TestChats(AbstractPostgresTest):
         super().setup_class()
 
     def setup_method(self):
+        """
+        Prepares the test environment by inserting a new chat into the database before each test method execution.
+        
+        This method overrides the parent class's setup_method and creates a sample chat with predefined properties for testing purposes. It uses the Chats model to insert a new chat associated with user ID "2" and a ChatForm with specific attributes.
+        
+        The inserted chat includes:
+        - Name: "chat1"
+        - Description: "chat1 description"
+        - Tags: ["tag1", "tag2"]
+        - Empty message history
+        """
         super().setup_method()
         from open_webui.models.chats import ChatForm, Chats
 
@@ -87,6 +98,23 @@ class TestChats(AbstractPostgresTest):
         self.test_get_session_user_chat_list()
 
     def test_get_user_archived_chats(self):
+        """
+        Test retrieval of archived chats for a specific user.
+        
+        This method archives all chats for user ID "2" and then verifies the retrieval of archived chats through the API endpoint.
+        
+        Validates that:
+        - The API returns a 200 OK status code
+        - The first archived chat has a non-null ID
+        - The first archived chat's title is "New Chat"
+        - The first archived chat has valid creation and update timestamps
+        
+        Args:
+            self: The test class instance
+        
+        Raises:
+            AssertionError: If any of the expected conditions are not met
+        """
         self.chats.archive_all_chats_by_user_id("2")
         from open_webui.internal.db import Session
 

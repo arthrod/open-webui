@@ -40,6 +40,38 @@ router = APIRouter()
 
 @router.get("/config")
 async def get_config(request: Request, user=Depends(get_admin_user)):
+    """
+    Retrieve the current image generation configuration for the application.
+    
+    This endpoint returns a comprehensive configuration dictionary containing settings for image generation across different engines, including OpenAI, Automatic1111, and ComfyUI.
+    
+    Parameters:
+        request (Request): The incoming HTTP request object
+        user (dict, optional): Admin user authentication dependency
+    
+    Returns:
+        dict: A configuration dictionary with the following keys:
+            - enabled (bool): Whether image generation is enabled
+            - engine (str): Current image generation engine
+            - openai (dict): OpenAI-specific configuration settings
+            - automatic1111 (dict): Automatic1111-specific configuration settings
+            - comfyui (dict): ComfyUI-specific configuration settings
+    
+    Requires:
+        - Admin user authentication
+        - Configured application state with image generation settings
+    
+    Example:
+        {
+            "enabled": true,
+            "engine": "openai",
+            "openai": {
+                "OPENAI_API_BASE_URL": "https://api.openai.com/v1",
+                "OPENAI_API_KEY": "sk-..."
+            },
+            ...
+        }
+    """
     return {
         "enabled": request.app.state.config.ENABLE_IMAGE_GENERATION,
         "engine": request.app.state.config.IMAGE_GENERATION_ENGINE,
@@ -95,6 +127,32 @@ class ConfigForm(BaseModel):
 async def update_config(
     request: Request, form_data: ConfigForm, user=Depends(get_admin_user)
 ):
+    """
+    Update the configuration settings for image generation engines.
+    
+    This asynchronous function allows an admin user to modify the configuration for various image generation services,
+    including OpenAI, Automatic1111, and ComfyUI. It updates the application's state with the provided configuration
+    parameters.
+    
+    Parameters:
+        request (Request): The HTTP request object containing the application state.
+        form_data (ConfigForm): A configuration form with settings for image generation engines.
+        user (dict, optional): The admin user performing the configuration update. Defaults to the result of get_admin_user.
+    
+    Returns:
+        dict: A comprehensive configuration dictionary containing the updated settings for:
+        - Image generation enablement status
+        - Selected image generation engine
+        - OpenAI API configuration
+        - Automatic1111 API configuration
+        - ComfyUI API configuration
+    
+    Notes:
+        - Requires admin privileges to execute
+        - Strips trailing slashes from ComfyUI base URL
+        - Converts Automatic1111 CFG scale to float if provided
+        - Handles optional configuration parameters by setting them to None if not specified
+    """
     request.app.state.config.IMAGE_GENERATION_ENGINE = form_data.engine
     request.app.state.config.ENABLE_IMAGE_GENERATION = form_data.enabled
 
@@ -158,6 +216,21 @@ async def update_config(
 
 
 def get_automatic1111_api_auth(request: Request):
+    """
+    Generate Basic Authentication header for Automatic1111 API if authentication is configured.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state configuration.
+    
+    Returns:
+        str: A Basic Authentication header string if authentication is configured, 
+             otherwise an empty string. The header is base64 encoded credentials 
+             prefixed with "Basic ".
+    
+    Notes:
+        - Returns an empty string if no authentication is set in the configuration
+        - Encodes the authentication credentials to a base64 string for HTTP Basic Auth
+    """
     if request.app.state.config.AUTOMATIC1111_API_AUTH is None:
         return ""
     else:
@@ -171,6 +244,26 @@ def get_automatic1111_api_auth(request: Request):
 
 @router.get("/config/url/verify")
 async def verify_url(request: Request, user=Depends(get_admin_user)):
+    """
+    Verify the configured image generation engine's base URL by making a test API request.
+    
+    This function checks the validity of the base URL for the selected image generation engine
+    (Automatic1111 or ComfyUI). If the URL is invalid or unreachable, it disables image generation.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state
+        user (dict, optional): Admin user authentication, obtained via dependency injection
+    
+    Returns:
+        bool: True if the URL is valid and the API is reachable
+    
+    Raises:
+        HTTPException: 400 error with INVALID_URL message if the URL cannot be verified
+        
+    Side Effects:
+        - Sets ENABLE_IMAGE_GENERATION to False if URL verification fails
+        - Requires admin user authentication
+    """
     if request.app.state.config.IMAGE_GENERATION_ENGINE == "automatic1111":
         try:
             r = requests.get(
@@ -197,6 +290,29 @@ async def verify_url(request: Request, user=Depends(get_admin_user)):
 
 
 def set_image_model(request: Request, model: str):
+    """
+    Set the image generation model for the current configuration.
+    
+    This function updates the image generation model in the application's configuration. For Automatic1111 engine, it also updates the model checkpoint directly through the API.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state.
+        model (str): The name of the image generation model to set.
+    
+    Returns:
+        str: The updated image generation model name.
+    
+    Side Effects:
+        - Updates the application's configuration with the new model.
+        - For Automatic1111 engine, sends a request to update the model checkpoint.
+    
+    Raises:
+        HTTPException: If there are issues communicating with the Automatic1111 API.
+    
+    Example:
+        # Set model for image generation
+        new_model = set_image_model(request, "stable-diffusion-v1-5")
+    """
     log.info(f"Setting image model to {model}")
     request.app.state.config.IMAGE_GENERATION_MODEL = model
     if request.app.state.config.IMAGE_GENERATION_ENGINE in ["", "automatic1111"]:
@@ -217,6 +333,27 @@ def set_image_model(request: Request, model: str):
 
 
 def get_image_model(request):
+    """
+    Retrieve the current image generation model based on the configured engine.
+    
+    This function determines the active image generation model by checking the configured image generation engine. 
+    It handles different engines (OpenAI, ComfyUI, Automatic1111) with specific model retrieval logic.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state configuration.
+    
+    Returns:
+        str: The name of the current image generation model.
+            - For OpenAI: Returns configured model or defaults to "dall-e-2"
+            - For ComfyUI: Returns configured model or an empty string
+            - For Automatic1111: Retrieves the current model checkpoint from the API
+    
+    Raises:
+        HTTPException: If there's an error retrieving the Automatic1111 model, with a 400 status code.
+    
+    Side Effects:
+        - May set ENABLE_IMAGE_GENERATION to False if Automatic1111 API request fails
+    """
     if request.app.state.config.IMAGE_GENERATION_ENGINE == "openai":
         return (
             request.app.state.config.IMAGE_GENERATION_MODEL
@@ -253,6 +390,25 @@ class ImageConfigForm(BaseModel):
 
 @router.get("/image/config")
 async def get_image_config(request: Request, user=Depends(get_admin_user)):
+    """
+    Retrieve the current image generation configuration.
+    
+    This endpoint returns the configuration settings for image generation, including the selected model, image size, and number of generation steps.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state
+        user (dict, optional): Admin user authentication, obtained through dependency injection
+    
+    Returns:
+        dict: A dictionary containing image generation configuration details:
+            - MODEL (str): The currently selected image generation model
+            - IMAGE_SIZE (str): The configured image size for generation
+            - IMAGE_STEPS (int): The number of steps used in image generation
+    
+    Requires:
+        - Admin user authentication
+        - Configured image generation settings in application state
+    """
     return {
         "MODEL": request.app.state.config.IMAGE_GENERATION_MODEL,
         "IMAGE_SIZE": request.app.state.config.IMAGE_SIZE,
@@ -265,6 +421,35 @@ async def update_image_config(
     request: Request, form_data: ImageConfigForm, user=Depends(get_admin_user)
 ):
 
+    """
+    Update the image generation configuration with validated parameters.
+    
+    This asynchronous function allows an admin user to modify image generation settings, including the model, image size, and number of generation steps.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state.
+        form_data (ImageConfigForm): Configuration data for image generation settings.
+        user (dict, optional): Admin user authentication, obtained via dependency injection.
+    
+    Returns:
+        dict: Updated image configuration with keys:
+            - MODEL: Selected image generation model
+            - IMAGE_SIZE: Validated image dimensions
+            - IMAGE_STEPS: Number of generation steps
+    
+    Raises:
+        HTTPException: 400 error if image size or steps are invalid
+            - Validates image size format (e.g., "512x512")
+            - Ensures image steps are non-negative
+    
+    Example:
+        Successful update: 
+        {
+            "MODEL": "stable-diffusion-xl",
+            "IMAGE_SIZE": "512x512", 
+            "IMAGE_STEPS": 50
+        }
+    """
     set_image_model(request, form_data.MODEL)
 
     pattern = r"^\d+x\d+$"
@@ -293,6 +478,30 @@ async def update_image_config(
 
 @router.get("/models")
 def get_models(request: Request, user=Depends(get_verified_user)):
+    """
+    Retrieve available image generation models based on the configured engine.
+    
+    This function fetches a list of available models from different image generation engines:
+    - OpenAI (DALL·E 2 and DALL·E 3)
+    - ComfyUI (dynamically retrieves models from workflow)
+    - Automatic1111 (retrieves Stable Diffusion models)
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state
+        user (dict, optional): Verified user information (default: authenticated via get_verified_user)
+    
+    Returns:
+        list: A list of dictionaries containing model information with 'id' and 'name' keys
+    
+    Raises:
+        HTTPException: If there's an error retrieving models, with a 400 status code
+        Side effect: Disables image generation if an error occurs
+    
+    Notes:
+        - For ComfyUI, attempts to dynamically extract model list from workflow configuration
+        - Supports fallback to CheckpointLoaderSimple models if specific model node is not found
+        - Automatically disables image generation on retrieval failure
+    """
     try:
         if request.app.state.config.IMAGE_GENERATION_ENGINE == "openai":
             return [
@@ -442,6 +651,29 @@ async def image_generations(
     form_data: GenerateImageForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Generate images using the configured image generation engine.
+    
+    Generates images based on the specified prompt and configuration. Supports multiple image generation engines including OpenAI, ComfyUI, and Automatic1111.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state and configuration.
+        form_data (GenerateImageForm): Image generation parameters including prompt, number of images, and optional model.
+        user (User, optional): Verified user making the request. Defaults to the result of get_verified_user dependency.
+    
+    Returns:
+        List[Dict[str, str]]: A list of generated image URLs, where each image is saved in the local image cache.
+    
+    Raises:
+        HTTPException: If image generation fails, with a 400 status code and error details.
+    
+    Notes:
+        - Supports dynamic configuration of image generation parameters
+        - Handles different image generation engines with specific API requirements
+        - Saves generated images to a local cache directory
+        - Logs additional metadata about each image generation request
+        - Supports optional user information forwarding for tracking
+    """
     width, height = tuple(map(int, request.app.state.config.IMAGE_SIZE.split("x")))
 
     r = None

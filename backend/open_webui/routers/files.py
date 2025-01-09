@@ -43,6 +43,27 @@ router = APIRouter()
 def upload_file(
     request: Request, file: UploadFile = File(...), user=Depends(get_verified_user)
 ):
+    """
+    Upload a file to the system and process it.
+    
+    Handles file upload with the following steps:
+    - Sanitizes the uploaded filename
+    - Generates a unique UUID for the file
+    - Uploads the file to storage
+    - Inserts a new file record in the database
+    - Attempts to process the uploaded file
+    
+    Parameters:
+        request (Request): The FastAPI request object
+        file (UploadFile): The uploaded file object
+        user (User): The verified user performing the upload
+    
+    Returns:
+        FileModelResponse: Details of the uploaded file, including processing results or potential errors
+    
+    Raises:
+        HTTPException: If file upload or processing fails, with a 400 status code
+    """
     log.info(f"file.content_type: {file.content_type}")
     try:
         unsanitized_filename = file.filename
@@ -188,6 +209,28 @@ class ContentForm(BaseModel):
 async def update_file_data_content_by_id(
     request: Request, id: str, form_data: ContentForm, user=Depends(get_verified_user)
 ):
+    """
+    Update the content of a file by its ID.
+    
+    Allows authorized users to modify the content of a specific file. The user must either be the file's owner or an admin.
+    
+    Parameters:
+        request (Request): The incoming HTTP request
+        id (str): Unique identifier of the file to update
+        form_data (ContentForm): Form containing the new file content
+        user (User, optional): Authenticated and verified user performing the update
+    
+    Returns:
+        dict: A dictionary containing the updated file content
+    
+    Raises:
+        HTTPException: 404 error if the file is not found or the user is not authorized
+    
+    Notes:
+        - Processes the file content using the `process_file` function
+        - Logs any errors during file processing
+        - Returns an empty string if no content is available after processing
+    """
     file = Files.get_file_by_id(id)
 
     if file and (file.user_id == user.id or user.role == "admin"):
@@ -215,6 +258,29 @@ async def update_file_data_content_by_id(
 
 @router.get("/{id}/content")
 async def get_file_content_by_id(id: str, user=Depends(get_verified_user)):
+    """
+    Retrieve a file's content by its unique identifier.
+    
+    This asynchronous function allows authorized users to download or view a file based on its ID. 
+    It supports different file types and handles Unicode filenames using RFC5987 encoding.
+    
+    Parameters:
+        id (str): The unique identifier of the file to retrieve.
+        user (User, optional): The authenticated and verified user requesting the file.
+    
+    Returns:
+        FileResponse: A file response with appropriate headers for downloading or viewing the file.
+    
+    Raises:
+        HTTPException: 404 error if the file is not found or the user is not authorized.
+        HTTPException: 400 error if there's an issue retrieving the file content.
+    
+    Notes:
+        - Admin users can access any file.
+        - Regular users can only access their own files.
+        - Supports different handling for PDF and plain text files.
+        - Encodes filenames to support Unicode characters.
+    """
     file = Files.get_file_by_id(id)
     if file and (file.user_id == user.id or user.role == "admin"):
         try:
@@ -291,6 +357,28 @@ async def get_html_file_content_by_id(id: str, user=Depends(get_verified_user)):
 
 @router.get("/{id}/content/{file_name}")
 async def get_file_content_by_id(id: str, user=Depends(get_verified_user)):
+    """
+    Retrieve a file's content by its unique identifier with authorization checks.
+    
+    This method handles file retrieval for both stored files and text-based content, supporting Unicode filenames and different access scenarios.
+    
+    Parameters:
+        id (str): Unique identifier of the file to retrieve
+        user (User): Authenticated and verified user attempting to access the file
+    
+    Returns:
+        FileResponse or StreamingResponse: The file content with appropriate headers for download
+    
+    Raises:
+        HTTPException: 404 error if file is not found or user lacks access permissions
+    
+    Behavior:
+        - Checks user authorization (file owner or admin)
+        - Supports retrieving physical files from storage
+        - Supports streaming text content as fallback
+        - Handles Unicode filename encoding using RFC5987 standard
+        - Provides attachment download headers
+    """
     file = Files.get_file_by_id(id)
 
     if file and (file.user_id == user.id or user.role == "admin"):
@@ -343,6 +431,22 @@ async def get_file_content_by_id(id: str, user=Depends(get_verified_user)):
 
 @router.delete("/{id}")
 async def delete_file_by_id(id: str, user=Depends(get_verified_user)):
+    """
+    Delete a file by its unique identifier.
+    
+    Deletes a file from both the database and storage system if the user is authorized.
+    
+    Parameters:
+        id (str): Unique identifier of the file to be deleted
+        user (User, optional): Authenticated user performing the deletion. Defaults to verified user.
+    
+    Returns:
+        dict: A message confirming successful file deletion
+    
+    Raises:
+        HTTPException: 400 error if file deletion fails
+        HTTPException: 404 error if file is not found or user lacks permission
+    """
     file = Files.get_file_by_id(id)
     if file and (file.user_id == user.id or user.role == "admin"):
         result = Files.delete_file_by_id(id)

@@ -78,6 +78,28 @@ def get_current_user(
     request: Request,
     auth_token: HTTPAuthorizationCredentials = Depends(bearer_security),
 ):
+    """
+    Authenticate a user using either a JWT token or an API key.
+    
+    This function handles user authentication through multiple methods:
+    1. Bearer token from Authorization header
+    2. Token from request cookies
+    3. API key authentication
+    
+    Parameters:
+        request (Request): The incoming HTTP request
+        auth_token (HTTPAuthorizationCredentials, optional): Authorization credentials from the bearer token
+    
+    Returns:
+        Users: The authenticated user object
+    
+    Raises:
+        HTTPException: 
+            - 403 if not authenticated
+            - 403 if API key usage is not allowed
+            - 403 if API key is used on a restricted endpoint
+            - 401 if token is invalid or user cannot be found
+    """
     token = None
 
     if auth_token is not None:

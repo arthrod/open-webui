@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { toast } from 'svelte-sonner';
 
 	import { onMount, getContext } from 'svelte';
@@ -9,18 +9,18 @@
 	import { ldapUserSignIn, getSessionUser, userSignIn, userSignUp } from '$lib/apis/auths';
 
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
-	import { WEBUI_NAME, config, user, socket, mobile } from '$lib/stores';
-	
+	import { WEBUI_NAME, config, user, socket, mobile, queueID } from '$lib/stores';
+
 	import { generateInitialsImage, canvasPixelTest } from '$lib/utils';
 
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import OnBoarding from '$lib/components/OnBoarding.svelte';
+	import { getMetrics, getStatus, joinQueue } from '$lib/apis/queue';
 
 	const i18n = getContext('i18n');
 
 	let loaded = false;
 
-	// let mode = 'queue';
 	let queue = { position: -1, totalPeople: -1 };
 	let mode = $config?.features.enable_ldap ? 'ldap' : 'signin';
 
@@ -83,15 +83,32 @@
 		}
 	};
 
+	const generateRandomStringId = (length: number = 16): string => {
+		const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		let result = '';
+		const charactersLength = characters.length;
+		for (let i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+		return result;
+	};
+
+	// TODO : DISCONNECT AFTER 15 MINUTES AND FIX BUGS
 	const joinQueueHandler = async () => {
-		queue = { position: 670, totalPeople: 670 };
-		let timer = setInterval(() => {
-			queue.position -= 5;
-			if (queue.position === 0) {
-				clearInterval(timer);
+		$queueID = generateRandomStringId();
+
+		queue.position = (await joinQueue({ user_id: $queueID })).position;
+		queue.totalPeople = (await getMetrics()).waiting_users;
+
+		let syncQueue = setInterval(async () => {
+			const res = await getStatus($queueID);
+
+			if (res.position) queue.position = res.position;
+			else if (res.status === 'draft') {
+				clearInterval(syncQueue);
 				signInHandler();
 			}
-		}, 100);
+		}, 5000);
 	};
 
 	const checkOauthCallback = async () => {

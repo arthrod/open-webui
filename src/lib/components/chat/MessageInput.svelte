@@ -630,7 +630,7 @@
 
 								<div class=" flex">
 									<div class="ml-1 self-end mb-1.5 flex space-x-1">
-										<InputMenu
+										<!-- <InputMenu
 											bind:webSearchEnabled
 											bind:selectedToolIds
 											{screenCaptureHandler}
@@ -680,12 +680,12 @@
 													/>
 												</svg>
 											</button>
-										</InputMenu>
+										</InputMenu> -->
 									</div>
 
 									{#if $settings?.richTextInput ?? true}
 										<div
-											class="scrollbar-hidden text-left bg-transparent dark:text-gray-100 outline-none w-full py-2.5 px-1 rounded-xl resize-none h-fit max-h-80 overflow-auto"
+											class="scrollbar-hidden text-left bg-transparent dark:text-gray-100 outline-none w-full py-2.5 px-3 rounded-xl resize-none h-fit max-h-80 overflow-auto"
 										>
 											<RichTextInput
 												bind:this={chatInputElement}
@@ -888,7 +888,7 @@
 										<textarea
 											id="chat-input"
 											bind:this={chatInputElement}
-											class="scrollbar-hidden bg-transparent dark:text-gray-100 outline-none w-full py-3 px-1 rounded-xl resize-none h-[48px]"
+											class="scrollbar-hidden bg-transparent dark:text-gray-100 outline-none w-full py-3 px-3 rounded-xl resize-none h-[48px]"
 											placeholder={placeholder ? placeholder : $i18n.t('Send a Message')}
 											bind:value={prompt}
 											on:keypress={(e) => {
@@ -1079,7 +1079,7 @@
 
 									<div class="self-end mb-1.5 flex space-x-1 mr-1">
 										{#if !history?.currentId || history.messages[history.currentId]?.done == true}
-											<Tooltip content={$i18n.t('Record voice')}>
+											<!-- <Tooltip content={$i18n.t('Record voice')}>
 												<button
 													id="voice-input-button"
 													class=" text-gray-600 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 transition rounded-full p-1.5 mr-0.5 self-center"
@@ -1124,12 +1124,12 @@
 														/>
 													</svg>
 												</button>
-											</Tooltip>
+											</Tooltip> -->
 										{/if}
 
 										{#if !history.currentId || history.messages[history.currentId]?.done == true}
 											{#if prompt === ''}
-												<div class=" flex items-center">
+												<!-- <div class=" flex items-center">
 													<Tooltip content={$i18n.t('Call')}>
 														<button
 															class=" bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full p-2 self-center"
@@ -1178,7 +1178,7 @@
 															<Headphone className="size-5" />
 														</button>
 													</Tooltip>
-												</div>
+												</div> -->
 											{:else}
 												<div class=" flex items-center">
 													<Tooltip content={$i18n.t('Send message')}>

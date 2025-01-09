@@ -1,4 +1,5 @@
 import asyncio
+from asyncio import StreamReader
 import hashlib
 import json
 import logging
@@ -15,6 +16,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.background import BackgroundTask
+
+from guardrails.hub import ToxicLanguage, DetectJailbreak
+import guardrails as gd
 
 from open_webui.models.models import Models
 from open_webui.config import (
@@ -42,6 +46,15 @@ from open_webui.utils.access_control import has_access
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
+
+guard = gd.AsyncGuard(name='toxic_guard')
+guards_list = [
+    ToxicLanguage(threshold=0.7, validation_method="sentence", on_fail="noop"),
+    DetectJailbreak(on_fail='noop', threshold=0.8)
+]
+guard.use_many(
+    *guards_list,
+)
 
 
 ##########################################
@@ -541,6 +554,38 @@ async def generate_chat_completion(
     payload = {**form_data}
     if "metadata" in payload:
         del payload["metadata"]
+    log.info(f'payload: {payload}')
+    latest_msg = payload['messages'][-1]['content']
+
+    error = await guard.validate(latest_msg)
+    if error.validation_passed is False :
+        log.error(f"Guardrail validation failed: {error}")
+        fails= ', '.join([s.validator_name for s in error.validation_summaries])
+        # msg = f"""
+        # I violate your terms and conditions as my message contains content that is not permitted : {fails}.
+        # Please respond respectfully in my language, without repeating or acknowledging the specific prohibited content. 
+        # Instead, convey that their input cannot be processed and encourage adherence to guidelines.
+        # My message : {latest_msg}
+        # """
+        # payload['messages'][-1]['content'] = msg
+        
+        # msg = f"""
+        # This user query `{latest_msg}` violates the following terms and conditions: {fails}.
+        # In the query's language, deny respectfully.
+        # """
+
+        payload['messages'].append({
+            'role': 'system',
+            'content': f"""You are an AI assistant that is required to answer the user's queries while adhering to the guidelines.
+            The user message violates the following policies: {fails}. 
+            Please respond respectfully in the user's language without repeating the specific prohibited content.
+            Specify the reason for the rejection and encourage adherence to the guidelines.
+            Response example : 
+            I'm sorry, I can't assist with that. You message violates our guidelines.
+            """
+        })
+
+        
 
     model_id = form_data.get("model")
     model_info = Models.get_model_by_id(model_id)
@@ -662,7 +707,43 @@ async def generate_chat_completion(
         # Check if response is SSE
         if "text/event-stream" in r.headers.get("Content-Type", ""):
             streaming = True
+
+            async def process_stream(content: StreamReader):
+                sentence = ''
+                # Decode and process the chunk
+                async for chunk in content.iter_any():
+                    decoded_chunk = chunk.decode('utf-8')
+                    if not decoded_chunk.startswith('data: '):
+                        log.info(f"abnormal DECODED_CHUNK: {decoded_chunk}")
+                    try:
+                        chunks = [s.split('data: ')[1] for s in decoded_chunk.split("\n") if s]
+                        log.info(f"chunks: {chunks}")
+                        log.info(f'len chunks: {len(chunks)}')
+                        data = [json.loads(json_str) for json_str in chunks if json_str]
+                        log.info(f"data list: {data}")
+                        content = ' '.join([d["choices"][0]["delta"]["content"] for d in data])
+                        log.info(f"Content: {content}")
+
+                        sentence += content
+
+                        error = await guard.validate(sentence)
+                        if error.validation_passed is True :
+                            log.info(f"CHUNKE SENT")
+                            yield chunk
+
+                    except (json.JSONDecodeError, KeyError) as e:
+                        log.warning(f"Failed to parse chunk: {e}")
+                        yield chunk
+
+                    except Exception as e:
+                        log.warning(f"Failed to process token: {e}")
+                        yield chunk
+                        
+
+
+                
             return StreamingResponse(
+                # process_stream(content=r.content),
                 r.content,
                 status_code=r.status,
                 headers=dict(r.headers),

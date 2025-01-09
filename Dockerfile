@@ -150,6 +150,14 @@ RUN pip3 install uv && \
     chown -R $UID:$GID /app/backend/data/
 
 
+ENV GUARDRAILS_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnb29nbGUtb2F1dGgyfDEwNzg1MzE1Njc2NTQ4NDU1MDcyNCIsImFwaUtleUlkIjoiNDJlNzJmMzItMWZkMC00YjgzLTllZDQtZWZjMjRhZDQ1NWFjIiwic2NvcGUiOiJyZWFkOnBhY2thZ2VzIiwicGVybWlzc2lvbnMiOltdLCJpYXQiOjE3MzYyMzg2NzQsImV4cCI6NDg4OTgzODY3NH0.t7XWdkB0q8vzbsrNsquFvJpGR_CzPhVlxsmyOyataEk
+# Run the Guardrails configure command to create a .guardrailsrc file
+RUN pip install guardrails-ai --upgrade
+RUN guardrails configure --enable-metrics --enable-remote-inferencing  --token $GUARDRAILS_TOKEN
+
+RUN guardrails hub install hub://guardrails/toxic_language
+RUN guardrails hub install hub://guardrails/detect_jailbreak
+
 
 # copy embedding weight from build
 # RUN mkdir -p /root/.cache/chroma/onnx_models/all-MiniLM-L6-v2

@@ -47,13 +47,24 @@ from open_webui.utils.access_control import has_access
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 
-guard = gd.AsyncGuard(name='toxic_guard')
-guards_list = [
+# pre-guard
+pre_guards_list = [
     ToxicLanguage(threshold=0.7, validation_method="sentence", on_fail="noop"),
-    DetectJailbreak(on_fail='noop', threshold=0.8)
+    DetectJailbreak(on_fail='noop', threshold=0.80)
 ]
-guard.use_many(
-    *guards_list,
+pre_guard = gd.AsyncGuard(name='pre_guard')
+pre_guard.use_many(
+    *pre_guards_list,
+)
+
+# post-guard
+post_guards_list = [
+    ToxicLanguage(threshold=0.7, validation_method="sentence", on_fail="noop"),
+]
+
+post_guard = gd.AsyncGuard(name='post_guard')
+post_guard.use_many(
+    *post_guards_list,
 )
 
 
@@ -557,22 +568,10 @@ async def generate_chat_completion(
     log.info(f'payload: {payload}')
     latest_msg = payload['messages'][-1]['content']
 
-    error = await guard.validate(latest_msg)
+    error = await pre_guard.validate(latest_msg)
     if error.validation_passed is False :
         log.error(f"Guardrail validation failed: {error}")
         fails= ', '.join([s.validator_name for s in error.validation_summaries])
-        # msg = f"""
-        # I violate your terms and conditions as my message contains content that is not permitted : {fails}.
-        # Please respond respectfully in my language, without repeating or acknowledging the specific prohibited content. 
-        # Instead, convey that their input cannot be processed and encourage adherence to guidelines.
-        # My message : {latest_msg}
-        # """
-        # payload['messages'][-1]['content'] = msg
-        
-        # msg = f"""
-        # This user query `{latest_msg}` violates the following terms and conditions: {fails}.
-        # In the query's language, deny respectfully.
-        # """
 
         payload['messages'].append({
             'role': 'system',
@@ -708,43 +707,43 @@ async def generate_chat_completion(
         if "text/event-stream" in r.headers.get("Content-Type", ""):
             streaming = True
 
-            async def process_stream(content: StreamReader):
-                sentence = ''
-                # Decode and process the chunk
-                async for chunk in content.iter_any():
+            async def process_stream_with_guard(content: StreamReader, guardCheck_frequency=5):
+                accumulated_text = ""
+                i = 0
+                while True:
+                    # Read chunk by chunk using StreamReader's methods. No problem with the buffer
+                    chunk = await content.readline()
+                    if not chunk:  # EOF
+                        break
+
+                    i += 1
                     decoded_chunk = chunk.decode('utf-8')
-                    if not decoded_chunk.startswith('data: '):
-                        log.info(f"abnormal DECODED_CHUNK: {decoded_chunk}")
-                    try:
-                        chunks = [s.split('data: ')[1] for s in decoded_chunk.split("\n") if s]
-                        log.info(f"chunks: {chunks}")
-                        log.info(f'len chunks: {len(chunks)}')
-                        data = [json.loads(json_str) for json_str in chunks if json_str]
-                        log.info(f"data list: {data}")
-                        content = ' '.join([d["choices"][0]["delta"]["content"] for d in data])
-                        log.info(f"Content: {content}")
+                    if decoded_chunk.startswith('data: '):
+                        try:
+                            data = json.loads(decoded_chunk[6:].strip())
+                            if 'choices' in data and data['choices']:
+                                if 'delta' in data['choices'][0]:
+                                    delta = data['choices'][0]['delta']
+                                    if 'content' in delta:
+                                        accumulated_text += delta['content']
+                                        log.info(f"SENTENCE: {accumulated_text}")
+                                        
+                                        if i % guardCheck_frequency == 0: 
+                                            # Run guard on accumulated text
+                                            error = await post_guard.validate(accumulated_text)
+                                            if not error.validation_passed:
+                                                log.info("Derailement")
+                                                # Handle violation
+                                                # pass
+                                                raise Exception("Potential derailment: Generation halted.")
 
-                        sentence += content
-
-                        error = await guard.validate(sentence)
-                        if error.validation_passed is True :
-                            log.info(f"CHUNKE SENT")
-                            yield chunk
-
-                    except (json.JSONDecodeError, KeyError) as e:
-                        log.warning(f"Failed to parse chunk: {e}")
-                        yield chunk
-
-                    except Exception as e:
-                        log.warning(f"Failed to process token: {e}")
-                        yield chunk
-                        
-
-
-                
+                        except json.JSONDecodeError:
+                            pass
+                    
+                    yield chunk
+                    
             return StreamingResponse(
-                # process_stream(content=r.content),
-                r.content,
+                process_stream_with_guard(content=r.content),
                 status_code=r.status,
                 headers=dict(r.headers),
                 background=BackgroundTask(

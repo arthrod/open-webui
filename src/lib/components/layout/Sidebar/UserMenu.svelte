@@ -44,7 +44,7 @@
 			align="start"
 			transition={(e) => fade(e, { duration: 100 })}
 		>
-			<button
+			<!-- <button
 				class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 				on:click={async () => {
 					await showSettings.set(true);
@@ -77,9 +77,9 @@
 					</svg>
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Settings')}</div>
-			</button>
+			</button> -->
 
-			<button
+			<!-- <button
 				class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 				on:click={() => {
 					dispatch('show', 'archived-chat');
@@ -94,8 +94,8 @@
 					<ArchiveBox className="size-5" strokeWidth="1.5" />
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Archived Chats')}</div>
-			</button>
-
+			</button> -->
+<!-- 
 			{#if role === 'admin'}
 				<a
 					class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
@@ -156,9 +156,9 @@
 					</div>
 					<div class=" self-center truncate">{$i18n.t('Admin Panel')}</div>
 				</a>
-			{/if}
+			{/if} -->
 
-			<hr class=" border-gray-50 dark:border-gray-850 my-1 p-0" />
+			<!-- <hr class=" border-gray-50 dark:border-gray-850 my-1 p-0" /> -->
 
 			<button
 				class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"

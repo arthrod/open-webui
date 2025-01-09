@@ -74,9 +74,14 @@
 			{$showSidebar ? 'ml-1' : ''}
 			"
 			>
-				{#if showModelSelector}
+				<div
+					class="flex w-full text-left px-0.5 outline-none bg-transparent truncate text-lg justify-between font-medium placeholder-gray-400 focus:outline-none"
+				>
+					Lucie 7B
+				</div>
+				<!-- {#if showModelSelector}
 					<ModelSelector bind:selectedModels showSetDefault={!shareEnabled} />
-				{/if}
+				{/if} -->
 			</div>
 
 			<div class="self-start flex flex-none items-center text-gray-600 dark:text-gray-400">
@@ -115,7 +120,7 @@
 						</button>
 					</Menu>
 				{:else if $mobile}
-					<Tooltip content={$i18n.t('Controls')}>
+					<!-- <Tooltip content={$i18n.t('Controls')}>
 						<button
 							class=" flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
 							on:click={async () => {
@@ -127,11 +132,11 @@
 								<AdjustmentsHorizontal className=" size-5" strokeWidth="0.5" />
 							</div>
 						</button>
-					</Tooltip>
+					</Tooltip> -->
 				{/if}
 
 				{#if !$mobile}
-					<Tooltip content={$i18n.t('Controls')}>
+					<!-- <Tooltip content={$i18n.t('Controls')}>
 						<button
 							class=" flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
 							on:click={async () => {
@@ -143,7 +148,7 @@
 								<AdjustmentsHorizontal className=" size-5" strokeWidth="0.5" />
 							</div>
 						</button>
-					</Tooltip>
+					</Tooltip> -->
 				{/if}
 
 				<Tooltip content={$i18n.t('New Chat')}>

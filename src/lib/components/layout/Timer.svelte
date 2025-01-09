@@ -32,7 +32,7 @@
 				$endTimestamp = -1;
 				termsOfUse.reset();
 				localStorage.removeItem('token');
-				// location.href = '/auth';
+				location.href = '/auth';
 			}
 		}, SECOND);
 	});

@@ -15,13 +15,21 @@
 
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import OnBoarding from '$lib/components/OnBoarding.svelte';
-	import { getMetrics, getStatus, joinQueue } from '$lib/apis/queue';
+	import { confirmConnection, getMetrics, getStatus, getTimers, joinQueue } from '$lib/apis/queue';
+	import type { QueueMetrics, QueueStatus } from '$lib/apis/queue/types';
 
 	const i18n = getContext('i18n');
 
 	let loaded = false;
 
-	let queue = { position: -1, totalPeople: -1 };
+	// Queue
+	let queueStatus: QueueStatus = { position: -1, status: 'disconnected' };
+	let queueMetrics: QueueMetrics = {
+		active_users: 0,
+		waiting_users: 0,
+		total_slots: 0
+	};
+
 	let mode = $config?.features.enable_ldap ? 'ldap' : 'signin';
 
 	let name = '';
@@ -93,46 +101,46 @@
 		return result;
 	};
 
+	// Refresh queue status periodically
 	const refreshQueue = async () => {
-		const res = await getStatus($queueID);
+		queueStatus = await getStatus($queueID);
+		queueMetrics = await getMetrics();
 
-		if (res.position) {
-			queue.position = res.position;
-
+		if (queueStatus.status === 'waiting') {
 			setTimeout(
 				refreshQueue,
-				queue.position > 1000
+				queueStatus.position > 1000
 					? 30000
-					: queue.position > 100
+					: queueStatus.position > 100
 						? 15000
-						: queue.position > 25
+						: queueStatus.position > 25
 							? 5000
 							: 1000
 			);
-		} else if (res.status === 'draft') {
-			queue.position = 0;
+		} else if (queueStatus.status === 'draft') {
+			// refreshTimer();
+		} else if (queueStatus.status === 'connected') {
 			signInHandler();
 		}
 	};
 
-	// TODO : DISCONNECT AFTER 15 MINUTES AND FIX BUGS
-	// CLEAR TIMER ON DISCONNECT
+	// const refreshTimer = async () => {
+	// 	let timer = await getTimers($queueID);
+	// 	console.log(timer);
+	// 	setTimeout(refreshTimer, 1000);
+	// };
+
+	const confirmConnectionHandler = async () => {
+		await confirmConnection({ user_id: $queueID });
+		refreshQueue();
+	};
+
+	// Join the queue and initialize periodic status refresh
 	const joinQueueHandler = async () => {
 		$queueID = generateRandomStringId();
+		await joinQueue({ user_id: $queueID });
 
-		queue.position = (await joinQueue({ user_id: $queueID })).position;
-		queue.totalPeople = (await getMetrics()).waiting_users;
-
-		setTimeout(
-			refreshQueue,
-			queue.position > 1000
-				? 30000
-				: queue.position > 100
-					? 15000
-					: queue.position > 25
-						? 5000
-						: 1000
-		);
+		refreshQueue();
 	};
 
 	const checkOauthCallback = async () => {
@@ -225,39 +233,68 @@
 				<span class="text-xl md:text-2xl font-medium text-center">
 					{$i18n.t(`Try {{WEBUI_NAME}} for free`, { WEBUI_NAME: $WEBUI_NAME })}
 				</span>
-				{#if queue.position === -1}
-					<button
-						id="queue"
-						class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition rounded-full font-medium text-sm my-6 py-3 px-8 w-72 relative text-center"
-						on:click={joinQueueHandler}
-					>
-						{$i18n.t('Join queue')}
-					</button>
-				{:else if queue.position === 0}
-					<div
-						class="my-6 py-3 flex items-center justify-center gap-3 text-sm sm:text-sm text-center font-semibold dark:text-gray-200"
-					>
-						<div>
-							{$i18n.t('Signing in to {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
-						</div>
-
-						<div>
-							<Spinner />
-						</div>
-					</div>
-				{:else}
-					<span
-						id="queue"
-						class="bg-gray-700/5 dark:bg-gray-100/5 dark:text-gray-300 rounded-full font-medium text-sm my-6 py-3 px-8 w-72 relative text-center"
-					>
+				<div class="h-48 flex flex-col justify-center items-center">
+					{#if queueStatus.status === 'disconnected'}
+						<button
+							id="queue"
+							class="w-72 h-12 my-6 py-3 px-8 relative rounded-full font-semibold text-base text-center transition
+							bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white"
+							on:click={joinQueueHandler}
+						>
+							{$i18n.t('Join queue')}
+						</button>
+					{:else if queueStatus.status === 'connected'}
 						<div
-							style="width: 
-							{Math.max(Math.round(((queue.totalPeople - queue.position) / queue.totalPeople) * 100), 15)}%"
-							class="absolute top-0 left-0 rounded-full h-full max-w-72 bg-gray-200 -z-10 transition"
-						/>
-						#{queue.position} in queue
-					</span>
-				{/if}
+							class="my-6 py-3 flex items-center justify-center gap-3 text-lg sm:text-lg text-center font-semibold dark:text-gray-200"
+						>
+							<div>
+								{$i18n.t('Signing in to {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
+							</div>
+
+							<div>
+								<Spinner />
+							</div>
+						</div>
+					{:else if queueStatus.status === 'waiting'}
+						<span class="font-medium text-center">
+							#{queueStatus.position}
+							{$i18n.t('in queue')}
+						</span>
+						<span class="text-xs mt-1">
+							({$i18n.t('estimated waiting time')} : ~{queueStatus.position * 20}
+							{$i18n.t('minutes')})
+						</span>
+						<span
+							class="bg-gray-700/5 dark:bg-gray-100/5 dark:text-gray-300 rounded-full font-medium text-sm my-6 py-3 px-8 w-72 relative text-center"
+						>
+							<div
+								style="width: {Math.max(
+									Math.round(
+										((queueMetrics.waiting_users - queueStatus.position) /
+											queueMetrics.waiting_users) *
+											100
+									),
+									10
+								)}%"
+								class="absolute top-0 left-0 rounded-full h-full max-w-72 bg-gray-200 -z-10 transition"
+							/>
+						</span>
+					{:else if queueStatus.status === 'draft'}
+						<span class="text-sm">
+							{$i18n.t('Please confirm your connection to {{WEBUI_NAME}}', {
+								WEBUI_NAME: $WEBUI_NAME
+							})}
+						</span>
+						<button
+							id="queue"
+							class="w-72 h-12 my-6 py-3 px-8 relative rounded-full font-semibold text-base text-center transition
+							bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white"
+							on:click={confirmConnectionHandler}
+						>
+							{$i18n.t('Connect')}
+						</button>
+					{/if}
+				</div>
 			{:else}
 				<div class="py-6">
 					<form

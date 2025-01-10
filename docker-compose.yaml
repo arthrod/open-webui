@@ -23,7 +23,6 @@ services:
       - .env
     command: >
       --config /app/config.yaml --port 4000 --num_workers 8 --detailed_debug
-
     depends_on:
       - postgres # Ensure the PostgreSQL service is started before litellm
 
@@ -34,6 +33,18 @@ services:
     volumes:
       - ./litellm/postgres_data:/var/lib/postgresql/data
     restart: always
+
+  queue:
+    build: ./simple-queue
+    ports:
+      - "8000:8000"
+    environment:
+      SESSION_DURATION: 10
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "--request", "POST", "http://localhost:8000/queue/idle" ]
+      interval: 1s
+      timeout: 60s
+      retries: 3
 
 volumes:
   open-webui-dev1:

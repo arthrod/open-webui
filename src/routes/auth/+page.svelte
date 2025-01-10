@@ -33,7 +33,7 @@
 	const setSessionUser = async (sessionUser) => {
 		if (sessionUser) {
 			console.log(sessionUser);
-			toast.success($i18n.t(`You're now logged in.`));
+			// toast.success($i18n.t(`You're now logged in.`));
 			if (sessionUser.token) {
 				localStorage.token = sessionUser.token;
 			}
@@ -93,22 +93,46 @@
 		return result;
 	};
 
+	const refreshQueue = async () => {
+		const res = await getStatus($queueID);
+
+		if (res.position) {
+			queue.position = res.position;
+
+			setTimeout(
+				refreshQueue,
+				queue.position > 1000
+					? 30000
+					: queue.position > 100
+						? 15000
+						: queue.position > 25
+							? 5000
+							: 1000
+			);
+		} else if (res.status === 'draft') {
+			queue.position = 0;
+			signInHandler();
+		}
+	};
+
 	// TODO : DISCONNECT AFTER 15 MINUTES AND FIX BUGS
+	// CLEAR TIMER ON DISCONNECT
 	const joinQueueHandler = async () => {
 		$queueID = generateRandomStringId();
 
 		queue.position = (await joinQueue({ user_id: $queueID })).position;
 		queue.totalPeople = (await getMetrics()).waiting_users;
 
-		let syncQueue = setInterval(async () => {
-			const res = await getStatus($queueID);
-
-			if (res.position) queue.position = res.position;
-			else if (res.status === 'draft') {
-				clearInterval(syncQueue);
-				signInHandler();
-			}
-		}, 5000);
+		setTimeout(
+			refreshQueue,
+			queue.position > 1000
+				? 30000
+				: queue.position > 100
+					? 15000
+					: queue.position > 25
+						? 5000
+						: 1000
+		);
 	};
 
 	const checkOauthCallback = async () => {
@@ -203,7 +227,8 @@
 				</span>
 				{#if queue.position === -1}
 					<button
-						class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition rounded-full font-medium text-sm my-6 py-3 px-8"
+						id="queue"
+						class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition rounded-full font-medium text-sm my-6 py-3 px-8 w-72 relative text-center"
 						on:click={joinQueueHandler}
 					>
 						{$i18n.t('Join queue')}
@@ -226,11 +251,9 @@
 						class="bg-gray-700/5 dark:bg-gray-100/5 dark:text-gray-300 rounded-full font-medium text-sm my-6 py-3 px-8 w-72 relative text-center"
 					>
 						<div
-							style="width: {Math.max(
-								Math.round(((queue.totalPeople - queue.position) / queue.totalPeople) * 100),
-								15
-							)}%"
-							class="absolute top-0 left-0 rounded-full h-full bg-gray-200 -z-10 transition-all"
+							style="width: 
+							{Math.max(Math.round(((queue.totalPeople - queue.position) / queue.totalPeople) * 100), 15)}%"
+							class="absolute top-0 left-0 rounded-full h-full max-w-72 bg-gray-200 -z-10 transition"
 						/>
 						#{queue.position} in queue
 					</span>

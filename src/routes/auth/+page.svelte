@@ -280,7 +280,7 @@
 							/>
 						</span>
 					{:else if queueStatus.status === 'draft'}
-						<span class="text-sm">
+						<span class="text-sm text-center">
 							{$i18n.t('Please confirm your connection to {{WEBUI_NAME}}', {
 								WEBUI_NAME: $WEBUI_NAME
 							})}

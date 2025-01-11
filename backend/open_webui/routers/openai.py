@@ -49,8 +49,8 @@ log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 
 # pre-guard
 pre_guards_list = [
+    DetectJailbreak(on_fail='noop', threshold=0.8),
     ToxicLanguage(threshold=0.7, validation_method="sentence", on_fail="noop"),
-    DetectJailbreak(on_fail='noop', threshold=0.80)
 ]
 pre_guard = gd.AsyncGuard(name='pre_guard')
 pre_guard.use_many(
@@ -59,7 +59,7 @@ pre_guard.use_many(
 
 # post-guard
 post_guards_list = [
-    ToxicLanguage(threshold=0.7, validation_method="sentence", on_fail="noop"),
+    ToxicLanguage(threshold=0.80, validation_method="sentence", on_fail="noop"),
 ]
 
 post_guard = gd.AsyncGuard(name='post_guard')
@@ -551,12 +551,31 @@ async def verify_connection(
             raise HTTPException(status_code=500, detail=error_detail)
 
 
+
+async def stream_violation_message(decoded_data: dict):
+    message = "**Derailment detected**: Generation stopped due to potentially harmful content. Please **use the service responsibly**."
+
+    # Stream each token of the message
+    for i, token in enumerate(message.split()):
+        token = '\n' + token if i == 0 else token
+        decoded_data['choices'] = [
+            {
+                "delta": {"content": token + " "},
+                "index": 0,
+                "finish_reason": None
+            }
+        ]
+        yield f"data: {json.dumps(decoded_data)}\n\n".encode('utf-8')    
+    yield b"data: [DONE]\n\n" # Send the final [DONE] message
+
+
 @router.post("/chat/completions")
 async def generate_chat_completion(
     request: Request,
     form_data: dict,
     user:UserModel=Depends(get_verified_user),
     bypass_filter: Optional[bool] = False,
+    guard: bool = False
 ):
     if BYPASS_MODEL_ACCESS_CONTROL:
         bypass_filter = True
@@ -567,24 +586,24 @@ async def generate_chat_completion(
         del payload["metadata"]
     log.info(f'payload: {payload}')
     latest_msg = payload['messages'][-1]['content']
-
     error = await pre_guard.validate(latest_msg)
-    if error.validation_passed is False :
-        log.error(f"Guardrail validation failed: {error}")
-        fails= ', '.join([s.validator_name for s in error.validation_summaries])
 
-        payload['messages'].append({
-            'role': 'system',
-            'content': f"""You are an AI assistant that is required to answer the user's queries while adhering to the guidelines.
-            The user message violates the following policies: {fails}. 
-            Please respond respectfully in the user's language without repeating the specific prohibited content.
-            Specify the reason for the rejection and encourage adherence to the guidelines.
-            Response example : 
-            I'm sorry, I can't assist with that. You message violates our guidelines.
-            """
-        })
+    if guard:
+        if error.validation_passed is False :
+            log.error(f"Pre-guardrail validation failed: {error}")
+            fails= ', '.join([s.validator_name for s in error.validation_summaries])
 
-        
+            payload['messages'].append({
+                'role': 'system',
+                'content': f"""You are an AI assistant that is required to answer the user's queries while adhering to the guidelines.
+                The user message violates the following policies: {fails}. 
+                Please respond respectfully in the user's language without repeating the specific prohibited content.
+                Specify the reason for the rejection and encourage adherence to the guidelines.
+                Response example : 
+                I'm sorry, I can't assist with that. You message violates our guidelines.
+                """
+            })
+
 
     model_id = form_data.get("model")
     model_info = Models.get_model_by_id(model_id)
@@ -718,6 +737,7 @@ async def generate_chat_completion(
 
                     i += 1
                     decoded_chunk = chunk.decode('utf-8')
+                    # log.info(decoded_chunk)
                     if decoded_chunk.startswith('data: '):
                         try:
                             data = json.loads(decoded_chunk[6:].strip())
@@ -726,24 +746,23 @@ async def generate_chat_completion(
                                     delta = data['choices'][0]['delta']
                                     if 'content' in delta:
                                         accumulated_text += delta['content']
-                                        log.info(f"SENTENCE: {accumulated_text}")
-                                        
+                                        # log.info(f"SENTENCE: {accumulated_text}")
                                         if i % guardCheck_frequency == 0: 
                                             # Run guard on accumulated text
                                             error = await post_guard.validate(accumulated_text)
                                             if not error.validation_passed:
-                                                log.info("Derailement")
-                                                # Handle violation
-                                                # pass
-                                                raise Exception("Potential derailment: Generation halted.")
-
+                                                log.error(f"Post-guardrail validation failed: {error}")
+                                                async for warning_chunk in stream_violation_message(decoded_data=data):
+                                                    yield warning_chunk
+                                                return # Stop processing further chunks
+                                             
                         except json.JSONDecodeError:
                             pass
                     
                     yield chunk
                     
             return StreamingResponse(
-                process_stream_with_guard(content=r.content),
+                process_stream_with_guard(content=r.content) if guard else r.content,
                 status_code=r.status,
                 headers=dict(r.headers),
                 background=BackgroundTask(

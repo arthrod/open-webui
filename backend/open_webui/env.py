@@ -409,3 +409,9 @@ if OFFLINE_MODE:
 ####################################
 LITELLM_MASTER_KEY = os.environ.get("LITELLM_MASTER_KEY", "")
 LITELLM_HOST = os.environ.get("LITELLM_HOST", "http://litellm:4000")
+
+
+####################################
+# GUARDRAILS
+####################################
+APPLY_GUARDRAILS_ON_CHAT_COMPLETION = os.environ.get("APPLY_GUARDRAILS_ON_CHAT_COMPLETION", "false").lower() == "true"

@@ -35,7 +35,8 @@
 		showOverview,
 		chatTitle,
 		showArtifacts,
-		tools
+		tools,
+		termsOfUse
 	} from '$lib/stores';
 	import {
 		convertMessagesToHistory,
@@ -1196,6 +1197,14 @@
 	//////////////////////////
 
 	const submitPrompt = async (userPrompt, { _raw = false } = {}) => {
+		// Ask user to accept terms of use
+		if (history.messages[history.currentId]) {
+			if (!history.messages[history.currentId].parentId !== null && !$termsOfUse.accepted) {
+				$termsOfUse.show = true;
+				return;
+			}
+		}
+
 		console.log('submitPrompt', userPrompt, $chatId);
 
 		const messages = createMessagesList(history.currentId);

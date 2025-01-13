@@ -62,7 +62,7 @@
 	});
 </script>
 
-{#if !$termsOfUse.accepted && $termsOfUse.show}
+{#if $termsOfUse.show}
 	<div class="h-screen w-screen absolute backdrop-blur-[1px] backdrop:disabled z-50 bg-white/30"></div>
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 	<div

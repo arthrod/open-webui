@@ -44,6 +44,7 @@
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
 	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
 	import Timer from '$lib/components/layout/Timer.svelte';
+	import TermsOfUse from '$lib/components/TermsOfUse.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -218,6 +219,7 @@
 </script>
 
 <Timer />
+<TermsOfUse />
 
 <SettingsModal bind:show={$showSettings} />
 <ChangelogModal bind:show={$showChangelog} />

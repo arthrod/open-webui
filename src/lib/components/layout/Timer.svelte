@@ -19,7 +19,12 @@
 	};
 
 	onMount(() => {
-		if ($endTimestamp === -1) $endTimestamp = Date.now() + DEFAULT_DURATION;
+		if ($endTimestamp < Date.now()) {
+			// Reset timer and terms of use status
+			$endTimestamp = Date.now() + DEFAULT_DURATION;
+			$termsOfUse.accepted = false;
+			$termsOfUse.show = false;
+		}
 
 		timeRemaining = $endTimestamp - Date.now();
 

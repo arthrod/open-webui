@@ -10,8 +10,9 @@ from simple_queue import SimpleQueue
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
+app.config.from_prefixed_env()
 
-queue = SimpleQueue(app.logger, 5 * 60, 20 * 60, 50)
+queue = SimpleQueue(app.logger, app.config['DRAFT_DURATION'], app.config['SESSION_DURATION'], app.config['MAX_ACTIVE_USERS'])
 
 
 @app.route('/queue/join', methods=['POST'])

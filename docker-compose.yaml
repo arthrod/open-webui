@@ -39,7 +39,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      SESSION_DURATION: 10
+      FLASK_SESSION_DURATION: 1200
+      FLASK_DRAFT_DURATION: 300
+      FLASK_MAX_ACTIVE_USERS: 50
     healthcheck:
       test: [ "CMD", "curl", "-f", "--request", "POST", "http://localhost:8000/queue/idle" ]
       interval: 1s

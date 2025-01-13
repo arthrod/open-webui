@@ -45,7 +45,7 @@ class SimpleQueue:
             return None
         idx = 0
         if self.users[user_id]['status'] in [ 'waiting' ]:
-            idx = SimpleQueue._index(self.waiting, self.users[user_id]['joined'])
+            idx = SimpleQueue._index(self.waiting, self.users[user_id]['joined'], user_id)
             
         return {
             'position': idx,
@@ -61,7 +61,7 @@ class SimpleQueue:
         self.users[user_id]['status'] = 'connected'
         self.connected.append((timestamp, user_id))
         assert('draft_timestamp' in self.users[user_id])
-        idx = SimpleQueue._index(self.draft, self.users[user_id]['draft_timestamp'])
+        idx = SimpleQueue._index(self.draft, self.users[user_id]['draft_timestamp'], user_id)
         del self.draft[idx]
 
         return self.session_time
@@ -74,9 +74,11 @@ class SimpleQueue:
 
 
     @staticmethod
-    def _index(lst: list, value: int) -> int:
-        idx = bisect_left(lst, value, key=lambda x: x[0])
-        if len(lst) != idx and lst[idx][0] == value:
+    def _index(lst: list, timestamp: int, user_id: str) -> int:
+        idx = bisect_left(lst, timestamp, key=lambda x: x[0])
+        while idx < len(lst) and lst[idx][0] == timestamp and lst[idx][1] != user_id:
+            idx += 1
+        if idx < len(lst) and lst[idx][0] == timestamp and lst[idx][1] == user_id:
             return idx
         raise ValueError
 

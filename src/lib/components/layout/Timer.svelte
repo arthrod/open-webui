@@ -6,7 +6,7 @@
 
 	const SECOND: number = 1000;
 	const MINUTE: number = 60 * SECOND;
-	const DEFAULT_DURATION: number = 15 * MINUTE;
+	const DEFAULT_DURATION: number = 20 * MINUTE;
 
 	let timeRemaining: number;
 
@@ -19,7 +19,12 @@
 	};
 
 	onMount(() => {
-		if ($endTimestamp === -1) $endTimestamp = Date.now() + DEFAULT_DURATION;
+		if ($endTimestamp < Date.now()) {
+			// Reset timer and terms of use status
+			$endTimestamp = Date.now() + DEFAULT_DURATION;
+			$termsOfUse.accepted = false;
+			$termsOfUse.show = false;
+		}
 
 		timeRemaining = $endTimestamp - Date.now();
 

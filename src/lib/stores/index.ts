@@ -86,6 +86,9 @@ export const subscriptionInfo: Writable<SubscriptionInfo> = writable({
 // Time at which the user should be kicked from using Lucie
 export const endTimestamp = persisted("endTimestamp", -1);
 
+// User queue ID
+export const queueID = writable("")
+
 export type Model = OpenAIModel | OllamaModel;
 
 type BaseModel = {

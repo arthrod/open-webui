@@ -5,7 +5,9 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env
-    volumes:      
+    environment:
+      - WEBUI_AUTH=False
+    volumes:
       - ./backend/open_webui:/app/backend/open_webui
       - open-webui-dev1:/app/backend/data
     ports:
@@ -20,13 +22,9 @@ services:
     env_file:
       - .env
     command: >
-      --config /app/config.yaml
-      --port 4000
-      --num_workers 8
-      --detailed_debug
-    
+      --config /app/config.yaml --port 4000 --num_workers 8 --detailed_debug
     depends_on:
-      - postgres  # Ensure the PostgreSQL service is started before litellm
+      - postgres # Ensure the PostgreSQL service is started before litellm
 
   postgres:
     image: postgres:latest
@@ -35,6 +33,20 @@ services:
     volumes:
       - ./litellm/postgres_data:/var/lib/postgresql/data
     restart: always
+
+  queue:
+    build: ./simple-queue
+    ports:
+      - "8000:8000"
+    environment:
+      FLASK_SESSION_DURATION: 1200
+      FLASK_DRAFT_DURATION: 300
+      FLASK_MAX_ACTIVE_USERS: 50
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "--request", "POST", "http://localhost:8000/queue/idle" ]
+      interval: 1s
+      timeout: 60s
+      retries: 3
 
 volumes:
   open-webui-dev1:

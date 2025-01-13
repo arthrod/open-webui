@@ -12,7 +12,7 @@ model_list:
     litellm_params:
       model: openai/lucie-7b-v1
       api_base: os.environ/BASE_URL
-      api_key: os.environ/LUCIE_API_KEY
+      api_key: os.environ/LUCIE_API_KEY_V1
       max_tokens: 1000
       input_cost_per_token: 0.000003
       output_cost_per_token: 0.000015

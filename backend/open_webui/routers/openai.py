@@ -47,10 +47,11 @@ from open_webui.utils.access_control import has_access
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 
-# pre-guard
+toxic_threshold = 0.8 
+# pre-gu
 pre_guards_list = [
-    DetectJailbreak(on_fail='noop', threshold=0.8),
-    ToxicLanguage(threshold=0.7, validation_method="sentence", on_fail="noop"),
+    DetectJailbreak(on_fail='noop', threshold=0.80),
+    ToxicLanguage(threshold=toxic_threshold, validation_method="sentence", on_fail="noop"),
 ]
 pre_guard = gd.AsyncGuard(name='pre_guard')
 pre_guard.use_many(
@@ -59,7 +60,7 @@ pre_guard.use_many(
 
 # post-guard
 post_guards_list = [
-    ToxicLanguage(threshold=0.80, validation_method="sentence", on_fail="noop"),
+    ToxicLanguage(threshold=toxic_threshold, validation_method="sentence", on_fail="noop"),
 ]
 
 post_guard = gd.AsyncGuard(name='post_guard')
@@ -726,7 +727,7 @@ async def generate_chat_completion(
         if "text/event-stream" in r.headers.get("Content-Type", ""):
             streaming = True
 
-            async def process_stream_with_guard(content: StreamReader, guardCheck_frequency=5):
+            async def process_stream_with_guard(content: StreamReader, guardCheck_frequency=6):
                 accumulated_text = ""
                 i = 0
                 while True:

@@ -3,6 +3,7 @@ from asyncio import StreamReader
 import hashlib
 import json
 import logging
+import torch
 from pathlib import Path
 from typing import Literal, Optional, overload
 
@@ -47,11 +48,13 @@ from open_webui.utils.access_control import has_access
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 
-toxic_threshold = 0.8 
+toxic_threshold = 0.8
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # pre-gu
 pre_guards_list = [
     DetectJailbreak(on_fail='noop', threshold=0.80),
-    ToxicLanguage(threshold=toxic_threshold, validation_method="sentence", on_fail="noop"),
+    ToxicLanguage(threshold=toxic_threshold, validation_method="sentence", on_fail="noop", device=device), # model_name='unbiased'
 ]
 pre_guard = gd.AsyncGuard(name='pre_guard')
 pre_guard.use_many(

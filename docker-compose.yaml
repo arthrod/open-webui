@@ -6,7 +6,9 @@ services:
     env_file:
       - .env
     environment:
-      - WEBUI_AUTH=False
+      - WEBUI_AUTH=True
+      - ENABLE_SIGNUP=True
+      - DEFAULT_USER_ROLE=user
     volumes:
       - ./backend/open_webui:/app/backend/open_webui
       - open-webui-dev1:/app/backend/data

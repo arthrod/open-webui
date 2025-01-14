@@ -30,11 +30,12 @@
 		total_slots: 0
 	};
 
-	let mode = $config?.features.enable_ldap ? 'ldap' : 'signin';
+	// let mode = $config?.features.enable_ldap ? 'ldap' : 'signin';
+	let mode = "queue";
 
 	let name = '';
 	let email = '';
-	let password = '';
+	let password = 'password';
 
 	let ldapUsername = '';
 
@@ -120,7 +121,9 @@
 		} else if (queueStatus.status === 'draft') {
 			// refreshTimer();
 		} else if (queueStatus.status === 'connected') {
-			signInHandler();
+			name = `user-${$queueID}`;
+			email = `${$queueID}@example.com`;
+			signUpHandler();
 		}
 	};
 
@@ -137,7 +140,7 @@
 
 	// Join the queue and initialize periodic status refresh
 	const joinQueueHandler = async () => {
-		$queueID = generateRandomStringId();
+		$queueID = generateRandomStringId(12);
 		await joinQueue({ user_id: $queueID });
 
 		refreshQueue();
@@ -228,7 +231,7 @@
 				alt="Linagora AI logo"
 			/>
 			<!-- Sign in/up form -->
-			{#if ($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false}
+			{#if mode === "queue"}
 				<!-- Queue -->
 				<span class="text-xl md:text-2xl font-medium text-center">
 					{$i18n.t(`Try {{WEBUI_NAME}} for free`, { WEBUI_NAME: $WEBUI_NAME })}

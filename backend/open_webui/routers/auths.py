@@ -409,11 +409,11 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
             raise HTTPException(
                 status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.ACCESS_PROHIBITED
             )
-    else:
-        if Users.get_num_users() != 0:
-            raise HTTPException(
-                status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.ACCESS_PROHIBITED
-            )
+    # else:
+    #     if Users.get_num_users() != 0:
+    #         raise HTTPException(
+    #             status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.ACCESS_PROHIBITED
+    #         )
 
     if not validate_email_format(form_data.email.lower()):
         raise HTTPException(
@@ -430,9 +430,9 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
             else request.app.state.config.DEFAULT_USER_ROLE
         )
 
-        if Users.get_num_users() == 0:
+        # if Users.get_num_users() == 0:
             # Disable signup after the first user is created
-            request.app.state.config.ENABLE_SIGNUP = False
+            # request.app.state.config.ENABLE_SIGNUP = False
 
         hashed = get_password_hash(form_data.password)
         user = Auths.insert_new_auth(

@@ -63,10 +63,11 @@
 </script>
 
 {#if $termsOfUse.show}
-	<div class="h-screen w-screen absolute backdrop-blur-[1px] backdrop:disabled z-50 bg-white/30"></div>
+	<div class="h-screen w-screen absolute backdrop-blur-[1px] backdrop:disabled z-50 bg-white/30 dark:bg-black/30"></div>
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 	<div
-		class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 md:w-1/2 h-4/5 md:h-2/3 p-6 md:p-12 pb-4 md:pb-8 flex flex-col border shadow-xl rounded-3xl bg-white z-50"
+		class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 md:w-1/2 h-4/5 md:h-2/3 p-6 md:p-12 pb-4 md:pb-8 flex flex-col border shadow-xl rounded-3xl bg-white z-50
+		dark:bg-gray-900 dark:text-gray-200 dark:border-gray-800 dark:border-2 dark:shadow-none"
 		tabindex="0"
 		bind:this={popupRef}
 	>
@@ -76,7 +77,8 @@
 
 		<div
 			id="terms"
-			class="overflow-y-auto shadow-inner border p-2 md:px-4 text-xs md:text-base text-gray-600"
+			class="overflow-y-auto shadow-inner border p-2 md:px-4 text-xs md:text-base text-gray-600
+			dark:border-gray-800 dark:text-gray-400"
 			on:scroll={handleScroll}
 		>
 			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus in nisl luctus, imperdiet mi
@@ -185,7 +187,8 @@
 
 		<div class="mt-4 md:mt-8 self-end flex space-x-3 md:space-x-6">
 			<button
-				class="py-2 md:py-3 px-4 md:px-6 rounded-full text-sm md:text-base text-gray-500 hover:text-red-800 disabled:text-gray-500 disabled:cursor-not-allowed"
+				class="py-2 md:py-3 px-4 md:px-6 rounded-full text-sm md:text-base text-gray-500 hover:text-red-800 disabled:text-gray-500 disabled:cursor-not-allowed
+				dark:disabled:text-gray-700 dark:text-gray-600"
 				disabled={!termsScrolled}
 				on:click={() => {
 					$termsOfUse.show = false;
@@ -195,7 +198,8 @@
 				{$i18n.t('Decline')}
 			</button>
 			<button
-				class="py-2 md:py-3 px-4 md:px-6 bg-black text-white rounded-full text-sm md:text-base hover:bg-gray-800 disabled:bg-gray-500 disabled:cursor-not-allowed"
+				class="py-2 md:py-3 px-4 md:px-6 bg-black text-white rounded-full text-sm md:text-base hover:bg-gray-800 disabled:bg-gray-500 disabled:cursor-not-allowed 
+				dark:disabled:bg-gray-800 dark:disabled:text-gray-400 dark:bg-gray-700 dark:text-gray-200"
 				disabled={!termsScrolled}
 				on:click={() => {
 					$termsOfUse.show = false;

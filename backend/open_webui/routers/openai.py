@@ -30,6 +30,7 @@ from open_webui.env import (
     AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST,
     ENABLE_FORWARD_USER_INFO_HEADERS,
     BYPASS_MODEL_ACCESS_CONTROL,
+    SYS_PROMPT
 )
 
 from open_webui.constants import ERROR_MESSAGES
@@ -43,17 +44,24 @@ from open_webui.utils.payload import (
 
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.access_control import has_access
-
+from langdetect import detect
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 
-toxic_threshold = 0.8
+toxic_threshold = 0.75
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # pre-gu
 pre_guards_list = [
-    DetectJailbreak(on_fail='noop', threshold=0.80),
-    ToxicLanguage(threshold=toxic_threshold, validation_method="sentence", on_fail="noop", device=device), # model_name='unbiased'
+    DetectJailbreak(
+        on_fail='noop', 
+        threshold=0.8
+    ),
+    ToxicLanguage(
+        threshold=toxic_threshold, model_name='multilingual',
+        validation_method="sentence", on_fail="noop", 
+        device=device, use_local=True
+    )
 ]
 pre_guard = gd.AsyncGuard(name='pre_guard')
 pre_guard.use_many(
@@ -62,7 +70,10 @@ pre_guard.use_many(
 
 # post-guard
 post_guards_list = [
-    ToxicLanguage(threshold=toxic_threshold, validation_method="sentence", on_fail="noop"),
+    ToxicLanguage(
+        threshold=toxic_threshold, model_name='multilingual', 
+        validation_method="sentence", on_fail="noop", 
+        device=device, use_local=True),
 ]
 
 post_guard = gd.AsyncGuard(name='post_guard')
@@ -70,13 +81,77 @@ post_guard.use_many(
     *post_guards_list,
 )
 
-
 ##########################################
 #
 # Utility functions
 #
 ##########################################
 
+async def translate_to_en(
+        text, 
+        model, url, 
+        target_language="English",
+        user: UserModel = None
+    ):
+    if detect(text) == 'en':
+        log.info(f"ENGLISH_DETECTED: {text}")
+        return text
+    else:
+        key = user.llm_api_key
+        payload = {
+            'model': model,
+            'messages': [
+                {
+                    'role': 'user',
+                    'content': f"Translate the following text to {target_language}: {text}"
+                }
+            ],
+            'timeout': 60,
+            'stream': False
+        }
+        session = aiohttp.ClientSession(
+            trust_env=True, timeout=aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT)
+        )
+        r = await session.request(
+            method="POST",
+            url=f"{url}/chat/completions",
+            data=json.dumps(payload),
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Content-Type": "application/json",
+                **(
+                    {
+                        "HTTP-Referer": "https://openwebui.com/",
+                        "X-Title": "Open WebUI",
+                    }
+                    if "openrouter.ai" in url
+                    else {}
+                ),
+                **(
+                    {
+                        "X-OpenWebUI-User-Name": user.name,
+                        "X-OpenWebUI-User-Id": user.id,
+                        "X-OpenWebUI-User-Email": user.email,
+                        "X-OpenWebUI-User-Role": user.role,
+                    }
+                    if ENABLE_FORWARD_USER_INFO_HEADERS
+                    else {}
+                ),
+            },
+        )
+        try:
+            response = await r.json()
+            if 'choices' in response and len(response['choices']) > 0:
+                output_text = response['choices'][0]['message']['content']
+                log.warning(f"Translation: {output_text}")
+                return output_text
+            else:
+                raise ValueError("Unexpected response structure from API")    
+        except Exception as e:
+            log.warning(f"Error processing model response: {str(e)}")
+            return text
+        finally:
+            await session.close()        
 
 async def send_get_request(url, key=None):
     timeout = aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST)
@@ -569,7 +644,7 @@ async def stream_violation_message(decoded_data: dict):
             }
         ]
         yield f"data: {json.dumps(decoded_data)}\n\n".encode('utf-8')    
-    yield b"data: [DONE]\n\n" # Send the final [DONE] message
+    yield b"data: [DONE]\n\n" # Send the final [DONE] message    
 
 
 @router.post("/chat/completions")
@@ -588,24 +663,7 @@ async def generate_chat_completion(
     if "metadata" in payload:
         del payload["metadata"]
     log.info(f'payload: {payload}')
-    latest_msg = payload['messages'][-1]['content']
-    error = await pre_guard.validate(latest_msg)
 
-    if guard:
-        if error.validation_passed is False :
-            log.error(f"Pre-guardrail validation failed: {error}")
-            fails= ', '.join([s.validator_name for s in error.validation_summaries])
-
-            payload['messages'].append({
-                'role': 'system',
-                'content': f"""You are an AI assistant that is required to answer the user's queries while adhering to the guidelines.
-                The user message violates the following policies: {fails}. 
-                Please respond respectfully in the user's language without repeating the specific prohibited content.
-                Specify the reason for the rejection and encourage adherence to the guidelines.
-                Response example : 
-                I'm sorry, I can't assist with that. You message violates our guidelines.
-                """
-            })
 
 
     model_id = form_data.get("model")
@@ -659,6 +717,29 @@ async def generate_chat_completion(
     if prefix_id:
         payload["model"] = payload["model"].replace(f"{prefix_id}.", "")
 
+    # Pre-GUARD
+    if guard:
+        latest_msg = payload['messages'][-1]['content']
+        translated_msg = await translate_to_en(
+            latest_msg, 
+            model=payload["model"],
+            url=request.app.state.config.OPENAI_API_BASE_URLS[idx],
+            target_language="English",
+            user=user
+        )
+        error = await pre_guard.validate(translated_msg)
+        if error.validation_passed is False :
+            log.error(f"Pre-guardrail validation failed: {error}")
+            fails= ', '.join([s.validator_name for s in error.validation_summaries])
+            payload['messages'].append({
+                'role': 'system',
+                'content': f"""You are an AI assistant. The user's message is flagged as {fails}. 
+                Respond respectfully in their language, avoid repeating prohibited content, explain the violation, and encourage guideline compliance. 
+                Example: "I'm sorry, I can't assist with that. Your message violates our guidelines.
+                """
+            })
+
+
     # Add user info to the payload if the model is a pipeline
     if "pipeline" in model and model.get("pipeline"):
         payload["user"] = {
@@ -684,6 +765,12 @@ async def generate_chat_completion(
     if "max_tokens" in payload and "max_completion_tokens" in payload:
         del payload["max_tokens"]
 
+    # Add Sys prompt if it's the chat
+    messages = payload['messages']
+    if guard:
+        messages = [{'role': 'system', 'content': SYS_PROMPT}] + messages
+    payload['messages'] = messages
+    
     # Convert the modified body back to JSON
     payload = json.dumps(payload)
 

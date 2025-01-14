@@ -107,3 +107,4 @@ ldap3==2.9.1
 
 ## Guardrails
 guardrails-ai
+langdetect

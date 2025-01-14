@@ -7,7 +7,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python packages
-RUN pip3 install --upgrade flask gunicorn
+RUN pip3 install --upgrade flask gunicorn flask-cors
 
 # Create the /app directory
 RUN mkdir -p /app

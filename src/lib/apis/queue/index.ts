@@ -1,5 +1,6 @@
 // Imports
 // import { QUEUE_API_BASE_URL } from '$lib/constants';
+import { QUEUE_API_BASE_URL } from '../../constants';
 import type { QueueMetrics, QueueStatus, TimerInfo, UserRequest } from './types';
 
 // Utility function to handle fetch errors
@@ -10,8 +11,6 @@ const handleFetchError = (error: unknown) => {
     }
     throw error;
 };
-
-const QUEUE_API_BASE_URL = "http://localhost:8000/queue"
 
 // Join Queue
 export const joinQueue = async (userRequest: UserRequest): Promise<{ position: number }> => {

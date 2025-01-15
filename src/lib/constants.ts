@@ -14,6 +14,8 @@ export const IMAGES_API_BASE_URL = `${WEBUI_BASE_URL}/api/v1/images`;
 export const RETRIEVAL_API_BASE_URL = `${WEBUI_BASE_URL}/api/v1/retrieval`;
 export const QUEUE_API_BASE_URL = `${WEBUI_BASE_URL}/queue`;
 
+// export const QUEUE_API_BASE_URL = `http://${location.hostname}:8000/queue`; // Use this when launching without the entire stack
+
 export const WEBUI_VERSION = APP_VERSION;
 export const WEBUI_BUILD_HASH = APP_BUILD_HASH;
 export const REQUIRED_OLLAMA_VERSION = '0.1.16';

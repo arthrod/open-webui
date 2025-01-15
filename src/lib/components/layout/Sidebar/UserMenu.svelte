@@ -27,7 +27,42 @@
 	const dispatch = createEventDispatcher();
 </script>
 
-<DropdownMenu.Root
+
+<!-- Copied the Sign out button here to make it show out of the dropdown -->
+<button
+class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+on:click={async () => {
+    $endTimestamp = -1;
+    await userSignOut();
+    localStorage.removeItem('token');
+    location.href = '/auth';
+    show = false;
+}}
+>
+<div class=" self-center mr-3">
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        class="w-5 h-5"
+    >
+        <path
+            fill-rule="evenodd"
+            d="M3 4.25A2.25 2.25 0 015.25 2h5.5A2.25 2.25 0 0113 4.25v2a.75.75 0 01-1.5 0v-2a.75.75 0 00-.75-.75h-5.5a.75.75 0 00-.75.75v11.5c0 .414.336.75.75.75h5.5a.75.75 0 00.75-.75v-2a.75.75 0 011.5 0v2A2.25 2.25 0 0110.75 18h-5.5A2.25 2.25 0 013 15.75V4.25z"
+            clip-rule="evenodd"
+        />
+        <path
+            fill-rule="evenodd"
+            d="M6 10a.75.75 0 01.75-.75h9.546l-1.048-.943a.75.75 0 111.004-1.114l2.5 2.25a.75.75 0 010 1.114l-2.5 2.25a.75.75 0 11-1.004-1.114l1.048-.943H6.75A.75.75 0 016 10z"
+            clip-rule="evenodd"
+        />
+    </svg>
+</div>
+<div class=" self-center truncate">{$i18n.t('Sign Out')}</div>
+</button>
+
+
+<!-- <DropdownMenu.Root
 	bind:open={show}
 	onOpenChange={(state) => {
 		dispatch('change', state);
@@ -45,7 +80,7 @@
 			align="start"
 			transition={(e) => fade(e, { duration: 100 })}
 		>
-			<!-- <button
+			<!- - <button
 				class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 				on:click={async () => {
 					await showSettings.set(true);
@@ -78,9 +113,9 @@
 					</svg>
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Settings')}</div>
-			</button> -->
+			</button> - ->
 
-			<!-- <button
+			<!- - <button
 				class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 				on:click={() => {
 					dispatch('show', 'archived-chat');
@@ -95,8 +130,8 @@
 					<ArchiveBox className="size-5" strokeWidth="1.5" />
 				</div>
 				<div class=" self-center truncate">{$i18n.t('Archived Chats')}</div>
-			</button> -->
-			<!-- 
+			</button> - ->
+			<!- - 
 			{#if role === 'admin'}
 				<a
 					class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
@@ -157,9 +192,9 @@
 					</div>
 					<div class=" self-center truncate">{$i18n.t('Admin Panel')}</div>
 				</a>
-			{/if} -->
+			{/if} - ->
 
-			<!-- <hr class=" border-gray-50 dark:border-gray-850 my-1 p-0" /> -->
+			<!- - <hr class=" border-gray-50 dark:border-gray-850 my-1 p-0" /> - ->
 
 			<button
 				class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
@@ -223,9 +258,9 @@
 				</Tooltip>
 			{/if}
 
-			<!-- <DropdownMenu.Item class="flex items-center px-3 py-2 text-sm ">
+			<!- - <DropdownMenu.Item class="flex items-center px-3 py-2 text-sm ">
 				<div class="flex items-center">Profile</div>
-			</DropdownMenu.Item> -->
+			</DropdownMenu.Item> - ->
 		</DropdownMenu.Content>
 	</slot>
-</DropdownMenu.Root>
+</DropdownMenu.Root> -->

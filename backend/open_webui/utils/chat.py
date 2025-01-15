@@ -58,6 +58,7 @@ async def generate_chat_completion(
     form_data: dict,
     user: Any,
     bypass_filter: bool = False,
+    guard=False
 ):
     if BYPASS_MODEL_ACCESS_CONTROL:
         bypass_filter = True
@@ -153,7 +154,7 @@ async def generate_chat_completion(
             return convert_response_ollama_to_openai(response)
     else:
         return await generate_openai_chat_completion(
-            request=request, form_data=form_data, user=user, bypass_filter=bypass_filter
+            request=request, form_data=form_data, user=user, bypass_filter=bypass_filter, guard=guard
         )
 
 

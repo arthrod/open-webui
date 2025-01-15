@@ -1,7 +1,9 @@
 import asyncio
+from asyncio import StreamReader
 import hashlib
 import json
 import logging
+import torch
 from pathlib import Path
 from typing import Literal, Optional, overload
 
@@ -16,6 +18,9 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.background import BackgroundTask
 
+from guardrails.hub import ToxicLanguage, DetectJailbreak
+import guardrails as gd
+
 from open_webui.models.models import Models
 from open_webui.config import (
     CACHE_DIR,
@@ -25,6 +30,7 @@ from open_webui.env import (
     AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST,
     ENABLE_FORWARD_USER_INFO_HEADERS,
     BYPASS_MODEL_ACCESS_CONTROL,
+    SYS_PROMPT
 )
 
 from open_webui.constants import ERROR_MESSAGES
@@ -38,11 +44,47 @@ from open_webui.utils.payload import (
 
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.access_control import has_access
-
+from langdetect import detect
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 
+toxic_threshold = 0.8
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# pre-gu
+pre_guards_list = [
+    DetectJailbreak(
+        on_fail='noop', 
+        threshold=0.8
+    ),
+    ToxicLanguage(
+        threshold=toxic_threshold,
+        model_name='multilingual',
+        validation_method="sentence", on_fail="noop", 
+        device=device,
+        use_local=True
+    )
+]
+pre_guard = gd.AsyncGuard(name='pre_guard')
+pre_guard.use_many(
+    *pre_guards_list,
+)
+
+# post-guard
+post_guards_list = [
+    ToxicLanguage(
+        threshold=toxic_threshold, 
+        model_name='multilingual', 
+        validation_method="sentence", on_fail="noop", 
+        device=device, 
+        use_local=True
+        ),
+]
+
+post_guard = gd.AsyncGuard(name='post_guard')
+post_guard.use_many(
+    *post_guards_list,
+)
 
 ##########################################
 #
@@ -50,6 +92,71 @@ log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 #
 ##########################################
 
+async def translate_to_en(
+        text, 
+        model, url, 
+        target_language="English",
+        user: UserModel = None
+    ):
+    if detect(text) == 'en':
+        log.info(f"ENGLISH_DETECTED: {text}")
+        return text
+    else:
+        key = user.llm_api_key
+        payload = {
+            'model': model,
+            'messages': [
+                {
+                    'role': 'user',
+                    'content': f"Translate the following text to {target_language}: {text}"
+                }
+            ],
+            'timeout': 60,
+            'stream': False
+        }
+        session = aiohttp.ClientSession(
+            trust_env=True, timeout=aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT)
+        )
+        r = await session.request(
+            method="POST",
+            url=f"{url}/chat/completions",
+            data=json.dumps(payload),
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Content-Type": "application/json",
+                **(
+                    {
+                        "HTTP-Referer": "https://openwebui.com/",
+                        "X-Title": "Open WebUI",
+                    }
+                    if "openrouter.ai" in url
+                    else {}
+                ),
+                **(
+                    {
+                        "X-OpenWebUI-User-Name": user.name,
+                        "X-OpenWebUI-User-Id": user.id,
+                        "X-OpenWebUI-User-Email": user.email,
+                        "X-OpenWebUI-User-Role": user.role,
+                    }
+                    if ENABLE_FORWARD_USER_INFO_HEADERS
+                    else {}
+                ),
+            },
+        )
+        try:
+            response = await r.json()
+            if 'choices' in response and len(response['choices']) > 0:
+                output_text = response['choices'][0]['message']['content']
+                log.warning(f"Translation: {output_text}")
+                return output_text
+            else:
+                raise ValueError("Unexpected response structure from API")    
+        except Exception as e:
+            log.warning(f"Error processing model response: {str(e)}")
+            return text
+        finally:
+            await session.close()        
 
 async def send_get_request(url, key=None):
     timeout = aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT_OPENAI_MODEL_LIST)
@@ -527,12 +634,31 @@ async def verify_connection(
             raise HTTPException(status_code=500, detail=error_detail)
 
 
+
+async def stream_violation_message(decoded_data: dict):
+    message = "**Derailment detected**: Generation stopped due to potentially harmful content. Please **use the service responsibly**."
+
+    # Stream each token of the message
+    for i, token in enumerate(message.split()):
+        token = '\n' + token if i == 0 else token
+        decoded_data['choices'] = [
+            {
+                "delta": {"content": token + " "},
+                "index": 0,
+                "finish_reason": None
+            }
+        ]
+        yield f"data: {json.dumps(decoded_data)}\n\n".encode('utf-8')    
+    yield b"data: [DONE]\n\n" # Send the final [DONE] message    
+
+
 @router.post("/chat/completions")
 async def generate_chat_completion(
     request: Request,
     form_data: dict,
     user:UserModel=Depends(get_verified_user),
     bypass_filter: Optional[bool] = False,
+    guard: bool = False
 ):
     if BYPASS_MODEL_ACCESS_CONTROL:
         bypass_filter = True
@@ -541,6 +667,9 @@ async def generate_chat_completion(
     payload = {**form_data}
     if "metadata" in payload:
         del payload["metadata"]
+    log.info(f'payload: {payload}')
+
+
 
     model_id = form_data.get("model")
     model_info = Models.get_model_by_id(model_id)
@@ -593,6 +722,29 @@ async def generate_chat_completion(
     if prefix_id:
         payload["model"] = payload["model"].replace(f"{prefix_id}.", "")
 
+    # Pre-GUARD
+    if guard:
+        latest_msg = payload['messages'][-1]['content']
+        translated_msg = await translate_to_en(
+            latest_msg, 
+            model=payload["model"],
+            url=request.app.state.config.OPENAI_API_BASE_URLS[idx],
+            target_language="English",
+            user=user
+        )
+        error = await pre_guard.validate(translated_msg)
+        if error.validation_passed is False :
+            log.error(f"Pre-guardrail validation failed: {error}")
+            fails= ', '.join([s.validator_name for s in error.validation_summaries])
+            payload['messages'].append({
+                'role': 'system',
+                'content': f"""You are an AI assistant. The user's message is flagged as {fails}. 
+                Respond respectfully in their language, avoid repeating prohibited content, explain the violation, and encourage guideline compliance. 
+                Example: "I'm sorry, I can't assist with that. Your message violates our guidelines.
+                """
+            })
+
+
     # Add user info to the payload if the model is a pipeline
     if "pipeline" in model and model.get("pipeline"):
         payload["user"] = {
@@ -618,6 +770,12 @@ async def generate_chat_completion(
     if "max_tokens" in payload and "max_completion_tokens" in payload:
         del payload["max_tokens"]
 
+    # Add Sys prompt if it's the chat
+    messages = payload['messages']
+    if guard:
+        messages = [{'role': 'system', 'content': SYS_PROMPT}] + messages
+    payload['messages'] = messages
+    
     # Convert the modified body back to JSON
     payload = json.dumps(payload)
 
@@ -662,8 +820,44 @@ async def generate_chat_completion(
         # Check if response is SSE
         if "text/event-stream" in r.headers.get("Content-Type", ""):
             streaming = True
+
+            async def process_stream_with_guard(content: StreamReader, guardCheck_frequency=6):
+                accumulated_text = ""
+                i = 0
+                while True:
+                    # Read chunk by chunk using StreamReader's methods. No problem with the buffer
+                    chunk = await content.readline()
+                    if not chunk:  # EOF
+                        break
+
+                    i += 1
+                    decoded_chunk = chunk.decode('utf-8')
+                    # log.info(decoded_chunk)
+                    if decoded_chunk.startswith('data: '):
+                        try:
+                            data = json.loads(decoded_chunk[6:].strip())
+                            if 'choices' in data and data['choices']:
+                                if 'delta' in data['choices'][0]:
+                                    delta = data['choices'][0]['delta']
+                                    if 'content' in delta:
+                                        accumulated_text += delta['content']
+                                        # log.info(f"SENTENCE: {accumulated_text}")
+                                        if i % guardCheck_frequency == 0: 
+                                            # Run guard on accumulated text
+                                            error = await post_guard.validate(accumulated_text)
+                                            if not error.validation_passed:
+                                                log.error(f"Post-guardrail validation failed: {error}")
+                                                async for warning_chunk in stream_violation_message(decoded_data=data):
+                                                    yield warning_chunk
+                                                return # Stop processing further chunks
+                                             
+                        except json.JSONDecodeError:
+                            pass
+                    
+                    yield chunk
+                    
             return StreamingResponse(
-                r.content,
+                process_stream_with_guard(content=r.content) if guard else r.content,
                 status_code=r.status,
                 headers=dict(r.headers),
                 background=BackgroundTask(

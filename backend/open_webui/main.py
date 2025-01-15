@@ -277,6 +277,7 @@ from open_webui.env import (
     BYPASS_MODEL_ACCESS_CONTROL,
     RESET_CONFIG_ON_START,
     OFFLINE_MODE,
+    APPLY_GUARDRAILS_ON_CHAT_COMPLETION
 )
 
 
@@ -879,7 +880,7 @@ async def chat_completion(
         )
 
     try:
-        response = await chat_completion_handler(request, form_data, user)
+        response = await chat_completion_handler(request, form_data, user, guard=APPLY_GUARDRAILS_ON_CHAT_COMPLETION)
         return await process_chat_response(
             request, response, form_data, user, events, metadata, tasks
         )

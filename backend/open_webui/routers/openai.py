@@ -52,18 +52,20 @@ log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 toxic_threshold = 0.8
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # pre-gu
+toxic_guard = ToxicLanguage(
+        threshold=toxic_threshold,
+        # model_name='multilingual',
+        validation_method="sentence", on_fail="noop", 
+        device=device,
+        use_local=True
+    )
+
 pre_guards_list = [
     DetectJailbreak(
         on_fail='noop', 
         threshold=0.8
     ),
-    ToxicLanguage(
-        threshold=toxic_threshold,
-        model_name='multilingual',
-        validation_method="sentence", on_fail="noop", 
-        device=device,
-        use_local=True
-    )
+    toxic_guard
 ]
 pre_guard = gd.AsyncGuard(name='pre_guard')
 pre_guard.use_many(
@@ -72,13 +74,7 @@ pre_guard.use_many(
 
 # post-guard
 post_guards_list = [
-    ToxicLanguage(
-        threshold=toxic_threshold, 
-        model_name='multilingual', 
-        validation_method="sentence", on_fail="noop", 
-        device=device, 
-        use_local=True
-        ),
+    toxic_guard
 ]
 
 post_guard = gd.AsyncGuard(name='post_guard')
@@ -821,7 +817,7 @@ async def generate_chat_completion(
         if "text/event-stream" in r.headers.get("Content-Type", ""):
             streaming = True
 
-            async def process_stream_with_guard(content: StreamReader, guardCheck_frequency=6):
+            async def process_stream_with_guard(content: StreamReader, guardCheck_frequency=5, buffer_size=200):
                 accumulated_text = ""
                 i = 0
                 while True:
@@ -844,7 +840,7 @@ async def generate_chat_completion(
                                         # log.info(f"SENTENCE: {accumulated_text}")
                                         if i % guardCheck_frequency == 0: 
                                             # Run guard on accumulated text
-                                            error = await post_guard.validate(accumulated_text)
+                                            error = await post_guard.validate(accumulated_text[-buffer_size:])
                                             if not error.validation_passed:
                                                 log.error(f"Post-guardrail validation failed: {error}")
                                                 async for warning_chunk in stream_violation_message(decoded_data=data):

@@ -49,18 +49,20 @@ from langdetect import detect
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 
-toxic_threshold = 0.75
+toxic_threshold = 0.7
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # pre-gu
 pre_guards_list = [
     DetectJailbreak(
         on_fail='noop', 
-        threshold=0.8
+        threshold=0.9
     ),
     ToxicLanguage(
-        threshold=toxic_threshold, model_name='multilingual',
+        threshold=toxic_threshold,
+        model_name='multilingual',
         validation_method="sentence", on_fail="noop", 
-        device=device, use_local=True
+        device=device,
+        use_local=True
     )
 ]
 pre_guard = gd.AsyncGuard(name='pre_guard')
@@ -71,9 +73,12 @@ pre_guard.use_many(
 # post-guard
 post_guards_list = [
     ToxicLanguage(
-        threshold=toxic_threshold, model_name='multilingual', 
+        threshold=toxic_threshold, 
+        # model_name='multilingual', 
         validation_method="sentence", on_fail="noop", 
-        device=device, use_local=True),
+        device=device, 
+        # use_local=True
+        ),
 ]
 
 post_guard = gd.AsyncGuard(name='post_guard')
@@ -733,7 +738,7 @@ async def generate_chat_completion(
             fails= ', '.join([s.validator_name for s in error.validation_summaries])
             payload['messages'].append({
                 'role': 'system',
-                'content': f"""You are an AI assistant. The user's message is flagged as {fails}. 
+                'content': f"""You are an AI assistant. The user's message is violation and is flagged as {fails}. 
                 Respond respectfully in their language, avoid repeating prohibited content, explain the violation, and encourage guideline compliance. 
                 Example: "I'm sorry, I can't assist with that. Your message violates our guidelines.
                 """

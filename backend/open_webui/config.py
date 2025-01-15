@@ -995,19 +995,38 @@ TITLE_GENERATION_PROMPT_TEMPLATE = PersistentConfig(
     os.environ.get("TITLE_GENERATION_PROMPT_TEMPLATE", ""),
 )
 
-DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE = """Create a concise, 3-5 word title with an emoji as a title for the chat history, in the given language. Suitable Emojis for the summary can be used to enhance understanding but avoid quotation marks or special formatting. RESPOND ONLY WITH THE TITLE TEXT.
+# DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE = """Create a concise, 3-5 word title with an emoji as a title for the chat history, in the given language. Suitable Emojis for the summary can be used to enhance understanding but avoid quotation marks or special formatting.
 
-Examples of titles:
-📉 Stock Market Trends
-🍪 Perfect Chocolate Chip Recipe
-Evolution of Music Streaming
-Remote Work Productivity Tips
-Artificial Intelligence in Healthcare
-🎮 Video Game Development Insights
+# RESPOND ONLY WITH THE TITLE TEXT.
 
+# Examples of titles:
+# 📉 Stock Market Trends
+# 🍪 Perfect Chocolate Chip Recipe
+# 🤝 Salutation
+# Evolution of Music Streaming
+# Remote Work Productivity Tips
+# Artificial Intelligence in Healthcare
+# 🎮 Video Game Development Insights
+
+# <chat_history>
+# {{MESSAGES:END:2}}
+# </chat_history>"""
+
+DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE = """You are an AI assistant that attributes titles to the chat conversations.
+Given a chat conversation, you should only output a 3-5 word title that captures the main topic of the chat conversation without using quotation marks or special formatting.
+
+# Guidliens
+* The title should be in the same language as the messages
+* You can add a suitable emoji to the title that can be used to enhance understanding
+
+# Title examples
+* Here are some examples: 🤝 Salutation, 📉 Stock Market Trends, 🎮 Video Game Development Insights, 🌍 Climate Change Solutions, 🧠 Memory Improvement Tricks, etc
+
+Here the chat history:
 <chat_history>
 {{MESSAGES:END:2}}
-</chat_history>"""
+</chat_history>
+"""
 
 
 TAGS_GENERATION_PROMPT_TEMPLATE = PersistentConfig(

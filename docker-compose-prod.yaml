@@ -17,3 +17,7 @@ services:
       interval: 1s
       timeout: 60s
       retries: 3
+
+networks:
+  lucie-network:
+    external: true

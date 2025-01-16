@@ -38,7 +38,7 @@
 		show = false;
 	}}
 >
-	<div class=" self-center truncate">{$i18n.t('Sign Out')}</div>
+	<div class=" self-center truncate max-md:hidden">{$i18n.t('Sign Out')}</div>
 	<div class=" self-center ml-3">
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
 			<path

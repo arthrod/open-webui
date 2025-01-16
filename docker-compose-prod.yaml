@@ -5,6 +5,8 @@ services:
       - /mnt/envs/.env
     volumes:
       - /mnt/open-webui-data:/app/backend/data
+    networks:
+      - lucie-network
       
   queue:
     image: ghcr.io/openllm-france/simple-queue
@@ -17,6 +19,8 @@ services:
       interval: 1s
       timeout: 60s
       retries: 3
+    networks:
+      - lucie-network
 
 networks:
   lucie-network:

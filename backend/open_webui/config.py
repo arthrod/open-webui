@@ -108,47 +108,55 @@ DEFAULT_CONFIG = {
         "prompt_suggestions": [
             {
                 "title": [
-                    "Help me study",
-                    "vocabulary for a college entrance exam",
-                ],
-                "content": "Help me study vocabulary: write a sentence for me to fill in the blank, and I'll try to pick the correct option.",
-            },
-            {
-                "title": [
-                    "Give me ideas",
+                    "Linagora",
                     "for what to do with my kids' art",
                 ],
                 "content": "What are 5 creative things I could do with my kids' art? I don't want to throw them away, but it's also so much clutter.",
             },
-            {
-                "title": ["Tell me a fun fact", "about the Roman Empire"],
-                "content": "Tell me a random fun fact about the Roman Empire",
-            },
+
             {
                 "title": [
-                    "Show me a code snippet",
-                    "of a website's sticky header",
+                    "OpenLLM France",
+                    "Objective & Mission",
                 ],
-                "content": "Show me a code snippet of a website's sticky header in CSS and JavaScript.",
+                "content": "Could you tell me about OpenLLM France and its mission?",
             },
+
             {
                 "title": [
-                    "Explain options trading",
-                    "if I'm familiar with buying and selling stocks",
+                    "French Revolution",
+                    "Timeline of historical events Historical events",
                 ],
-                "content": "Explain options trading in simple terms if I'm familiar with buying and selling stocks.",
+                "content": "Create a timeline of the most significant key events of the French Revolution.",
             },
+            
             {
-                "title": ["Overcome procrastination", "give me tips"],
+                "title": ["Tell me a fun fact", "About France"],
+                "content": "Tell me a fun fact about France ",
+            },
+
+            {
+                "title": ["Tech Innovation", "AI Ethics"],
+                "content": "What are the 'key ethical' considerations we should think about as AI technology becomes more prevalent in our daily lives?"
+            },
+
+            {
+                "title": [
+                    "Data Protection",
+                    "A Practical Guide to Writing a GDPR Privacy Policy",
+                ],
+                "content": "I am creating a SaaS and I want to write a GDPR-compliant privacy policy. Give me a simple template to adapt.",
+            },
+
+            {
+                "title": ["Sustainable Living", "Eco-friendly Tips"],
+                "content": "What are some practical ways to reduce my environmental impact in daily life?"
+            },
+
+            {
+                "title": ["Overcome procrastination", "Give me tips"],
                 "content": "Could you start by asking me about instances when I procrastinate the most and then give me some suggestions to overcome it?",
-            },
-            {
-                "title": [
-                    "Grammar check",
-                    "rewrite it for better readability ",
-                ],
-                "content": 'Check the following sentence for grammar and clarity: "[sentence]". Rewrite it for better readability while maintaining its original meaning.',
-            },
+            }
         ],
     },
 }
@@ -1012,15 +1020,19 @@ TITLE_GENERATION_PROMPT_TEMPLATE = PersistentConfig(
 # {{MESSAGES:END:2}}
 # </chat_history>"""
 
-DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE = """You are an AI assistant that attributes titles to the chat conversations.
-Given a chat conversation, you should only output a 3-5 word title that captures the main topic of the chat conversation without using quotation marks or special formatting.
+DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE = """You are an AI assistant that gives titles to chat conversations.
+Given a chat conversation, you should only output a 3-5 word title that captures the main topic of the chat conversation without using quotation marks or any special formatting.
 
-# Guidliens
-* The title should be in the same language as the messages
-* You can add a suitable emoji to the title that can be used to enhance understanding
+# Guidelines
+1. Generate a 3-5 words long title in the same language as the messages
+2. Additionally, prepend a suitable emoji to the title to enhance understanding
 
-# Title examples
-* Here are some examples: 🤝 Salutation, 📉 Stock Market Trends, 🎮 Video Game Development Insights, 🌍 Climate Change Solutions, 🧠 Memory Improvement Tricks, etc
+* Title examples: 
+    - 🤝 Salutation
+    - 📉 Stock Market Trends
+    - 🎮 Video Game Development Insights
+    - 🌍 Climate Change Solutions
+    - 🧠 Memory Improvement Tricks
 
 Here the chat history:
 <chat_history>

@@ -49,12 +49,12 @@ from langdetect import detect
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 
-toxic_threshold = 0.8
+toxic_threshold = 0.82
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # pre-gu
 toxic_guard = ToxicLanguage(
         threshold=toxic_threshold,
-        # model_name='multilingual',
+        model_name='multilingual',
         validation_method="sentence", on_fail="noop", 
         device=device,
         use_local=True
@@ -843,7 +843,9 @@ async def generate_chat_completion(
                                             error = await post_guard.validate(accumulated_text[-buffer_size:])
                                             if not error.validation_passed:
                                                 log.error(f"Post-guardrail validation failed: {error}")
+                                                yield chunk
                                                 async for warning_chunk in stream_violation_message(decoded_data=data):
+                        
                                                     yield warning_chunk
                                                 return # Stop processing further chunks
                                              

@@ -7,6 +7,8 @@ services:
       - /mnt/open-webui-data:/app/backend/data
     networks:
       - lucie-network
+    deploy:
+      replicas: 4
       
   queue:
     image: ghcr.io/openllm-france/simple-queue

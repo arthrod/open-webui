@@ -12,8 +12,8 @@ export const OPENAI_API_BASE_URL = `${WEBUI_BASE_URL}/openai`;
 export const AUDIO_API_BASE_URL = `${WEBUI_BASE_URL}/api/v1/audio`;
 export const IMAGES_API_BASE_URL = `${WEBUI_BASE_URL}/api/v1/images`;
 export const RETRIEVAL_API_BASE_URL = `${WEBUI_BASE_URL}/api/v1/retrieval`;
-export const QUEUE_API_BASE_URL = `${WEBUI_BASE_URL}/queue`; // Use this when launching without the entire stack
-// export const QUEUE_API_BASE_URL = `http://${location.hostname}:8000/queue`; // Use this when launching this repo solely
+// export const QUEUE_API_BASE_URL = `${WEBUI_BASE_URL}/queue`; // Use this when launching without the entire stack
+export const QUEUE_API_BASE_URL = `http://${location.hostname}:8000/queue`; // Use this when launching this repo solely
 
 export const WEBUI_VERSION = APP_VERSION;
 export const WEBUI_BUILD_HASH = APP_BUILD_HASH;

@@ -107,8 +107,11 @@ DEFAULT_CONFIG = {
         "default_locale": "",
         "prompt_suggestions": [
             {
-                "title": ["Linagora", "to discover our company"],
-                "content": "Can you tell me what kind of company Linagora is ?",
+                "title": [
+                    "Linagora",
+                    "to discover our company"
+                ],
+                "content": "What can you tell me about Linagora ?",
             },
             {
                 "title": ["OpenLLM France", "Objective & Mission"],

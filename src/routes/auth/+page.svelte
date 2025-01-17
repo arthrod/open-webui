@@ -125,7 +125,7 @@
 	const refreshQueue = async () => {
 		queueStatus = await getStatus($queueID);
 		queueMetrics = await getMetrics({ user_id: $queueID });
-		console.log(queueMetrics)
+		console.log(queueMetrics);
 
 		if (queueStatus.status === 'waiting') {
 			setTimeout(
@@ -240,57 +240,44 @@
 <!-- Page -->
 <div class="h-screen overflow-y-scroll pt-20 text-gray-700">
 	<div class="grid md:grid-cols-2">
-		<div class="p-8 md:p-48 flex flex-col justify-center space-y-6 bg-slate-100">
+		<div class="p-8 md:px-48 md:py-24 flex flex-col justify-center space-y-6 bg-slate-100">
 			<span class="text-2xl md:text-5xl max-md:text-center">
 				LUCIE : The truly open source AI built on transparency, trust, and efficiency.
 			</span>
 			<span class="text-lg md:text-2xl max-md:text-center italic text-gray-500">
 				Beyond openness, we pioneer transparency and trust.
 			</span>
-			<span class="text-base md:text-lg max-md:text-center md:pr-32">
-				LUCIE isn't just <span class="font-semibold">open</span>; it's exceptionally
-				<span class="font-semibold">transparent and reliable</span>. From its inception, every
-				decision has been guided by principles of
-				<span class="font-semibold">trustworthiness, fairness, and accountability</span>. Whether
-				it's for education, government, or research, LUCIE is designed to be a model you can count
-				on.
-			</span>
 			{#if queueStatus.status === 'disconnected'}
 				<button
 					class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
 					on:click={joinQueueHandler}
 				>
-					{$i18n.t('Join queue')}
+					Join queue
 				</button>
 			{:else if queueStatus.status === 'connected'}
 				<div
 					class="max-md:self-center h-12 md:h-16 w-64 flex items-center justify-center gap-3 text-lg sm:text-lg text-center font-semibold dark:text-gray-200"
 				>
-					<div>
-						{$i18n.t('Signing in to {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
-					</div>
+					<div>Signing in to Lucie Chat</div>
 
 					<div>
 						<Spinner />
 					</div>
 				</div>
-			{:else if queueStatus.status === 'waiting'}
+			{:else if queueStatus.status === 'draft'}
 				<button
 					class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-slate-400 font-medium transition-all relative"
 					disabled
 				>
 					<span class="relative z-20 text-white">
-						#{queueStatus.position}
-						{$i18n.t('in queue')}</span
-					>
+						#{queueStatus.position} in queue
+					</span>
 					<span
 						class="absolute md:left-full md:w-full text-xs
-						max-md:translate-y-1 max-md:left-1/2 max-md:top-full max-md:-translate-x-1/2 max-md:w-64"
+						max-md:translate-y-2 max-md:left-1/2 max-md:top-full max-md:-translate-x-1/2 max-md:w-64"
 					>
-						({$i18n.t('estimated waiting time')} : ~{Math.floor(
-							queueMetrics.estimated_time / (60)
-						)}
-						{$i18n.t('minutes')})
+						estimated waiting time : ~{Math.floor(queueMetrics.estimated_time / 60)}
+						minutes
 					</span>
 					<div
 						style="width: {Math.max(
@@ -303,21 +290,29 @@
 						class="absolute top-0 left-0 rounded-full h-full max-w-72 bg-slate-500 z-10 transition"
 					/>
 				</button>
-			{:else if queueStatus.status === 'draft'}
+			{:else if queueStatus.status === 'waiting'}
 				<button
 					class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-all"
 					on:click={confirmConnectionHandler}
 				>
-					{$i18n.t('Confirm connection')}
+					Confirm connection
 				</button>
 			{/if}
+			<span class="max-md:pt-4 text-base md:text-lg max-md:text-center md:pr-32">
+				LUCIE isn't just <span class="font-semibold">open</span>; it's exceptionally
+				<span class="font-semibold">transparent and reliable</span>. From its inception, every
+				decision has been guided by principles of
+				<span class="font-semibold">trustworthiness, fairness, and accountability</span>. Whether
+				it's for education, government, or research, LUCIE is designed to be a model you can count
+				on.
+			</span>
 		</div>
 		<div class="max-md:p-8 max-md:pt-0 bg-white flex items-center justify-center">
 			<!-- Lucie Illustration -->
 			<img
 				crossorigin="anonymous"
 				src="/assets/images/lucie.png"
-				class="md:max-h-[80vh]"
+				class="md:max-h-[75vh]"
 				alt="Lucie illustration"
 			/>
 		</div>
@@ -329,25 +324,25 @@
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/linagora-ai.png"
-			class="h-12 self-center"
+			class="w-28 self-center"
 			alt="Linagora AI logo"
 		/>
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/france-2030-laureat.png"
-			class="h-24"
+			class="w-28"
 			alt="France 2030 Lauréat logo"
 		/>
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/opsci.png"
-			class="h-16 self-center"
+			class="h-14 self-center"
 			alt="OPSCI logo"
 		/>
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/talkr-ai.png"
-			class="h-16"
+			class="h-14"
 			alt="Talkr.ai logo"
 		/>
 		<img
@@ -356,15 +351,27 @@
 			class="w-28"
 			alt="Class'Code logo"
 		/>
-		<img crossorigin="anonymous" src="/assets/logos/cea.png" class="h-16" alt="CEA logo" />
-		<img crossorigin="anonymous" src="/assets/logos/cnrs.png" class="h-16" alt="CNRS logo" />
-		<img crossorigin="anonymous" src="/assets/logos/loria.png" class="h-16" alt="Loria logo" />
-		<img crossorigin="anonymous" src="/assets/logos/lix.png" class="h-16" alt="LIX logo" />
+		<img crossorigin="anonymous" src="/assets/logos/cea.png" class="h-14" alt="CEA logo" />
+		<img crossorigin="anonymous" src="/assets/logos/cnrs.png" class="h-14" alt="CNRS logo" />
+		<img crossorigin="anonymous" src="/assets/logos/loria.png" class="h-14" alt="Loria logo" />
+		<img crossorigin="anonymous" src="/assets/logos/lix.png" class="h-14" alt="LIX logo" />
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/sorbonne.png"
 			class="w-28"
 			alt="Sorbonne logo"
+		/>
+		<img
+			crossorigin="anonymous"
+			src="/assets/logos/exaion.png"
+			class="w-28 self-center"
+			alt="Exaion logo"
+		/>
+		<img
+			crossorigin="anonymous"
+			src="/assets/logos/ovh.png"
+			class="w-28 self-center bg-indigo-700 p-2 rounded-lg"
+			alt="OVH Cloud logo"
 		/>
 	</div>
 	<div class="px-8 md:px-48 my-12 md:my-24">

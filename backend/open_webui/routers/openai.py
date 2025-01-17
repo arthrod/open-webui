@@ -49,7 +49,7 @@ from langdetect import detect
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 
-toxic_threshold = 0.82
+toxic_threshold = 0.80
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # pre-gu
 toxic_guard = ToxicLanguage(

@@ -14,6 +14,11 @@ services:
       - open-webui-dev1:/app/backend/data
     ports:
       - "8080:8080" # Adjust this if your app exposes a different port
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "--request", "POST", "http://webui:8080/queue/idle" ]
+      interval: 1s
+      timeout: 60s
+      retries: 3
 
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
@@ -36,19 +41,19 @@ services:
       - ./litellm/postgres_data:/var/lib/postgresql/data
     restart: always
 
-  queue:
-    build: ./simple-queue
-    ports:
-      - "8000:8000"
-    environment:
-      FLASK_SESSION_DURATION: 1200
-      FLASK_DRAFT_DURATION: 300
-      FLASK_MAX_ACTIVE_USERS: 50
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "--request", "POST", "http://localhost:8000/queue/idle" ]
-      interval: 1s
-      timeout: 60s
-      retries: 3
+  # queue:
+  #   build: ./simple-queue
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     FLASK_SESSION_DURATION: 1200
+  #     FLASK_DRAFT_DURATION: 300
+  #     FLASK_MAX_ACTIVE_USERS: 50
+  #   healthcheck:
+  #     test: [ "CMD", "curl", "-f", "--request", "POST", "http://localhost:8000/queue/idle" ]
+  #     interval: 1s
+  #     timeout: 60s
+  #     retries: 3
 
 volumes:
   open-webui-dev1:

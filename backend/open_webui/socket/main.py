@@ -7,6 +7,7 @@ import time
 from open_webui.models.users import Users, UserNameResponse
 from open_webui.models.channels import Channels
 from open_webui.models.chats import Chats
+from open_webui.models.queue import queue
 
 from open_webui.env import (
     ENABLE_WEBSOCKET_SUPPORT,
@@ -80,6 +81,7 @@ async def periodic_usage_pool_cleanup():
     log.debug("Running periodic_usage_pool_cleanup")
     try:
         while True:
+            queue.idle()
             if not renew_func():
                 log.error(f"Unable to renew cleanup lock. Exiting usage pool cleanup.")
                 raise Exception("Unable to renew usage pool cleanup lock.")

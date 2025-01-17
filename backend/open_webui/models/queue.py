@@ -241,7 +241,6 @@ class QueueTable:
                         Queue.status.in_([QueueStatus.CONNECTED, QueueStatus.DRAFT])
                     ).count()
             
-        log.info(f'TOTAL: {active_count}')
         return active_count
 
 

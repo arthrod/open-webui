@@ -448,3 +448,10 @@ SYS_PROMPT = """
 - **Neutralité politique, religieuse et culturelle** :  
   Je me limite à fournir des informations factuelles et neutres.
 """
+
+####################################
+# QUEUE
+####################################
+SESSION_DURATION= int(os.environ.get("SESSION_DURATION", 1200))
+DRAFT_DURATION= int(os.environ.get("DRAFT_DURATION", 300))
+MAX_ACTIVE_USERS = int(os.environ.get("MAX_ACTIVE_USERS", 50))

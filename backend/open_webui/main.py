@@ -73,7 +73,8 @@ from open_webui.routers import (
     tools,
     users,
     utils,
-    queue
+    queue,
+    contact
 )
 
 from open_webui.routers.retrieval import (
@@ -742,6 +743,7 @@ app.mount("/ws", socket_app)
 app.include_router(ollama.router, prefix="/ollama", tags=["ollama"])
 app.include_router(openai.router, prefix="/openai", tags=["openai"])
 app.include_router(queue.router, prefix="/queue", tags=["queue"])
+app.include_router(contact.router, prefix="/contact", tags=["contact"])
 
 
 

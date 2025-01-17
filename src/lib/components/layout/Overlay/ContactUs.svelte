@@ -1,9 +1,52 @@
-<script>
+<script lang="ts">
     export let show = false;
+
+    interface Contact {
+        first_name: string;
+        last_name: string;
+        company: string;
+        position: string;
+        email: string;
+        phone: string;
+        message: string;
+    }
 
     function submitForm(event: Event) {
         event.preventDefault();
+        const form = event.target as HTMLFormElement;
+        const formData = new FormData(form);
         
+        const contact: Contact = {
+            first_name: formData.get('firstname') as string,
+            last_name: formData.get('lastname') as string,
+            company: formData.get('company') as string,
+            position: formData.get('position') as string,
+            email: formData.get('email') as string,
+            phone: formData.get('phone') as string,
+            message: formData.get('message') as string
+        };
+
+        console.log(contact);
+
+        // Send form to /contact api
+        fetch('/contact/contact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(contact),
+        })
+            .then((response) => {
+                if (response.ok) {
+                    console.log('Form submitted successfully');
+                } else {
+                    console.error('Form submission failed');
+                }
+            })
+            .catch((error) => {
+                console.error('Form submission failed', error);
+            });
+            
         closeModal();
     }
 
@@ -79,48 +122,46 @@
             <label class="block text-sm font-bold mb-2" for="lastname">
                 Nom *
             </label>
-            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="lastname" type="text" placeholder="Smith">
+            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="lastname" name="lastname" type="text" placeholder="Smith">
         </div>
         <div class="col-span-1">
             <label class="block text-sm font-bold mb-2" for="firstname">
                 Prénom *
             </label>
-            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="firstname" type="text" placeholder="John">
+            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="firstname" name="firstname" type="text" placeholder="John">
         </div>
         <div class="col-span-1">
             <label class="block text-sm font-bold mb-2" for="company">
               Société *
             </label>
-            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="company" type="text" placeholder="John Smith & Co">
+            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="company" name="company" type="text" placeholder="John Smith & Co">
         </div>
         <div class="col-span-1">
             <label class="block text-sm font-bold mb-2" for="position">
               Poste *
             </label>
-            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="position" type="text" placeholder="Responsable Marketing">
+            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="position" name="position" type="text" placeholder="Responsable Marketing">
         </div>
         <div class="col-span-2">
             <label class="block text-sm font-bold mb-2" for="email">
               Email *
             </label>
-            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="email" type="text" placeholder="johnsmith@jsco.com">
+            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="email" name="email" type="text" placeholder="johnsmith@jsco.com">
         </div>
         <div class="col-span-2">
             <label class="block text-sm font-bold mb-2" for="phone">
               Téléphone *
             </label>
-            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="phone" type="text" placeholder="+33 1 02 03 04 05">
+            <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="phone" name="phone" type="text" placeholder="+33 1 02 03 04 05">
         </div>
         <div class="col-span-2">
             <label class="block text-md font-bold mb-2" for="message">
                 Message *
             </label>
-            <textarea class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="message" rows="4" placeholder="Votre message"></textarea>
+            <textarea class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="message" name="message" rows="4" placeholder="Votre message"></textarea>
         </div>
         <div class="col-span-2">
-            <button type="submit" class="form-button mt-4 w-full inline-flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-3xl focus:outline-none focus:ring-2 focus:ring-offset-2"
-                on:click={submitForm}
-            >
+            <button type="submit" class="form-button mt-4 w-full inline-flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-3xl focus:outline-none focus:ring-2 focus:ring-offset-2">
                 Submit
             </button>
         </div>

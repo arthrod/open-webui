@@ -11,6 +11,7 @@ services:
       - DEFAULT_USER_ROLE=user
     volumes:
       - ./backend/open_webui:/app/backend/open_webui
+      - /tmp/inbox:/inbox
       - open-webui-dev1:/app/backend/data
     ports:
       - "8080:8080" # Adjust this if your app exposes a different port

@@ -120,7 +120,7 @@
 	// Refresh queue status periodically
 	const refreshQueue = async () => {
 		queueStatus = await getStatus($queueID);
-		queueMetrics = await getMetrics();
+		queueMetrics = await getMetrics({ user_id: $queueID });
 
 		if (queueStatus.status === 'waiting') {
 			setTimeout(

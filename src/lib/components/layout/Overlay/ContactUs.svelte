@@ -1,9 +1,9 @@
-<script>
+<script lang="ts">
     export let show = false;
 
-    function submitForm(event) {
+    function submitForm(event: Event) {
         event.preventDefault();
-        // Handle form submission logic here
+        
         closeModal();
     }
 
@@ -11,13 +11,13 @@
         show = false;
     }
 
-    function handleOverlayClick(event) {
+    function handleOverlayClick(event: MouseEvent) {
         if (event.target === event.currentTarget) {
             closeModal();
         }
     }
 
-    function handleKeyDown(event) {
+    function handleKeyDown(event: KeyboardEvent) {
         if (event.key === 'Escape') {
             closeModal();
         }
@@ -112,7 +112,15 @@
             <input class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="phone" type="text" placeholder="+33 1 02 03 04 05">
         </div>
         <div class="col-span-2">
-            <button type="submit" class="form-button mt-4 w-full inline-flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-3xl focus:outline-none focus:ring-2 focus:ring-offset-2">
+            <label class="block text-md font-bold mb-2" for="message">
+                Message *
+            </label>
+            <textarea class="form-input shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="message" rows="4" placeholder="Votre message"></textarea>
+        </div>
+        <div class="col-span-2">
+            <button type="submit" class="form-button mt-4 w-full inline-flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-3xl focus:outline-none focus:ring-2 focus:ring-offset-2"
+                on:click={submitForm}
+            >
                 Submit
             </button>
         </div>

@@ -32,10 +32,13 @@
 		TimelineContent,
 		TimelineOppositeContent
 	} from 'svelte-vertical-timeline';
+	import ContactUs from '$lib/components/layout/Overlay/ContactUs.svelte';
 
 	const i18n = getContext('i18n');
 
 	let loaded = false;
+
+	let showContactUs = false;
 
 	// Queue
 	let queueStatus: QueueStatus = { position: -1, status: 'disconnected' };
@@ -212,6 +215,10 @@
 	</title>
 </svelte:head>
 
+{#if showContactUs}
+	<ContactUs bind:show={showContactUs} />
+{/if}
+
 <!-- Header -->
 <div
 	class="fixed w-full h-20 px-8 md:px-48 py-3 flex items-center justify-between bg-white/90 border-b-[2px] border-gray-100 z-50"
@@ -222,13 +229,12 @@
 		class="h-full"
 		alt="OpenLLM France logo"
 	/>
-	<a href="mailto:ai-summit@linagora.com">
-		<button
-			class="h-8 md:h-14 px-3 md:px-12 rounded-full border border-black bg-white hover:bg-gray-50 text-sm md:text-base transition-all"
-		>
-			Contact us
-		</button>
-	</a>
+	<button
+		class="h-8 md:h-14 px-3 md:px-12 rounded-full border border-black bg-white hover:bg-gray-50 text-sm md:text-base transition-all"
+		on:click={() => (showContactUs = !showContactUs)}
+	>
+		Contact us
+	</button>
 </div>
 
 <!-- Page -->
@@ -702,6 +708,17 @@
 			class="h-16"
 			alt="OpenLLM France logo"
 		/>
-		<span class="text-xs">2025 - All rights reserved ©</span>
+		<div class="flex flex-col items-center space-y-2">
+			<span class="text-xs">2025 - All rights reserved ©</span>
+			<div class="text-[0.6rem]">
+				<a href="https://linagora.com/fr/legal" class="underline hover:text-violet-500">
+					Terms of Use
+				</a>
+				-
+				<a href="https://linagora.com/fr/privacy" class="underline hover:text-violet-500">
+					Privacy Policy
+				</a>
+			</div>
+		</div>
 	</div>
 </div>

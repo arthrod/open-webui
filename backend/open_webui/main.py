@@ -263,6 +263,7 @@ from open_webui.config import (
 )
 from open_webui.env import (
     CHANGELOG,
+    DRAFT_DURATION,
     GLOBAL_LOG_LEVEL,
     SAFE_MODE,
     SESSION_DURATION,
@@ -980,7 +981,8 @@ async def get_app_config(request: Request):
         "features": {
             "auth": WEBUI_AUTH,
             "timer": {
-                "session_duration" : SESSION_DURATION
+                "session_duration" : SESSION_DURATION,
+                "draft_duration" : DRAFT_DURATION
             },
             "auth_trusted_header": bool(app.state.AUTH_TRUSTED_EMAIL_HEADER),
             "enable_ldap": app.state.config.ENABLE_LDAP,

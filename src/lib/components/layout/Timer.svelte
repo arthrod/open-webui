@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { userSignOut } from '$lib/apis/auths';
 	import i18n from '$lib/i18n';
-	import { endTimestamp, termsOfUse } from '$lib/stores';
+	import { config, endTimestamp, termsOfUse } from '$lib/stores';
 	import { onMount } from 'svelte';
 
 	const SECOND: number = 1000;
 	const MINUTE: number = 60 * SECOND;
-	const DEFAULT_DURATION: number = 20 * MINUTE;
 
 	let timeRemaining: number;
 
@@ -21,7 +20,7 @@
 	onMount(() => {
 		if ($endTimestamp < Date.now()) {
 			// Reset timer and terms of use status
-			$endTimestamp = Date.now() + DEFAULT_DURATION;
+			$endTimestamp = Date.now() + ($config.features.timer.session_duration * SECOND);
 			$termsOfUse.accepted = false;
 			$termsOfUse.show = false;
 		}

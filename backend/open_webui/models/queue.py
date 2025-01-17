@@ -72,50 +72,8 @@ class QueueTable:
         ):
         self.draft_time = draft_time
         self.session_time = session_time
-        self.max_connected = max_connected
-    
-    def estimate_time2(self, user_id: str) -> Optional[int]:
-        """
-        Estimate the waiting time before a user joins the draft.
-        """
-        try:
-            with get_db() as db:
-                # Retrieve the user
-                user = db.query(Queue).filter_by(user_id=user_id).first()
-                if not user:
-                    log.error(f"User {user_id} not found in the queue.")
-                    return None
-                
-                if user.status == QueueStatus.DRAFT or user.status == QueueStatus.CONNECTED:
-                    # If the user is already in DRAFT or CONNECTED, no waiting time
-                    return 0
-                
-                # Get the position of the user in the WAITING queue
-                position = db.query(Queue).filter(
-                    Queue.status == QueueStatus.WAITING,
-                    Queue.timestamp <= user.timestamp
-                ).count()
-                
-                # Count active users (CONNECTED + DRAFT)
-                active_count = self._count_connected_and_draft()
-                slots_available = self.max_connected - active_count
-                
-                if slots_available > 0 and position <= slots_available:
-                    # User will be moved to DRAFT immediately
-                    return 0
-                
-                # Estimate time based on draft_time and session_time
-                users_to_wait = max(0, position - slots_available)
-                estimated_time = users_to_wait * (self.draft_time + self.session_time)
-                log.info(f"Estimated waiting time for user {user_id}: {estimated_time} seconds.")
-                return estimated_time
+        self.max_connected = max_connected        
             
-        except Exception as e:
-            log.error(f"Error estimating waiting time for user {user_id}: {e}")
-            return None
-
-
-    
     def estimate_time(self, user_id: str):
         """Estimate the waiting time before joining the draft"""
         try:

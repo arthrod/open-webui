@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 import time
+import json
 
 from bisect import bisect_left
 
 
 class SimpleQueue:
-    def __init__(self, logger, draft_time: int = 5 * 60, session_time: int = 20 * 60, max_connected: int = 50):
+    def __init__(self, logger, draft_time: int = 5 * 60, session_time: int = 20 * 60, max_connected: int = 50, fn_prefix = None, max_states: int = 10):
         self.logger = logger
         self.draft_time = draft_time
         self.session_time = session_time
@@ -16,6 +18,54 @@ class SimpleQueue:
         self.waiting = []
         self.draft = []
         self.connected = []
+        self.dir_name, self.fn_prefix = None, None
+        self.max_states = max_states
+        self.save_step = 0
+        if fn_prefix is not None:
+            self.dir_name, self.fn_prefix = os.path.split(os.path.normpath(fn_prefix))
+            self._load()
+
+
+    def _save(self):
+        fn = os.path.join(self.dir_name, self.fn_prefix) + f'_{self.save_step}.json'
+        self.save_step = (self.save_step + 1) % self.max_states
+        with open(fn, 'w') as f:
+            state = {
+                'waiting': self.waiting,
+                'draft': self.draft,
+                'connected': self.connected,
+                'users': self.users
+            }
+            json.dump(state, f, ensure_ascii=False, indent=4)
+
+
+    def _find_last_state_fn(self):
+        last_ts, last_fn = 0, None
+        for f in os.listdir(self.dir_name):
+            if not f.startswith(self.fn_prefix):
+                continue
+            fn = os.path.join(self.dir_name, f)
+            if not os.path.isfile(fn):
+                continue
+            ts = os.path.getmtime(fn)
+            if ts > last_ts:
+                last_ts = ts
+                last_fn = fn
+
+        self.logger.info(f'Last state is in \'{last_fn}\' ({last_ts})')
+        return last_fn
+
+
+    def _load(self):
+        fn = self._find_last_state_fn()
+        if fn is None:
+            return
+        with open(fn, 'r') as f:
+            state = json.load(f)
+            self.waiting = state['waiting']
+            self.draft = state['draft']
+            self.connected = state['connected']
+            self.users = state['users']
 
 
     def metrics(self):
@@ -27,9 +77,9 @@ class SimpleQueue:
         }
 
 
-    def join(self, user_id: int):
+    def join(self, user_id: str):
         if user_id in self.users:
-            return -1
+            return
 
         join_time = int(time.time())
         self.users[user_id] = {
@@ -39,8 +89,11 @@ class SimpleQueue:
 
         self.waiting.append((join_time, user_id))
 
+        if self.fn_prefix is not None:
+            self._save()
 
-    def status(self, user_id: int):
+
+    def status(self, user_id: str):
         if user_id not in self.users:
             return None
         idx = 0
@@ -53,18 +106,46 @@ class SimpleQueue:
         }
 
 
-    def confirm(self, user_id: str, timestamp: int) -> int:
+    def confirm(self, user_id: str) -> tuple:
         if user_id not in self.users:
-            return None
+            return None, None
 
+        timestamp = int(time.time())
         assert('draft' == self.users[user_id]['status'])
         self.users[user_id]['status'] = 'connected'
+        self.users[user_id]['connected_timestamp'] = timestamp
         self.connected.append((timestamp, user_id))
         assert('draft_timestamp' in self.users[user_id])
         idx = SimpleQueue._index(self.draft, self.users[user_id]['draft_timestamp'], user_id)
         del self.draft[idx]
 
-        return self.session_time
+        if self.fn_prefix is not None:
+            self._save()
+
+        return self.session_time, timestamp
+
+
+    def leave(self, user_id: str):
+        if user_id not in self.users:
+            return None
+
+        user = self.users[user_id]
+        if user['status'] in [ 'waiting' ]:
+            idx = SimpleQueue._index(self.waiting, user['joined'], user_id)
+            del self.waiting[idx]
+            self.logger.info(f'removed {user_id} from WAITING')
+        elif user['status'] in [ 'draft' ]:
+            idx = SimpleQueue._index(self.draft, user['draft_timestamp'], user_id)
+            del self.draft[idx]
+            self.logger.info(f'removed {user_id} from DRAFT')
+        elif user['status'] in [ 'connected' ]:
+            idx = SimpleQueue._index(self.connected, user['connected_timestamp'], user_id)
+            del self.connected[idx]
+            self.logger.info(f'removed {user_id} from CONNECTED')
+        else:
+            raise Exception(f'Unknown status: \'{user.status}\'')
+
+        del self.users[user_id]
 
 
     def idle(self, steps: int = 1):

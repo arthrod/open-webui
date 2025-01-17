@@ -11,10 +11,14 @@ from simple_queue import SimpleQueue
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
-app.config.from_prefixed_env()
+app.config()#.from_prefixed_env()
 CORS(app, resources={r"/queue/*": {"origins": "*"}})
 
-queue = SimpleQueue(app.logger, app.config['DRAFT_DURATION'], app.config['SESSION_DURATION'], app.config['MAX_ACTIVE_USERS'])
+persist_prefix = None
+persist_prefix_var_name = 'PERSIST_PREFIX'
+if persist_prefix_var_name in app.config:
+    persist_prefix = app.config[persist_prefix_var_name]
+queue = SimpleQueue(app.logger, app.config['DRAFT_DURATION'], app.config['SESSION_DURATION'], app.config['MAX_ACTIVE_USERS'], persist_prefix)
 
 
 @app.route('/queue/join', methods=['POST'])
@@ -49,17 +53,29 @@ def confirm():
     user_id = str(params['user_id'])
     app.logger.debug(f'-> confirm({user_id})')
 
-    now = int(time.time())
-    session_duration = queue.confirm(user_id, now)
+    session_duration, now = queue.confirm(user_id)
     if session_duration is None:
         return { 'reason': f'Unknown user {user_id}' }
 
+    token = ' '.join([str(now), user_id])
+    signature = None
     return {
         'status': 'connected',
         'session_duration': session_duration,
-        'token': ' '.join([str(now), user_id]),
-        'signature': None   # TODO
+        'token': token,
+        'signature': signature   # TODO
     }
+
+
+@app.route('/queue/leave', methods=['POST'])
+def leave():
+    params = request.get_json()
+    user_id = str(params['user_id'])
+    app.logger.debug(f'-> leave({user_id})')
+
+    queue.leave(user_id)
+
+    return {}
 
 
 @app.route('/queue/idle', methods=['POST'])

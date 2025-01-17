@@ -43,7 +43,10 @@ services:
     environment:
       FLASK_SESSION_DURATION: 1200
       FLASK_DRAFT_DURATION: 300
-      FLASK_MAX_ACTIVE_USERS: 50
+      FLASK_MAX_ACTIVE_USERS: 100
+      FLASK_PERSIST_PREFIX: /data/queue_state
+    volumes:
+      - persistent_data:/data/
     healthcheck:
       test: [ "CMD", "curl", "-f", "--request", "POST", "http://localhost:8000/queue/idle" ]
       interval: 1s
@@ -52,3 +55,4 @@ services:
 
 volumes:
   open-webui-dev1:
+  persistent_data:

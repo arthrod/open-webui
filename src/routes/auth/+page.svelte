@@ -122,6 +122,7 @@
 	const refreshQueue = async () => {
 		queueStatus = await getStatus($queueID);
 		queueMetrics = await getMetrics({ user_id: $queueID });
+		console.log(queueMetrics)
 
 		if (queueStatus.status === 'waiting') {
 			setTimeout(
@@ -279,7 +280,7 @@
 						max-md:translate-y-1 max-md:left-1/2 max-md:top-full max-md:-translate-x-1/2 max-md:w-64"
 					>
 						({$i18n.t('estimated waiting time')} : ~{Math.floor(
-							queueMetrics.estimated_time / (1000 * 60)
+							queueMetrics.estimated_time / (60)
 						)}
 						{$i18n.t('minutes')})
 					</span>

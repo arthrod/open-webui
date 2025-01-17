@@ -247,10 +247,12 @@
 				Beyond openness, we pioneer transparency and trust.
 			</span>
 			<span class="text-base md:text-lg max-md:text-center md:pr-32">
-				LUCIE isn't just open; it's especially transparent and reliable. From its foundation, every
-				decision has been guided by principles of trustworthiness, fairness, and accountability.
-				Whether it's for education, government, or research, LUCIE is designed to be a model you can
-				count on.
+				LUCIE isn't just <span class="font-semibold">open</span>; it's exceptionally
+				<span class="font-semibold">transparent and reliable</span>. From its inception, every
+				decision has been guided by principles of
+				<span class="font-semibold">trustworthiness, fairness, and accountability</span>. Whether
+				it's for education, government, or research, LUCIE is designed to be a model you can count
+				on.
 			</span>
 			{#if queueStatus.status === 'disconnected'}
 				<button
@@ -371,25 +373,27 @@
 				<EyeInBox className="size-8" />
 				<span class="text-xl md:text-2xl font-medium">Transparent Data</span>
 				<span>
-					All training datasets are open and licensed for public use. From collection to curation,
-					we ensure transparency at every step.
+					All training datasets are openly available and licensed for public use. We ensure
+					transparency at every stage, from collection to curation.
 				</span>
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8">
 				<StateGraph className="size-8" />
 				<span class="text-xl md:text-2xl font-medium">Open Algorithms</span>
 				<span>
-					Our training methodologies, fine-tuning processes, and "secret sauce" are fully documented
-					and openly available for anyone to explore, use, and improve.
+					Our training methodologies, fine-tuning processes, and "secret sauce" are thoroughly
+					documented and openly accessible for anyone to explore, use, and improve.
 				</span>
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8">
 				<TouchWindow className="size-8" />
 				<span class="text-xl md:text-2xl font-medium">Freely Accessible Models</span>
 				<span>
-					LUCIE's weights, checkpoints and source code are accessible under the Apache 2.0 license.
-					This permissive, unrestricted license allows anyone, anywhere in the world, to use, adapt,
-					and deploy the model for any purpose, ensuring true global accessibility and innovation.
+					LUCIE's weights, checkpoints, and source code are available under the <span
+						class="font-semibold">Apache 2.0 license</span
+					>. This permissive, unrestricted license allows anyone, anywhere in the world, to use,
+					adapt, and deploy the model for any purpose, ensuring true global accessibility and
+					innovation.
 				</span>
 			</div>
 		</div>
@@ -398,7 +402,7 @@
 		<div class="grid md:grid-cols-2 items-center mb-8 md:mb-16">
 			<span class="text-2xl md:text-3xl"> Designed for sovereignty and sustainability </span>
 			<span class="max-md:text-sm max-md:pt-2">
-				ⓘ LUCIE was built to adress the unique challenges of creating ethical, efficient, and
+				ⓘ LUCIE was built to address the unique challenges of developing ethical, efficient, and
 				accessible AI.
 			</span>
 		</div>
@@ -407,16 +411,16 @@
 				<EuLogo className="size-16 p-1 border-2 border-gray-700 rounded-full" />
 				<span class="text-2xl md:text-3xl font-medium">European Sovereignty</span>
 				<span>
-					LUCIE embodies a commitment to European values, respecting cultural diversity, promoting
-					ethical AI, development and compliance with AI Act.
+					LUCIE embodies a commitment to European values by respecting cultural diversity, promoting
+					ethical AI development and ensuring compliance with the AI Act.
 				</span>
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8 bg-white rounded p-8">
 				<Speedometer className="size-16" />
 				<span class="text-2xl md:text-3xl font-medium">Compact and Efficient</span>
 				<span>
-					Optimized for low-resource environments, LUCIE's architecture enables deployment on "GPU
-					poor" infrastructures and even mobile devices.
+					Optimized for low-resource environments, LUCIE's architecture enables deployment on “GPU
+					poor” infrastructures and even on mobile devices.
 				</span>
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8 bg-white rounded p-8">
@@ -478,8 +482,8 @@
 	<div class="max-md:px-8 py-12 md:py-24 bg-gray-50 flex flex-col items-center text-center">
 		<div class="text-3xl mb-8">Future of LUCIE in 2025</div>
 		<div class="md:px-[33vw] mb-8 md:mb-16">
-			The journey of LUCIE doesn't stop here. Our roadmap for 2025 outlines ambitious milestones to
-			enhance capabilities and expand the model's applications :
+			The journey of LUCIE is far from over. Our 2025 roadmap outlines ambitious milestones to
+			enhance capabilities and expand the model's applications:
 		</div>
 		<div class="md:px-[25vw] md:-translate-x-44">
 			<Timeline>
@@ -498,9 +502,9 @@
 							</span>
 							<span>
 								We will refine LUCIE's instruction-following capabilities (fine-instruct), introduce
-								function calling for better integration with external systems, and release at least
-								one model under 3 billions parameters to ensure accessibility for
-								resource-constrained environments.
+								<span class="font-semibold">function calling</span> for better integration with external
+								systems, and release at least one model with fewer than 3 billion parameters to ensure
+								accessibility for resource-constrained environments.
 							</span>
 						</div>
 					</TimelineContent>
@@ -519,8 +523,9 @@
 								Advanced Retrieval-Augmented Generation (RAG)
 							</span>
 							<span>
-								LUCIE will gain an advanced RAG function, enabling it to leverage external knowledge
-								bases for more accurate and context-aware responses.
+								LUCIE will gain an advanced <span class="font-semibold">RAG function</span>,
+								enabling it to leverage external knowledge bases for more accurate and context-aware
+								responses.
 							</span>
 						</div>
 					</TimelineContent>
@@ -537,9 +542,10 @@
 						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
 							<span class="text-xl md:text-2xl"> Multimodal Expansion with Voice Support </span>
 							<span>
-								We will extend LUCIE's capabilities into multimodal AI, with a focus on voice
-								processing in French, opening new possibilities for applications in education,
-								accessibility, and beyond.
+								We will extend LUCIE's capabilities into <span class="font-semibold"
+									>multimodal AI</span
+								>, with a focus on <span class="font-semibold">voice processing</span> in French, opening
+								new possibilities for applications in education, accessibility, and beyond.
 							</span>
 						</div>
 					</TimelineContent>
@@ -556,9 +562,11 @@
 						<div class="flex flex-col max-md:w-52 space-y-2">
 							<span class="text-xl md:text-2xl"> Agentic AI Framework </span>
 							<span>
-								LUCIE will evolve into a robust agentic AI framework, harnessing its capabilities to
-								power autonomous systems and foundations for Large Action Models (LAM) while
-								maintaining transparency, trust, and ethical safeguards.
+								LUCIE will evolve into a robust <span class="font-semibold"
+									>agentic AI framework</span
+								>, harnessing its capabilities to power autonomous systems and lay the foundation
+								for Large Action Models (LAM) all while maintaining transparency, trust, and ethical
+								safeguards.
 							</span>
 						</div>
 					</TimelineContent>
@@ -643,14 +651,13 @@
 				</div>
 				<span class="md:h-16 px-8 text-xl md:text-2xl"> Experiment on Hugging Face </span>
 				<span class="px-8 text-sm max-md:pb-6 md:h-32">
-					LUCIE embodies a commitment to European values, respecting cultural diversity, promoting
-					ethical AI, development and compliance with AI Act.
+					Explore LUCIE's capabilities in your projects.
 				</span>
 				<a
 					href="https://huggingface.co/OpenLLM-France"
 					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
 				>
-					Learn more
+					Experiment
 				</a>
 			</div>
 			<div class="flex flex-col space-y-4 bg-white rounded border pb-8">
@@ -672,7 +679,7 @@
 					href="https://www.openllm-france.fr/"
 					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
 				>
-					Learn more
+					Join us
 				</a>
 			</div>
 			<div class="flex flex-col space-y-4 bg-white rounded border pb-8">

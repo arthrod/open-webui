@@ -11,7 +11,7 @@ from simple_queue import SimpleQueue
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
-app.config()#.from_prefixed_env()
+app.config.from_prefixed_env()
 CORS(app, resources={r"/queue/*": {"origins": "*"}})
 
 persist_prefix = None

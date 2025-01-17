@@ -701,6 +701,17 @@
 			class="h-16"
 			alt="OpenLLM France logo"
 		/>
-		<span class="text-xs">2025 - All rights reserved ©</span>
+		<div class="flex flex-col items-center space-y-2">
+			<span class="text-xs">2025 - All rights reserved ©</span>
+			<div class="text-[0.6rem]">
+				<a href="https://linagora.com/fr/legal" class="underline hover:text-violet-500">
+					Terms of Use
+				</a>
+				-
+				<a href="https://linagora.com/fr/privacy" class="underline hover:text-violet-500">
+					Privacy Policy
+				</a>
+			</div>
+		</div>
 	</div>
 </div>

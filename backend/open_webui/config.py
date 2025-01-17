@@ -109,9 +109,9 @@ DEFAULT_CONFIG = {
             {
                 "title": [
                     "Linagora",
-                    "for what to do with my kids' art",
+                    "to discover our company",
                 ],
-                "content": "What are 5 creative things I could do with my kids' art? I don't want to throw them away, but it's also so much clutter.",
+                "content": "Can you tell me what kind of company Linagora is ?",
             },
 
             {
@@ -119,13 +119,13 @@ DEFAULT_CONFIG = {
                     "OpenLLM France",
                     "Objective & Mission",
                 ],
-                "content": "Could you tell me about OpenLLM France and its mission?",
+                "content": "Could you tell me about OpenLLM France and its mission ?",
             },
 
             {
                 "title": [
                     "French Revolution",
-                    "Timeline of historical events Historical events",
+                    "Timeline of historical events",
                 ],
                 "content": "Create a timeline of the most significant key events of the French Revolution.",
             },
@@ -156,7 +156,12 @@ DEFAULT_CONFIG = {
             {
                 "title": ["Overcome procrastination", "Give me tips"],
                 "content": "Could you start by asking me about instances when I procrastinate the most and then give me some suggestions to overcome it?",
-            }
+            },
+            
+            {
+                "title": ["Love Poem", "To get some inspiration"],
+                "content": "Please write a short love poem.",
+            },
         ],
     },
 }

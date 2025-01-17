@@ -1,7 +1,7 @@
 import { APP_NAME } from '$lib/constants';
 import { type Writable, writable } from 'svelte/store';
 import { persisted } from 'svelte-persisted-store'
-import type { GlobalModelConfig, ModelConfig } from '$lib/apis';import type { Banner } from '$lib/types';
+import type { GlobalModelConfig, ModelConfig } from '$lib/apis'; import type { Banner } from '$lib/types';
 import type { Socket } from 'socket.io-client';
 import type { SubscriptionInfo } from './types';
 
@@ -218,6 +218,9 @@ type Config = {
 		enable_admin_export: boolean;
 		enable_admin_chat_access: boolean;
 		enable_community_sharing: boolean;
+		timer: {
+			session_duration: number;
+		}
 	};
 	oauth: {
 		providers: {

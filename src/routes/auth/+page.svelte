@@ -120,7 +120,7 @@
 	// Refresh queue status periodically
 	const refreshQueue = async () => {
 		queueStatus = await getStatus($queueID);
-		queueMetrics = await getMetrics();
+		queueMetrics = await getMetrics({ user_id: $queueID });
 
 		if (queueStatus.status === 'waiting') {
 			setTimeout(
@@ -220,11 +220,13 @@
 		class="h-full"
 		alt="OpenLLM France logo"
 	/>
-	<button
-		class="h-8 md:h-full px-3 md:px-12 rounded-full border border-black bg-white hover:bg-gray-50 text-sm md:text-base transition-all"
-	>
-		Contact us
-	</button>
+	<a href="mailto:ai-summit@linagora.com">
+		<button
+			class="h-8 md:h-14 px-3 md:px-12 rounded-full border border-black bg-white hover:bg-gray-50 text-sm md:text-base transition-all"
+		>
+			Contact us
+		</button>
+	</a>
 </div>
 
 <!-- Page -->
@@ -233,6 +235,9 @@
 		<div class="p-8 md:p-48 flex flex-col justify-center space-y-6 bg-slate-100">
 			<span class="text-2xl md:text-5xl max-md:text-center">
 				LUCIE : The truly open source AI built on transparency, trust, and efficiency.
+			</span>
+			<span class="text-lg md:text-2xl max-md:text-center italic text-gray-500">
+				Beyond openness, we pioneer transparency and trust.
 			</span>
 			<span class="text-base md:text-lg max-md:text-center md:pr-32">
 				LUCIE isn't just open; it's especially transparent and reliable. From its foundation, every
@@ -673,7 +678,9 @@
 					/>
 				</div>
 				<span class="md:h-16 px-8 text-xl md:text-2xl"> Other European Initiatives </span>
-				<span class="px-8 text-sm max-md:pb-6 md:h-32"> Explore other european OpenLLM projects. </span>
+				<span class="px-8 text-sm max-md:pb-6 md:h-32">
+					Explore other european OpenLLM projects.
+				</span>
 				<a
 					href="https://github.com/OpenLLM-Europe/European-OpenLLM-Projects"
 					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"

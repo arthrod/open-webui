@@ -410,11 +410,20 @@ if OFFLINE_MODE:
 LITELLM_MASTER_KEY = os.environ.get("LITELLM_MASTER_KEY", "")
 LITELLM_HOST = os.environ.get("LITELLM_HOST", "http://litellm:4000")
 
+####################################
+# TIMER
+####################################
+
+SESSION_DURATION = os.environ.get("SESSION_DURATION", 1200)
+DRAFT_DURATION = os.environ.get("DRAFT_DURATION", 300)
+MAX_ACTIVE_USERS = os.environ.get("MAX_ACTIVE_USERS", 100)
 
 ####################################
 # GUARDRAILS
 ####################################
-APPLY_GUARDRAILS_ON_CHAT_COMPLETION = os.environ.get("APPLY_GUARDRAILS_ON_CHAT_COMPLETION", "false").lower() == "true"
+APPLY_GUARDRAILS_ON_CHAT_COMPLETION = (
+    os.environ.get("APPLY_GUARDRAILS_ON_CHAT_COMPLETION", "false").lower() == "true"
+)
 
 SYS_PROMPT = """
 # Système de Directives pour Lucie

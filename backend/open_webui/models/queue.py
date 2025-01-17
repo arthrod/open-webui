@@ -93,8 +93,7 @@ class QueueTable:
 
                 # Calculate available slots
                 available_slots = max(0, self.max_connected - total_active)
-
-                if available_slots > 0: # TODO: 'and available_slots > n_users_ahead:'
+                if available_slots > 0: # if we hypothesize that draft user will join automatically else, adding this condition: "and available_slots > "
                     return 0
                 else:
                     connected_users = db.query(Queue).filter(

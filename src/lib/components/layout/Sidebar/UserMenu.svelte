@@ -12,11 +12,13 @@
 		mobile,
 		showSidebar,
 		termsOfUse,
-		endTimestamp
+		endTimestamp,
+		queueID
 	} from '$lib/stores';
 	import { fade, slide } from 'svelte/transition';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
 	import { userSignOut } from '$lib/apis/auths';
+	import { leaveQueue } from '$lib/apis/queue';
 
 	const i18n = getContext('i18n');
 
@@ -31,11 +33,12 @@
 <button
 	class="flex rounded-md py-2 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition"
 	on:click={async () => {
+		await leaveQueue({ user_id: $queueID });
 		$endTimestamp = -1;
 		await userSignOut();
 		localStorage.removeItem('token');
-		location.href = '/auth';
 		show = false;
+		location.href = '/auth';
 	}}
 >
 	<div class=" self-center truncate max-md:hidden">{$i18n.t('Sign Out')}</div>

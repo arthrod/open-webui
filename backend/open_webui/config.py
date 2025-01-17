@@ -109,37 +109,18 @@ DEFAULT_CONFIG = {
             {
                 "title": [
                     "Linagora",
-                    "to discover our company",
+                    "to discover our company"
                 ],
-                "content": "Can you tell me what kind of company Linagora is ?",
+                "content": "What can you tell me about Linagora ?",
             },
-
             {
-                "title": [
-                    "OpenLLM France",
-                    "Objective & Mission",
-                ],
+                "title": ["OpenLLM France", "Objective & Mission"],
                 "content": "Could you tell me about OpenLLM France and its mission ?",
             },
-
             {
-                "title": [
-                    "French Revolution",
-                    "Timeline of historical events",
-                ],
-                "content": "Tell me about the key events of the French Revolution.",
+                "title": ["Digital Sovereignty", "Understanding the Concept"],
+                "content": "Can you explain what digital sovereignty means and why it's important for countries and organizations?",
             },
-            
-            {
-                "title": ["Tell me a fun fact", "About France"],
-                "content": "Tell me a fun fact about France ",
-            },
-
-            {
-                "title": ["Tech Innovation", "AI Ethics"],
-                "content": "What are the 'key ethical' considerations we should think about as AI technology becomes more prevalent in our daily lives?"
-            },
-
             {
                 "title": [
                     "Data Protection",
@@ -147,17 +128,30 @@ DEFAULT_CONFIG = {
                 ],
                 "content": "I am creating a SaaS and I want to write a GDPR-compliant privacy policy. Give me a simple template to adapt.",
             },
-
+            {
+                "title": ["Innovation", "French Tech Scene"],
+                "content": "What makes France's technology sector unique, and what are some notable French tech innovations?",
+            },
+            {
+                "title": ["Remote Work", "Best Practices"],
+                "content": "What are the most effective strategies for maintaining productivity and work-life balance while working remotely?",
+            },
             {
                 "title": ["Sustainable Living", "Eco-friendly Tips"],
-                "content": "What are some practical ways to reduce my environmental impact in daily life?"
+                "content": "What are some practical ways to reduce my environmental impact in daily life?",
             },
-
+            {
+                "title": ["French Revolution", "Timeline of historical events"],
+                "content": "Tell me about the key events of the French Revolution.",
+            },
+            {
+                "title": ["Tell me a fun fact", "About France"],
+                "content": "Tell me a fun fact about France ",
+            },
             {
                 "title": ["Overcome procrastination", "Give me tips"],
                 "content": "Could you start by asking me about instances when I procrastinate the most and then give me some suggestions to overcome it?",
             },
-            
             {
                 "title": ["Love Poem", "To get some inspiration"],
                 "content": "Please write a short love poem.",
@@ -1035,9 +1029,12 @@ Given a chat conversation, you should only output a 3-5 word title that captures
 * Title examples: 
     - 🤝 Salutation
     - 📉 Stock Market Trends
-    - 🎮 Video Game Development Insights
-    - 🌍 Climate Change Solutions
     - 🧠 Memory Improvement Tricks
+    - 🎮 Video Game Development Insights
+    - 🧑‍💼 Leadership and Team Building
+    - 🕊️ Mindfulness Practices for Stress
+    - 🚀 Startup Success Strategies
+    - 🎤 Public Speaking Confidence Tips
 
 Here the chat history:
 <chat_history>

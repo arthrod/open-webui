@@ -78,9 +78,7 @@ class QueueTable:
         """Estimate the waiting time before joining the draft"""
         try:
             with get_db() as db:
-                # Get the user's position in the waiting queue
                 user = db.query(Queue).filter_by(user_id=user_id).first()
-                
                 if not user or user.status != QueueStatus.WAITING:
                     return None
 
@@ -88,33 +86,32 @@ class QueueTable:
                 total_active = self._count_connected_and_draft()
 
                 # Count users ahead in the waiting queue
-                users_ahead = db.query(Queue).filter(
+                n_users_ahead = db.query(Queue).filter(
                     Queue.status == QueueStatus.WAITING,
                     Queue.timestamp < user.timestamp
                 ).count()
 
                 # Calculate available slots
                 available_slots = max(0, self.max_connected - total_active)
-
-                if available_slots > 0:
+                if available_slots > 0: # if we hypothesize that draft user will join automatically else, adding this condition: "and available_slots > "
                     return 0
                 else:
                     connected_users = db.query(Queue).filter(
                         Queue.status == QueueStatus.CONNECTED
                     ).order_by(Queue.timestamp).all()
 
-                    remaining_times = [1, 2, 3, 5, 7]
+                    remaining_times = []
                     # Estimate based on session expiration of currently connected users
                     current_time = int(time.time())
                     for i, conn_user in enumerate(connected_users):
                         time_remaining = max(0, (conn_user.timestamp + self.session_time) - current_time)
                         remaining_times.append(time_remaining)
                     
-                    if users_ahead < len(remaining_times):
-                        time = remaining_times[users_ahead]
+                    if n_users_ahead < len(remaining_times):
+                        time = remaining_times[n_users_ahead - 1]
                         return time
                     else:
-                        return max(remaining_times) + ((users_ahead - len(remaining_times)) // (self.max_connected)) * self.session_time
+                        return max(remaining_times) + ((n_users_ahead - len(remaining_times)) // (self.max_connected)) * self.session_time
                     
         except Exception as e:
             log.error(f"Error estimating wait time: {e}")
@@ -151,9 +148,6 @@ class QueueTable:
                 total_slots=self.max_connected,
                 estimated_time=estimated_time
             )
-      
-
-
 
     def join(self, user_id: str) -> Optional[QueueModel]:
         with get_db() as db:
@@ -243,9 +237,6 @@ class QueueTable:
 
 
     def _count_connected_and_draft(self):
-        # total_connected = self._count_in_status(status=QueueStatus.CONNECTED)
-        # total_draft = self._count_in_status(status=QueueStatus.DRAFT)
-        # return total_connected + total_draft
         with get_db() as db:
             active_count = db.query(Queue).filter(
                         Queue.status.in_([QueueStatus.CONNECTED, QueueStatus.DRAFT])
@@ -266,7 +257,7 @@ class QueueTable:
                     Queue.status == QueueStatus.CONNECTED,
                     Queue.timestamp < expired_connected)
                 ).delete()
-                # db.commit()
+                db.commit()
 
                 # Remove expired draft users
                 expired_draft = int(time.time()) - self.draft_time
@@ -276,7 +267,6 @@ class QueueTable:
                     Queue.timestamp < expired_draft)
                 ).delete()
                 db.commit()
-
 
                 # Move waiting users to draft if space available
                 while self._count_connected_and_draft() < self.max_connected and self._count_in_status(QueueStatus.WAITING) > 0:

@@ -127,7 +127,7 @@ DEFAULT_CONFIG = {
                     "French Revolution",
                     "Timeline of historical events",
                 ],
-                "content": "Create a timeline of the most significant key events of the French Revolution.",
+                "content": "Tell me about the key events of the French Revolution.",
             },
             
             {

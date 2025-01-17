@@ -1049,9 +1049,12 @@ Given a chat conversation, you should only output a 3-5 word title that captures
 * Title examples: 
     - 🤝 Salutation
     - 📉 Stock Market Trends
-    - 🎮 Video Game Development Insights
-    - 🌍 Climate Change Solutions
     - 🧠 Memory Improvement Tricks
+    - 🎮 Video Game Development Insights
+    - 🧑‍💼 Leadership and Team Building
+    - 🕊️ Mindfulness Practices for Stress
+    - 🚀 Startup Success Strategies
+    - 🎤 Public Speaking Confidence Tips
 
 Here the chat history:
 <chat_history>

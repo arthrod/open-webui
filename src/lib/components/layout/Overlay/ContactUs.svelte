@@ -14,20 +14,42 @@
         message: string;
     }
 
-    function sendForm(event: Event) {
-        event.preventDefault();
-        const form = event.target as HTMLFormElement;
-        const formData = new FormData(form);
-        
+	const validateEmailFormat = (email: string): boolean => {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return emailRegex.test(email);
+	};
+
+	const validateForm = (
+		firstName: string,
+		lastName: string,
+		email: string,
+		message: string
+	): boolean => {
+		return firstName !== '' && lastName !== '' && email !== '' && message !== '';
+	};
+
+	function submitForm(event: Event) {
+		event.preventDefault();
+
+        		// Parse form data
+
         const contact: Contact = {
-            first_name: formData.get('firstname') as string,
-            last_name: formData.get('lastname') as string,
-            company: formData.get('company') as string,
-            position: formData.get('position') as string,
-            email: formData.get('email') as string,
-            phone: formData.get('phone') as string,
-            message: formData.get('message') as string
-        };
+            first_name: (document.getElementById('firstname') as HTMLInputElement).value,
+            last_name: (document.getElementById('lastname') as HTMLInputElement).value,
+            company: (document.getElementById('company') as HTMLInputElement).value,
+            position: (document.getElementById('position') as HTMLInputElement).value,
+            email: (document.getElementById('email') as HTMLInputElement).value,
+            phone: (document.getElementById('phone') as HTMLInputElement).value,
+            message: (document.getElementById('message') as HTMLInputElement).value
+        }
+		if (!validateForm(contact.first_name, contact.last_name, contact.email, contact.message)) {
+			toast.error('Please fill out the required (*) fields.');
+			return;
+		}
+		if (!validateEmailFormat(contact.email)) {
+			toast.error('Invalid email address.');
+			return;
+		}
 
         console.log(contact);
 
@@ -51,47 +73,6 @@
             });
             
         closeModal();
-    }
-
-	const validateEmailFormat = (email: string): boolean => {
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		return emailRegex.test(email);
-	};
-
-	const validateForm = (
-		firstName: string,
-		lastName: string,
-		email: string,
-		message: string
-	): boolean => {
-		return firstName !== '' && lastName !== '' && email !== '' && message !== '';
-	};
-
-	function submitForm(event: Event) {
-		event.preventDefault();
-
-		// Parse form data
-		const firstName = (document.getElementById('firstname') as HTMLInputElement).value;
-		const lastName = (document.getElementById('lastname') as HTMLInputElement).value;
-		const company = (document.getElementById('company') as HTMLInputElement).value ?? '';
-		const position = (document.getElementById('position') as HTMLInputElement).value ?? '';
-		const email = (document.getElementById('email') as HTMLInputElement).value;
-		const phone = (document.getElementById('phone') as HTMLInputElement).value ?? '';
-		const message = (document.getElementById('message') as HTMLInputElement).value;
-
-		if (!validateForm(firstName, lastName, email, message)) {
-			toast.error('Please fill out the required (*) fields.');
-			return;
-		}
-		if (!validateEmailFormat(email)) {
-			toast.error('Invalid email address.');
-			return;
-		}
-
-        sendForm(event);
-
-		// TODO : CALL API TO SEND MAIL
-		closeModal();
 	}
 
 	function closeModal() {
@@ -191,7 +172,6 @@
 				<button
 					type="submit"
 					class="form-button mt-4 w-full inline-flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-3xl focus:outline-none focus:ring-2 focus:ring-offset-2"
-					on:click={submitForm}
 				>
 					Submit
 				</button>

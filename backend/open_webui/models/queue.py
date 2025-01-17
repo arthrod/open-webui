@@ -108,7 +108,7 @@ class QueueTable:
                         remaining_times.append(time_remaining)
                     
                     if n_users_ahead < len(remaining_times):
-                        t = remaining_times[n_users_ahead - 1]
+                        t = remaining_times[n_users_ahead]
                         return t
                     else:
                         return max(remaining_times) + ((n_users_ahead - len(remaining_times)) / (self.max_connected)) * self.session_time

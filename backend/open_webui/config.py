@@ -111,7 +111,7 @@ DEFAULT_CONFIG = {
                     "Linagora",
                     "to discover our company"
                 ],
-                "content": "Can you tell me what kind of company Linagora is ?",
+                "content": "What can you tell me about Linagora ?",
             },
             {
                 "title": [

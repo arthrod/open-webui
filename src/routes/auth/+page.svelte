@@ -264,7 +264,7 @@
 						<Spinner />
 					</div>
 				</div>
-			{:else if queueStatus.status === 'draft'}
+			{:else if queueStatus.status === 'waiting'}
 				<button
 					class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-slate-400 font-medium transition-all relative"
 					disabled
@@ -290,7 +290,7 @@
 						class="absolute top-0 left-0 rounded-full h-full max-w-72 bg-slate-500 z-10 transition"
 					/>
 				</button>
-			{:else if queueStatus.status === 'waiting'}
+			{:else if queueStatus.status === 'draft'}
 				<button
 					class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-all"
 					on:click={confirmConnectionHandler}

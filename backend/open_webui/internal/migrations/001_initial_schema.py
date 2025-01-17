@@ -140,6 +140,15 @@ def migrate_sqlite(migrator: Migrator, database: pw.Database, *, fake=False):
         class Meta:
             table_name = "user"
 
+    @migrator.create_model
+    class Queue(pw.Model):
+        user_id = pw.CharField(max_length=255)
+        timestamp = pw.BigIntegerField()
+        status = pw.CharField(max_length=255)
+
+        class Meta:
+            table_name = "queue"
+
 
 def migrate_external(migrator: Migrator, database: pw.Database, *, fake=False):
     @migrator.create_model
@@ -232,6 +241,15 @@ def migrate_external(migrator: Migrator, database: pw.Database, *, fake=False):
 
         class Meta:
             table_name = "user"
+    
+    @migrator.create_model
+    class Queue(pw.Model):
+        user_id = pw.CharField(max_length=255)
+        timestamp = pw.BigIntegerField()
+        status = pw.CharField(max_length=255)
+
+        class Meta:
+            table_name = "queue"
 
 
 def rollback(migrator: Migrator, database: pw.Database, *, fake=False):

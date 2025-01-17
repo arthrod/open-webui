@@ -14,6 +14,11 @@ services:
       - open-webui-dev1:/app/backend/data
     ports:
       - "8080:8080" # Adjust this if your app exposes a different port
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "--request", "POST", "http://webui:8080/queue/idle" ]
+      interval: 1s
+      timeout: 60s
+      retries: 3
 
   litellm:
     image: ghcr.io/berriai/litellm:main-latest

@@ -108,10 +108,10 @@ class QueueTable:
                         remaining_times.append(time_remaining)
                     
                     if n_users_ahead < len(remaining_times):
-                        time = remaining_times[n_users_ahead - 1]
-                        return time
+                        t = remaining_times[n_users_ahead - 1]
+                        return t
                     else:
-                        return max(remaining_times) + ((n_users_ahead - len(remaining_times)) // (self.max_connected)) * self.session_time
+                        return max(remaining_times) + ((n_users_ahead - len(remaining_times)) / (self.max_connected)) * self.session_time
                     
         except Exception as e:
             log.error(f"Error estimating wait time: {e}")
@@ -140,7 +140,6 @@ class QueueTable:
         draft_users = self._count_in_status(status=QueueStatus.DRAFT)
         active_users = self._count_in_status(status=QueueStatus.CONNECTED)
         estimated_time = self.estimate_time(user_id=user_id) if user_id else None
-
         return QueueMetrics(
                 waiting_users=waiting_users,
                 draft_users=draft_users,

@@ -12,6 +12,7 @@ export interface QueueMetrics {
     active_users: number;
     waiting_users: number;
     total_slots: number;
+    estimated_time: number;
 }
 
 export interface TimerInfo {

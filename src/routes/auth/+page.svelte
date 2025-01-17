@@ -42,7 +42,8 @@
 	let queueMetrics: QueueMetrics = {
 		active_users: 0,
 		waiting_users: 0,
-		total_slots: 0
+		total_slots: 0,
+		estimated_time: 0
 	};
 
 	// let mode = $config?.features.enable_ldap ? 'ldap' : 'signin';
@@ -277,7 +278,9 @@
 						class="absolute md:left-full md:w-full text-xs
 						max-md:translate-y-1 max-md:left-1/2 max-md:top-full max-md:-translate-x-1/2 max-md:w-64"
 					>
-						({$i18n.t('estimated waiting time')} : ~{queueStatus.position * 20}
+						({$i18n.t('estimated waiting time')} : ~{Math.floor(
+							queueMetrics.estimated_time / (1000 * 60)
+						)}
 						{$i18n.t('minutes')})
 					</span>
 					<div

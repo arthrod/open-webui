@@ -216,7 +216,7 @@
 </svelte:head>
 
 {#if showContactUs}
-	<ContactUs bind:show={showContactUs} isLightMode={true}/>
+	<ContactUs bind:show={showContactUs} isLightMode={true} />
 {/if}
 
 <!-- Header -->
@@ -382,6 +382,40 @@
 			class="w-28 self-center bg-indigo-700 p-2 rounded-lg"
 			alt="OVH Cloud logo"
 		/>
+	</div>
+	<div class="px-8 md:px-48 my-6 md:mt-12">
+		<div class="text-2xl md:text-3xl mb-4 md:mb-8">
+			{$i18n.t('Origins of the name of {{WEBUI_NAME}} model', { WEBUI_NAME: $WEBUI_NAME })}
+		</div>
+		<div class="flex flex-col space-y-4 text-sm md:text-base">
+			<span>
+				{$i18n.t(
+					'{{WEBUI_NAME}} is our truly Open Source artificial intelligence, developed in collaboration with the OpenLLM-France community and supported by the French General Secretariat for Investment.',
+					{ WEBUI_NAME: $WEBUI_NAME }
+				)}
+			</span>
+			<span>
+				{$i18n.t('The name {{WEBUI_NAME}} carries a dual symbolism:', { WEBUI_NAME: $WEBUI_NAME })}
+			</span>
+			<ol class="list-decimal list-inside space-y-2">
+				<li>
+					{$i18n.t(
+						'It echoes "Lucy", the common ancestor of all humanity, representing universal origins and connection.'
+					)}
+				</li>
+				<li>
+					{$i18n.t(
+						'It also refers to the main character of the film "Lucy" by Luc Besson, who masters all human knowledge.'
+					)}
+				</li>
+			</ol>
+			<span>
+				{$i18n.t(
+					'Her face is inspired by Marianne, the French Republic\'s emblem, while also reminiscent of Scarlett Johansson, the heroine of the film "Lucy". Draped in a tricolor shawl, {{WEBUI_NAME}} embodies sovereignty and French values.',
+					{ WEBUI_NAME: $WEBUI_NAME }
+				)}
+			</span>
+		</div>
 	</div>
 	<div class="px-8 md:px-48 my-12 md:my-24">
 		<div class="text-2xl md:text-3xl mb-8 md:mb-16">

@@ -242,69 +242,77 @@
 	<div class="grid md:grid-cols-2">
 		<div class="p-8 md:px-48 md:py-24 flex flex-col justify-center space-y-6 bg-slate-100">
 			<span class="text-2xl md:text-5xl max-md:text-center">
-				LUCIE : The truly open source AI built on transparency, trust, and efficiency.
+				LUCIE - The truly open source AI built on transparency, trust, and efficiency.
 			</span>
-			<span class="text-lg md:text-2xl max-md:text-center italic text-gray-500">
+			<span class="text-lg md:text-2xl max-md:text-center text-gray-500">
 				Beyond openness, we pioneer transparency and trust.
 			</span>
-			{#if queueStatus.status === 'disconnected'}
-				<button
-					class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
-					on:click={joinQueueHandler}
-				>
-					Join queue
-				</button>
-			{:else if queueStatus.status === 'connected'}
-				<div
-					class="max-md:self-center h-12 md:h-16 w-64 flex items-center justify-center gap-3 text-lg sm:text-lg text-center font-semibold dark:text-gray-200"
-				>
-					<div>Signing in to Lucie Chat</div>
-
-					<div>
-						<Spinner />
-					</div>
-				</div>
-			{:else if queueStatus.status === 'waiting'}
-				<button
-					class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-slate-400 font-medium transition-all relative"
-					disabled
-				>
-					<span class="relative z-20 text-white">
-						#{queueStatus.position} in queue
-					</span>
-					<span
-						class="absolute md:left-full md:w-full text-xs
-						max-md:translate-y-2 max-md:left-1/2 max-md:top-full max-md:-translate-x-1/2 max-md:w-64"
+			<div class="flex items-center space-x-6">
+				{#if queueStatus.status === 'disconnected'}
+					<button
+						class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
+						on:click={joinQueueHandler}
 					>
-						estimated waiting time : ~{Math.floor(queueMetrics.estimated_time / 60)}
-						minutes
-					</span>
+						Join queue
+					</button>
+				{:else if queueStatus.status === 'connected'}
 					<div
-						style="width: {Math.max(
-							Math.round(
-								((queueMetrics.waiting_users - queueStatus.position) / queueMetrics.waiting_users) *
-									100
-							),
-							25
-						)}%"
-						class="absolute top-0 left-0 rounded-full h-full max-w-72 bg-slate-500 z-10 transition"
-					/>
-				</button>
-			{:else if queueStatus.status === 'draft'}
+						class="max-md:self-center h-12 md:h-16 w-64 flex items-center justify-center gap-3 text-lg sm:text-lg text-center font-semibold dark:text-gray-200"
+					>
+						<div>Signing in to Lucie Chat</div>
+
+						<div>
+							<Spinner />
+						</div>
+					</div>
+				{:else if queueStatus.status === 'waiting'}
+					<button
+						class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-slate-400 font-medium transition-all relative"
+						disabled
+					>
+						<span class="relative z-20 text-white">
+							#{queueStatus.position} in queue
+						</span>
+						<span
+							class="absolute md:left-full md:w-full text-xs
+							max-md:translate-y-2 max-md:left-1/2 max-md:top-full max-md:-translate-x-1/2 max-md:w-64"
+						>
+							estimated waiting time : ~{Math.floor(queueMetrics.estimated_time / 60)}
+							minutes
+						</span>
+						<div
+							style="width: {Math.max(
+								Math.round(
+									((queueMetrics.waiting_users - queueStatus.position) /
+										queueMetrics.waiting_users) *
+										100
+								),
+								25
+							)}%"
+							class="absolute top-0 left-0 rounded-full h-full max-w-72 bg-slate-500 z-10 transition"
+						/>
+					</button>
+				{:else if queueStatus.status === 'draft'}
+					<button
+						class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-all"
+						on:click={confirmConnectionHandler}
+					>
+						Confirm connection
+					</button>
+				{/if}
+
 				<button
-					class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-all"
-					on:click={confirmConnectionHandler}
+					class="h-8 md:h-14 px-3 md:px-12 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm md:text-base transition-all"
+					on:click={() => (showContactUs = !showContactUs)}
 				>
-					Confirm connection
+					Contact us
 				</button>
-			{/if}
-			<span class="max-md:pt-4 text-base md:text-lg max-md:text-center md:pr-32">
-				LUCIE isn't just <span class="font-semibold">open</span>; it's exceptionally
-				<span class="font-semibold">transparent and reliable</span>. From its inception, every
-				decision has been guided by principles of
-				<span class="font-semibold">trustworthiness, fairness, and accountability</span>. Whether
-				it's for education, government, or research, LUCIE is designed to be a model you can count
-				on.
+			</div>
+			<span class="max-md:pt-4 text-base md:text-lg max-md:text-center md:pr-8">
+				LUCIE isn't just open, it's exceptionally transparent and reliable. From its inception,
+				every decision has been guided by principles of trustworthiness, fairness, and
+				accountability. Whether it's for education, government, or research, LUCIE is designed to be
+				a model you can count on.
 			</span>
 		</div>
 		<div class="max-md:p-8 max-md:pt-0 bg-white flex items-center justify-center">

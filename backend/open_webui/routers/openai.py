@@ -64,7 +64,8 @@ toxic_guard = ToxicLanguage(
 pre_guards_list = [
     DetectJailbreak(
         on_fail='noop', 
-        threshold=0.8
+        threshold=0.8,
+        use_local=True
     ),
     toxic_guard
 ]

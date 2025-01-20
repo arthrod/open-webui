@@ -719,6 +719,7 @@ async def generate_chat_completion(
     if prefix_id:
         payload["model"] = payload["model"].replace(f"{prefix_id}.", "")
 
+    payload['temperature'] = 0.6
     # Pre-GUARD
     if guard:
         latest_msg = payload['messages'][-1]['content']
@@ -776,6 +777,7 @@ async def generate_chat_completion(
     # Convert the modified body back to JSON
     payload = json.dumps(payload)
 
+    log.warning(f"PAYLOAD: {payload}")
     r = None
     session = None
     streaming = False

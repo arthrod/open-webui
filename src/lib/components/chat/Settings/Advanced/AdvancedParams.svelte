@@ -172,7 +172,7 @@
 	<div class=" py-0.5 w-full justify-between">
 		<Tooltip
 			content={$i18n.t(
-				'The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)'
+				'The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)'
 			)}
 			placement="top-start"
 			className="inline-tooltip"

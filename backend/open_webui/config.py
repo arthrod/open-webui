@@ -108,53 +108,44 @@ DEFAULT_CONFIG = {
         "prompt_suggestions": [
             {
                 "title": [
-                    "Linagora",
-                    "to discover our company"
+                    "À la découverte de Linagora",
+                    "Découvrez notre entreprise"
                 ],
-                "content": "What can you tell me about Linagora ?",
+                "content": "fais moi une présentation de Linagora?",
             },
             {
-                "title": ["OpenLLM France", "Objective & Mission"],
-                "content": "Could you tell me about OpenLLM France and its mission ?",
+                "title": ["À la découverte d'OpenLLM France", "Objectifs et mission d'OpenLLM France"],
+                "content": "Quels sont les objectifs et la mission d'OpenLLM France ?",
+            },
+
+            {
+                "title": ["Innovation technologique en France", "Écosystème technologique français"],
+                "content": "Qu'est-ce qui rend le secteur technologique français unique, et quelles sont les innovations notables de la French Tech ?",
             },
             {
-                "title": ["Digital Sovereignty", "Understanding the Concept"],
-                "content": "Can you explain what digital sovereignty means and why it's important for countries and organizations?",
+                "title": ["Mieux télétravailler !!!", "Les bonnes pratiques"],
+                "content": "Quelles stratégies adopter pour rester productif tout en préservant l'équilibre entre travail et vie personnelle en télétravail ?",
             },
+
             {
                 "title": [
-                    "Data Protection",
-                    "A Practical Guide to Writing a GDPR Privacy Policy",
+                    "Protection des données",
+                    "Guide pratique pour rédiger une politique de confidentialité conforme au RGPD",
                 ],
-                "content": "I am creating a SaaS and I want to write a GDPR-compliant privacy policy. Give me a simple template to adapt.",
+                "content": "J'ai mis en place un produit SaaS et souhaite rédiger une politique de confidentialité conforme au RGPD. Donnez-moi un modèle simple à adapter.",
+            },
+
+            {
+                "title": ["Mode de vie durable", "Actions concrètes pour un impact environnemental réduit"],
+                "content": "Quelles actions concrètes puis-je entreprendre pour réduire mon impact environnemental au quotidien ?",
             },
             {
-                "title": ["Innovation", "French Tech Scene"],
-                "content": "What makes France's technology sector unique, and what are some notable French tech innovations?",
+                "title": ["Révolution française", "Événements majeurs de la Révolution"],
+                "content": "Quels sont les événements majeurs de la Révolution française ?",
             },
             {
-                "title": ["Remote Work", "Best Practices"],
-                "content": "What are the most effective strategies for maintaining productivity and work-life balance while working remotely?",
-            },
-            {
-                "title": ["Sustainable Living", "Eco-friendly Tips"],
-                "content": "What are some practical ways to reduce my environmental impact in daily life?",
-            },
-            {
-                "title": ["French Revolution", "Timeline of historical events"],
-                "content": "Tell me about the key events of the French Revolution.",
-            },
-            {
-                "title": ["Tell me a fun fact", "About France"],
-                "content": "Tell me a fun fact about France ",
-            },
-            {
-                "title": ["Overcome procrastination", "Give me tips"],
-                "content": "Could you start by asking me about instances when I procrastinate the most and then give me some suggestions to overcome it?",
-            },
-            {
-                "title": ["Love Poem", "To get some inspiration"],
-                "content": "Please write a short love poem.",
+                "title": ["Surmonter la procrastination", "Conseils pour surmonter la procrastination"],
+                "content": "Quelles sont les causes principales de la procrastination et quelles stratégies efficaces peuvent aider à les surmonter ?",
             },
         ],
     },
@@ -1023,10 +1014,8 @@ DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE = """You are an AI assistant that gives
 Given a chat conversation, you should only output a 3-5 word title that captures the main topic of the chat conversation without using quotation marks or any special formatting.
 
 # Guidelines
-1. Generate a 3-5 words long title in the same language as the messages
-2. Additionally, prepend a suitable emoji to the title to enhance understanding
-
-* Title examples: 
+1. Generate a 3-5 words long title in the same language as the chat conversation
+2. Additionally, prepend a suitable emoji to the title to enhance understanding. Here are some examples:
     - 🤝 Salutation
     - 📉 Stock Market Trends
     - 🧠 Memory Improvement Tricks

@@ -901,7 +901,7 @@
 	"The maximum file size in MB. If the file size exceeds this limit, the file will not be uploaded.": "Το μέγιστο μέγεθος αρχείου σε MB. Αν το μέγεθος του αρχείου υπερβαίνει αυτό το όριο, το αρχείο δεν θα ανεβεί.",
 	"The maximum number of files that can be used at once in chat. If the number of files exceeds this limit, the files will not be uploaded.": "Ο μέγιστος αριθμός αρχείων που μπορούν να χρησιμοποιηθούν ταυτόχρονα στη συνομιλία. Αν ο αριθμός των αρχείων υπερβαίνει αυτό το όριο, τα αρχεία δεν θα ανεβούν.",
 	"The score should be a value between 0.0 (0%) and 1.0 (100%).": "Η βαθμολογία θα πρέπει να είναι μια τιμή μεταξύ 0.0 (0%) και 1.0 (100%).",
-	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)": "Η θερμοκρασία του μοντέλου. Η αύξηση της θερμοκρασίας θα κάνει το μοντέλο να απαντά πιο δημιουργικά. (Προεπιλογή: 0.8)",
+	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)": "Η θερμοκρασία του μοντέλου. Η αύξηση της θερμοκρασίας θα κάνει το μοντέλο να απαντά πιο δημιουργικά. (Προεπιλογή: 0.8)",
 	"Theme": "Θέμα",
 	"Thinking...": "Σκέφτομαι...",
 	"This action cannot be undone. Do you wish to continue?": "Αυτή η ενέργεια δεν μπορεί να αναιρεθεί. Θέλετε να συνεχίσετε;",

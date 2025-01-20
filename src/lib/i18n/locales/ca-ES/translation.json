@@ -901,7 +901,7 @@
 	"The maximum file size in MB. If the file size exceeds this limit, the file will not be uploaded.": "La mida màxima del fitxer en MB. Si la mida del fitxer supera aquest límit, el fitxer no es carregarà.",
 	"The maximum number of files that can be used at once in chat. If the number of files exceeds this limit, the files will not be uploaded.": "El nombre màxim de fitxers que es poden utilitzar alhora al xat. Si el nombre de fitxers supera aquest límit, els fitxers no es penjaran.",
 	"The score should be a value between 0.0 (0%) and 1.0 (100%).": "El valor de puntuació hauria de ser entre 0.0 (0%) i 1.0 (100%).",
-	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)": "La temperatura del model. Augmentar la temperatura farà que el model respongui de manera més creativa. (Per defecte: 0,8)",
+	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)": "La temperatura del model. Augmentar la temperatura farà que el model respongui de manera més creativa. (Per defecte: 0,8)",
 	"Theme": "Tema",
 	"Thinking...": "Pensant...",
 	"This action cannot be undone. Do you wish to continue?": "Aquesta acció no es pot desfer. Vols continuar?",

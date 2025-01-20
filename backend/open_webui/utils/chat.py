@@ -163,7 +163,7 @@ chat_completion = generate_chat_completion
 
 async def chat_completed(request: Request, form_data: dict, user: Any):
     if not request.app.state.MODELS:
-        await get_all_models(request)
+        await get_all_models(request, user)
     models = request.app.state.MODELS
 
     data = form_data

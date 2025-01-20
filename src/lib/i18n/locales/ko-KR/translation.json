@@ -901,7 +901,7 @@
 	"The maximum file size in MB. If the file size exceeds this limit, the file will not be uploaded.": "최대 파일 크기(MB). 만약 파일 크기가 한도를 초과할 시, 파일은 업로드되지 않습니다",
 	"The maximum number of files that can be used at once in chat. If the number of files exceeds this limit, the files will not be uploaded.": "하나의 채팅에서는 사용가능한 최대 파일 수가 있습니다. 만약 파일 수가 한도를 초과할 시, 파일은 업로드되지 않습니다.",
 	"The score should be a value between 0.0 (0%) and 1.0 (100%).": "점수는 0.0(0%)에서 1.0(100%) 사이의 값이어야 합니다.",
-	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)": "",
+	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)": "",
 	"Theme": "테마",
 	"Thinking...": "생각 중...",
 	"This action cannot be undone. Do you wish to continue?": "이 액션은 되돌릴 수 없습니다. 계속 하시겠습니까?",

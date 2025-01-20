@@ -901,7 +901,7 @@
 	"The maximum file size in MB. If the file size exceeds this limit, the file will not be uploaded.": "Максимальный размер файла в МБ. Если размер файла превысит это ограничение, файл не будет загружен.",
 	"The maximum number of files that can be used at once in chat. If the number of files exceeds this limit, the files will not be uploaded.": "Максимальное количество файлов, которые могут быть использованы одновременно в чате. Если количество файлов превысит это ограничение, файлы не будут загружены.",
 	"The score should be a value between 0.0 (0%) and 1.0 (100%).": "Оценка должна быть значением между 0,0 (0%) и 1,0 (100%).",
-	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)": "Температура модели. Повышение температуры заставит модель отвечать более творчески. (По умолчанию: 0,8)",
+	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)": "Температура модели. Повышение температуры заставит модель отвечать более творчески. (По умолчанию: 0,8)",
 	"Theme": "Тема",
 	"Thinking...": "Думаю...",
 	"This action cannot be undone. Do you wish to continue?": "Это действие нельзя отменить. Вы хотите продолжить?",

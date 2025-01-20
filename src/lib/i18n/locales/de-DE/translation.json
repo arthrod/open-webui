@@ -901,7 +901,7 @@
 	"The maximum file size in MB. If the file size exceeds this limit, the file will not be uploaded.": "Die maximale Dateigröße in MB. Wenn die Dateigröße dieses Limit überschreitet, wird die Datei nicht hochgeladen.",
 	"The maximum number of files that can be used at once in chat. If the number of files exceeds this limit, the files will not be uploaded.": "Die maximale Anzahl von Dateien, die gleichzeitig in der Unterhaltung verwendet werden können. Wenn die Anzahl der Dateien dieses Limit überschreitet, werden die Dateien nicht hochgeladen.",
 	"The score should be a value between 0.0 (0%) and 1.0 (100%).": "Die Punktzahl sollte ein Wert zwischen 0,0 (0 %) und 1,0 (100 %) sein.",
-	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)": "Die Temperatur des Modells. Eine Erhöhung der Temperatur führt dazu, dass das Modell kreativer antwortet. (Standard: 0,8)",
+	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)": "Die Temperatur des Modells. Eine Erhöhung der Temperatur führt dazu, dass das Modell kreativer antwortet. (Standard: 0,8)",
 	"Theme": "Design",
 	"Thinking...": "Denke nach...",
 	"This action cannot be undone. Do you wish to continue?": "Diese Aktion kann nicht rückgängig gemacht werden. Möchten Sie fortfahren?",

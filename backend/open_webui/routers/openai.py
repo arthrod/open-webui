@@ -662,7 +662,6 @@ async def generate_chat_completion(
 
     idx = 0
     payload = {**form_data}
-    payload['temperature'] = 0.6
     if "metadata" in payload:
         del payload["metadata"]
     log.info(f'payload: {payload}')

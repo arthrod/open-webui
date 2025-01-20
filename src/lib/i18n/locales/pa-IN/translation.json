@@ -901,7 +901,7 @@
 	"The maximum file size in MB. If the file size exceeds this limit, the file will not be uploaded.": "",
 	"The maximum number of files that can be used at once in chat. If the number of files exceeds this limit, the files will not be uploaded.": "",
 	"The score should be a value between 0.0 (0%) and 1.0 (100%).": "ਸਕੋਰ 0.0 (0%) ਅਤੇ 1.0 (100%) ਦੇ ਵਿਚਕਾਰ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ।",
-	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)": "",
+	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)": "",
 	"Theme": "ਥੀਮ",
 	"Thinking...": "",
 	"This action cannot be undone. Do you wish to continue?": "",

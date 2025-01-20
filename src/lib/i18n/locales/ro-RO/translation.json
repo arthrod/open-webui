@@ -901,7 +901,7 @@
 	"The maximum file size in MB. If the file size exceeds this limit, the file will not be uploaded.": "Dimensiunea maximă a fișierului în MB. Dacă dimensiunea fișierului depășește această limită, fișierul nu va fi încărcat.",
 	"The maximum number of files that can be used at once in chat. If the number of files exceeds this limit, the files will not be uploaded.": "Numărul maxim de fișiere care pot fi utilizate simultan în chat. Dacă numărul de fișiere depășește această limită, fișierele nu vor fi încărcate.",
 	"The score should be a value between 0.0 (0%) and 1.0 (100%).": "Scorul ar trebui să fie o valoare între 0.0 (0%) și 1.0 (100%).",
-	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)": "",
+	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)": "",
 	"Theme": "Temă",
 	"Thinking...": "Gândește...",
 	"This action cannot be undone. Do you wish to continue?": "Această acțiune nu poate fi anulată. Doriți să continuați?",

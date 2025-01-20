@@ -901,7 +901,7 @@
 	"The maximum file size in MB. If the file size exceeds this limit, the file will not be uploaded.": "De maximale bestandsgrootte in MB. Als het bestand groter is dan deze limiet, wordt het bestand niet geüpload.",
 	"The maximum number of files that can be used at once in chat. If the number of files exceeds this limit, the files will not be uploaded.": "Het maximum aantal bestanden dat in één keer kan worden gebruikt in de chat. Als het aantal bestanden deze limiet overschrijdt, worden de bestanden niet geüpload.",
 	"The score should be a value between 0.0 (0%) and 1.0 (100%).": "Het score moet een waarde zijn tussen 0.0 (0%) en 1.0 (100%).",
-	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)": "De temperatuur van het model. Als je de temperatuur verhoogt, zal het model creatiever antwoorden. (Standaard: 0,8)",
+	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)": "De temperatuur van het model. Als je de temperatuur verhoogt, zal het model creatiever antwoorden. (Standaard: 0,8)",
 	"Theme": "Thema",
 	"Thinking...": "Aan het denken...",
 	"This action cannot be undone. Do you wish to continue?": "Deze actie kan niet ongedaan worden gemaakt. Wilt u doorgaan?",

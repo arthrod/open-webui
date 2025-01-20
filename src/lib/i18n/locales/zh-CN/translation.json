@@ -901,7 +901,7 @@
 	"The maximum file size in MB. If the file size exceeds this limit, the file will not be uploaded.": "最大文件大小（MB）。如果文件大小超过此限制，则无法上传该文件。",
 	"The maximum number of files that can be used at once in chat. If the number of files exceeds this limit, the files will not be uploaded.": "在单次对话中可以使用的最大文件数。如果文件数超过此限制，则文件不会上传。",
 	"The score should be a value between 0.0 (0%) and 1.0 (100%).": "分值应介于 0.0（0%）和 1.0（100%）之间。",
-	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)": "模型的温度。提高温度将使模型更具创造性地回答。（默认值：0.8）",
+	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)": "模型的温度。提高温度将使模型更具创造性地回答。（默认值：0.8）",
 	"Theme": "主题",
 	"Thinking...": "正在思考...",
 	"This action cannot be undone. Do you wish to continue?": "此操作无法撤销。是否确认继续？",

@@ -901,7 +901,7 @@
 	"The maximum file size in MB. If the file size exceeds this limit, the file will not be uploaded.": "Maximálna veľkosť súboru v MB. Ak veľkosť súboru presiahne tento limit, súbor nebude nahraný.",
 	"The maximum number of files that can be used at once in chat. If the number of files exceeds this limit, the files will not be uploaded.": "Maximálny počet súborov, ktoré je možné použiť naraz v chate. Ak počet súborov presiahne tento limit, súbory nebudú nahrané.",
 	"The score should be a value between 0.0 (0%) and 1.0 (100%).": "Skóre by malo byť hodnotou medzi 0,0 (0%) a 1,0 (100%).",
-	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.8)": "",
+	"The temperature of the model. Increasing the temperature will make the model answer more creatively. (Default: 0.6)": "",
 	"Theme": "Téma",
 	"Thinking...": "Premýšľam...",
 	"This action cannot be undone. Do you wish to continue?": "Túto akciu nie je možné vrátiť späť. Prajete si pokračovať?",

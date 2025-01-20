@@ -216,7 +216,7 @@
 </svelte:head>
 
 {#if showContactUs}
-	<ContactUs bind:show={showContactUs} />
+	<ContactUs bind:show={showContactUs} isLightMode={true}/>
 {/if}
 
 <!-- Header -->

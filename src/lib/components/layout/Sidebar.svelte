@@ -840,7 +840,7 @@
         </div>
 
         {#if showContactUs}
-            <ContactUs bind:show={showContactUs} />
+            <ContactUs bind:show={showContactUs} isLightMode={window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches}/>
         {/if}
 
         <!-- Removing user button from sidebar entirely -->

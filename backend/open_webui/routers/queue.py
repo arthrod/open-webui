@@ -11,7 +11,6 @@ from fastapi import APIRouter, HTTPException, status
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["DB"])
 
-
 router = APIRouter()
 
 ############################

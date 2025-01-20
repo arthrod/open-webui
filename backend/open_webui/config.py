@@ -1016,9 +1016,11 @@ Given a chat conversation, you should only output a 3-5 word title that captures
 # Guidelines
 1. Generate a 3-5 words long title in the same language as the chat conversation
 2. Additionally, prepend a suitable emoji to the title to enhance understanding. Here are some examples:
+    - 🕊️ Mindfulness Practices for Stress
+    - 🚀 Startup Success Strategies
     - 🤝 Salutation
     - 📉 Stock Market Trends
-    - 🧠 Memory Improvement Tricks
+    - 🧠 MemoMemoryry Improvement Tricks
     - 🎮 Video Game Development Insights
     - 🧑‍💼 Leadership and Team Building
     - 🕊️ Mindfulness Practices for Stress

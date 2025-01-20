@@ -139,7 +139,7 @@
 							: 1000
 			);
 		} else if (queueStatus.status === 'draft') {
-			toast.info('You are ready to enter Lucie Chat ! Come back to the queue to enter.');
+			toast.info('You are ready to enter LUCIE ! Come back to the queue to enter.');
 			// refreshTimer();
 		} else if (queueStatus.status === 'connected') {
 			name = `user-${$queueID}`;
@@ -221,7 +221,7 @@
 
 <!-- Header -->
 <div
-	class="fixed w-full h-20 px-8 md:px-48 py-3 flex items-center justify-between bg-white/90 border-b-[2px] border-gray-100 z-50"
+	class="fixed w-full h-20 px-8 md:px-48 py-3 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-50"
 >
 	<img
 		crossorigin="anonymous"
@@ -233,7 +233,7 @@
 		class="h-8 md:h-14 px-3 md:px-12 rounded-full border border-black bg-white hover:bg-gray-50 text-sm md:text-base transition-all"
 		on:click={() => (showContactUs = !showContactUs)}
 	>
-		Contact us
+		{$i18n.t('Contact us')}
 	</button>
 </div>
 
@@ -242,24 +242,27 @@
 	<div class="grid md:grid-cols-2">
 		<div class="p-8 md:px-48 md:py-24 flex flex-col justify-center space-y-6 bg-slate-100">
 			<span class="text-2xl md:text-5xl max-md:text-center">
-				LUCIE - The truly open source AI built on transparency, trust, and efficiency.
+				{$i18n.t(
+					'{{WEBUI_NAME}} — The truly open source AI built on transparency, trust, and efficiency.',
+					{ WEBUI_NAME: $WEBUI_NAME }
+				)}
 			</span>
 			<span class="text-lg md:text-2xl max-md:text-center text-gray-500">
-				Beyond openness, we pioneer transparency and trust.
+				{$i18n.t('Beyond openness, we pioneer transparency and trust.')}
 			</span>
-			<div class="flex items-center space-x-6">
+			<div class="flex items-center md:space-x-6 max-md:flex-col max-md:space-y-8">
 				{#if queueStatus.status === 'disconnected'}
 					<button
-						class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
+						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
 						on:click={joinQueueHandler}
 					>
-						Join queue
+						{$i18n.t('Join queue')}
 					</button>
 				{:else if queueStatus.status === 'connected'}
 					<div
 						class="max-md:self-center h-12 md:h-16 w-64 flex items-center justify-center gap-3 text-lg sm:text-lg text-center font-semibold dark:text-gray-200"
 					>
-						<div>Signing in to Lucie Chat</div>
+						<div>{$i18n.t('Signing in to {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}</div>
 
 						<div>
 							<Spinner />
@@ -267,18 +270,16 @@
 					</div>
 				{:else if queueStatus.status === 'waiting'}
 					<button
-						class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-slate-400 font-medium transition-all relative"
+						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-slate-400 font-medium transition-all relative"
 						disabled
 					>
 						<span class="relative z-20 text-white">
-							#{queueStatus.position} in queue
+							#{queueStatus.position}
+							{$i18n.t('in queue')}
 						</span>
-						<span
-							class="absolute md:left-full md:w-full text-xs
-							max-md:translate-y-2 max-md:left-1/2 max-md:top-full max-md:-translate-x-1/2 max-md:w-64"
-						>
-							estimated waiting time : ~{Math.floor(queueMetrics.estimated_time / 60)}
-							minutes
+						<span class="absolute text-xs translate-y-2 left-1/2 top-full -translate-x-1/2 w-64">
+							{$i18n.t('estimated waiting time')} : ~{Math.floor(queueMetrics.estimated_time / 60)}
+							{$i18n.t('minutes')}
 						</span>
 						<div
 							style="width: {Math.max(
@@ -289,30 +290,30 @@
 								),
 								25
 							)}%"
-							class="absolute top-0 left-0 rounded-full h-full max-w-72 bg-slate-500 z-10 transition"
+							class="absolute top-0 left-0 rounded-full h-full max-w-64 bg-slate-500 z-10 transition"
 						/>
 					</button>
 				{:else if queueStatus.status === 'draft'}
 					<button
-						class="max-md:self-center h-12 md:h-16 w-48 md:w-64 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-all"
+						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-all"
 						on:click={confirmConnectionHandler}
 					>
-						Confirm connection
+						{$i18n.t('Confirm connection')}
 					</button>
 				{/if}
 
 				<button
-					class="h-8 md:h-14 px-3 md:px-12 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm md:text-base transition-all"
+					class="h-8 md:h-16 px-3 md:px-12 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm md:text-base transition-all"
 					on:click={() => (showContactUs = !showContactUs)}
 				>
-					Contact us
+					{$i18n.t('Contact us')}
 				</button>
 			</div>
-			<span class="max-md:pt-4 text-base md:text-lg max-md:text-center md:pr-8">
-				LUCIE isn't just open, it's exceptionally transparent and reliable. From its inception,
-				every decision has been guided by principles of trustworthiness, fairness, and
-				accountability. Whether it's for education, government, or research, LUCIE is designed to be
-				a model you can count on.
+			<span class="md:pt-4 text-base md:text-lg max-md:text-center md:pr-8">
+				{$i18n.t(
+					"{{WEBUI_NAME}} isn't just open, it's exceptionally transparent and reliable. From its inception, every decision has been guided by principles of trustworthiness, fairness, and accountability. Whether it's for education, government, or research, {{WEBUI_NAME}} is designed to be a model you can count on.",
+					{ WEBUI_NAME: $WEBUI_NAME }
+				)}
 			</span>
 		</div>
 		<div class="max-md:p-8 max-md:pt-0 bg-white flex items-center justify-center">
@@ -383,123 +384,155 @@
 		/>
 	</div>
 	<div class="px-8 md:px-48 my-12 md:my-24">
-		<div class="text-2xl md:text-3xl mb-8 md:mb-16">What makes LUCIE truly Open Source ?</div>
+		<div class="text-2xl md:text-3xl mb-8 md:mb-16">
+			{$i18n.t('What makes {{WEBUI_NAME}} truly Open Source ?', { WEBUI_NAME: $WEBUI_NAME })}
+		</div>
 		<div class="grid md:grid-cols-3 gap-12 md:gap-24 md:px-6">
 			<div class="flex flex-col space-y-4 md:space-y-8">
 				<EyeInBox className="size-8" />
-				<span class="text-xl md:text-2xl font-medium">Transparent Data</span>
+				<span class="text-xl md:text-2xl font-medium">{$i18n.t('Transparent Data')}</span>
 				<span>
-					All training datasets are openly available and licensed for public use. We ensure
-					transparency at every stage, from collection to curation.
+					{$i18n.t(
+						'All training datasets are openly available and licensed for public use. We ensure transparency at every stage, from collection to curation.'
+					)}
 				</span>
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8">
 				<StateGraph className="size-8" />
-				<span class="text-xl md:text-2xl font-medium">Open Algorithms</span>
+				<span class="text-xl md:text-2xl font-medium">{$i18n.t('Open Algorithms')}</span>
 				<span>
-					Our training methodologies, fine-tuning processes, and "secret sauce" are thoroughly
-					documented and openly accessible for anyone to explore, use, and improve.
+					{$i18n.t(
+						'Our training methodologies, fine-tuning processes, and "secret sauce" are thoroughly documented and openly accessible for anyone to explore, use, and improve.'
+					)}
 				</span>
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8">
 				<TouchWindow className="size-8" />
-				<span class="text-xl md:text-2xl font-medium">Freely Accessible Models</span>
+				<span class="text-xl md:text-2xl font-medium">{$i18n.t('Freely Accessible Models')}</span>
 				<span>
-					LUCIE's weights, checkpoints, and source code are available under the <span
-						class="font-semibold">Apache 2.0 license</span
-					>. This permissive, unrestricted license allows anyone, anywhere in the world, to use,
-					adapt, and deploy the model for any purpose, ensuring true global accessibility and
-					innovation.
+					{$i18n.t(
+						"{{WEBUI_NAME}}'s weights, checkpoints, and source code are available under the Apache 2.0 license. This permissive, unrestricted license allows anyone, anywhere in the world, to use, adapt, and deploy the model for any purpose, ensuring true global accessibility and innovation.",
+						{ WEBUI_NAME: $WEBUI_NAME }
+					)}
 				</span>
 			</div>
 		</div>
 	</div>
 	<div class="px-8 md:px-48 py-12 md:py-24 bg-gray-50">
 		<div class="grid md:grid-cols-2 items-center mb-8 md:mb-16">
-			<span class="text-2xl md:text-3xl"> Designed for sovereignty and sustainability </span>
+			<span class="text-2xl md:text-3xl">
+				{$i18n.t('Designed for sovereignty and sustainability')}
+			</span>
 			<span class="max-md:text-sm max-md:pt-2">
-				ⓘ LUCIE was built to address the unique challenges of developing ethical, efficient, and
-				accessible AI.
+				ⓘ {$i18n.t(
+					'{{WEBUI_NAME}} was built to address the unique challenges of developing ethical, efficient, and accessible AI.',
+					{ WEBUI_NAME: $WEBUI_NAME }
+				)}
 			</span>
 		</div>
 		<div class="grid md:grid-cols-3 gap-6">
 			<div class="flex flex-col space-y-4 md:space-y-8 bg-white rounded p-8">
 				<EuLogo className="size-16 p-1 border-2 border-gray-700 rounded-full" />
-				<span class="text-2xl md:text-3xl font-medium">European Sovereignty</span>
+				<span class="text-2xl md:text-3xl font-medium">{$i18n.t('European Sovereignty')}</span>
 				<span>
-					LUCIE embodies a commitment to European values by respecting cultural diversity, promoting
-					ethical AI development and ensuring compliance with the AI Act.
+					{$i18n.t(
+						'{{WEBUI_NAME}} embodies a commitment to European values by respecting cultural diversity, promoting ethical AI development and ensuring compliance with the AI Act.',
+						{ WEBUI_NAME: $WEBUI_NAME }
+					)}
 				</span>
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8 bg-white rounded p-8">
 				<Speedometer className="size-16" />
-				<span class="text-2xl md:text-3xl font-medium">Compact and Efficient</span>
+				<span class="text-2xl md:text-3xl font-medium">{$i18n.t('Compact and Efficient')}</span>
 				<span>
-					Optimized for low-resource environments, LUCIE's architecture enables deployment on “GPU
-					poor” infrastructures and even on mobile devices.
+					{$i18n.t(
+						'Optimized for low-resource environments, {{WEBUI_NAME}}\'s architecture enables deployment on "GPU poor" infrastructures and even on mobile devices.',
+						{ WEBUI_NAME: $WEBUI_NAME }
+					)}
 				</span>
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8 bg-white rounded p-8">
 				<PlanetLeaf className="size-16" />
-				<span class="text-2xl md:text-3xl font-medium">Eco-Responsibility</span>
+				<span class="text-2xl md:text-3xl font-medium">{$i18n.t('Eco-Responsibility')}</span>
 				<span>
-					By focusing on quality over quantity in training data, we ensure a lighter environmental
-					footprint without compromising performance.
+					{$i18n.t(
+						'By focusing on quality over quantity in training data, we ensure a lighter environmental footprint without compromising performance.'
+					)}
 				</span>
 			</div>
 		</div>
 	</div>
 	<div class="px-8 md:px-48 my-12 md:my-24">
-		<div class="text-2xl md:text-3xl mb-8 md:mb-16">LUCIE in figures</div>
+		<div class="text-2xl md:text-3xl mb-8 md:mb-16">
+			{$i18n.t('{{WEBUI_NAME}} in figures', { WEBUI_NAME: $WEBUI_NAME })}
+		</div>
 		<div class="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-24">
 			<div class="flex flex-col space-y-3 md:space-y-6">
-				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">7 billion parameters</span>
+				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">
+					{$i18n.t('7 billion parameters')}
+				</span>
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
-					Model size : 7 billion parameters - compact and optimized for performance across diverse
-					applications. In 2025, we will build a more compact model size of LUCIE (&lt;3B).
+					{$i18n.t(
+						'Model size : 7 billion parameters - compact and optimized for performance across diverse applications. In 2025, we will build a more compact model size of {{WEBUI_NAME}} (<3B).',
+						{ WEBUI_NAME: $WEBUI_NAME }
+					)}
 				</span>
 			</div>
 			<div class="flex flex-col space-y-3 md:space-y-6">
-				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">3.1 trillion tokens</span>
+				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end"
+					>{$i18n.t('3.1 trillion tokens')}</span
+				>
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
-					Training Dataset : 3.1 trillion tokens, carefully curated to balance quality and
-					diversity, including French, English, German, Spanish, Italian, and code.
+					{$i18n.t(
+						'Training Dataset : 3.1 trillion tokens, carefully curated to balance quality and diversity, including French, English, German, Spanish, Italian, and code.'
+					)}
 				</span>
 			</div>
 			<div class="flex flex-col space-y-3 md:space-y-6">
-				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">600k GPU Hours</span>
+				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">
+					{$i18n.t('600k GPU Hours')}
+				</span>
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
-					Training Hours : Over 600,000 GPU hours on the Jean Zay supercomputer, utilizing 512
-					NVIDIA H100 GPUs in parallel.
+					{$i18n.t(
+						'Training Hours : Over 600,000 GPU hours on the Jean Zay supercomputer, utilizing 512 NVIDIA H100 GPUs in parallel.'
+					)}
 				</span>
 			</div>
 			<div class="flex flex-col space-y-3 md:space-y-6">
-				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">Languages supported</span>
+				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">
+					{$i18n.t('Languages supported')}
+				</span>
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
-					Multilingual focus, with a primary emphasis on French and main european languages,
-					ensuring cultural and linguistic representation.
+					{$i18n.t(
+						'Multilingual focus, with a primary emphasis on French and main european languages, ensuring cultural and linguistic representation.'
+					)}
 				</span>
 			</div>
 			<div class="flex flex-col space-y-3 md:space-y-6">
 				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">2023 - 2025</span>
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
-					Development Timeline : Training initiated in late 2023, culminating with the model's
-					release in January 2025.
+					{$i18n.t(
+						"Development Timeline : Training initiated in late 2023, culminating with the model's release in January 2025."
+					)}
 				</span>
 			</div>
 		</div>
 	</div>
 	<!-- Timeline -->
 	<div class="max-md:px-8 py-12 md:py-24 bg-gray-50 flex flex-col items-center text-center">
-		<div class="text-3xl mb-8">Future of LUCIE in 2025</div>
+		<div class="text-3xl mb-8">
+			{$i18n.t('Future of {{WEBUI_NAME}} in 2025', { WEBUI_NAME: $WEBUI_NAME })}
+		</div>
 		<div class="md:px-[33vw] mb-8 md:mb-16">
-			The journey of LUCIE is far from over. Our 2025 roadmap outlines ambitious milestones to
-			enhance capabilities and expand the model's applications:
+			{$i18n.t(
+				"The journey of {{WEBUI_NAME}} is far from over. Our 2025 roadmap outlines ambitious milestones to enhance capabilities and expand the model's applications :",
+				{ WEBUI_NAME: $WEBUI_NAME }
+			)}
 		</div>
 		<div class="md:px-[25vw] md:-translate-x-44">
 			<Timeline>
@@ -514,13 +547,13 @@
 					<TimelineContent>
 						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
 							<span class="text-xl md:text-2xl">
-								Enhanced fine-tuning and better toolkit for AI makers
+								{$i18n.t('Enhanced fine-tuning and better toolkit for AI makers')}
 							</span>
 							<span>
-								We will refine LUCIE's instruction-following capabilities (fine-instruct), introduce
-								<span class="font-semibold">function calling</span> for better integration with external
-								systems, and release at least one model with fewer than 3 billion parameters to ensure
-								accessibility for resource-constrained environments.
+								{$i18n.t(
+									"We will refine {{WEBUI_NAME}}'s instruction-following capabilities (fine-instruct), introduce function calling for better integration with external systems, and release at least one model with fewer than 3 billion parameters to ensure accessibility for resource-constrained environments.",
+									{ WEBUI_NAME: $WEBUI_NAME }
+								)}
 							</span>
 						</div>
 					</TimelineContent>
@@ -536,12 +569,13 @@
 					<TimelineContent>
 						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
 							<span class="text-xl md:text-2xl">
-								Advanced Retrieval-Augmented Generation (RAG)
+								{$i18n.t('Advanced Retrieval-Augmented Generation (RAG)')}
 							</span>
 							<span>
-								LUCIE will gain an advanced <span class="font-semibold">RAG function</span>,
-								enabling it to leverage external knowledge bases for more accurate and context-aware
-								responses.
+								{$i18n.t(
+									'{{WEBUI_NAME}} will gain an advanced RAG function, enabling it to leverage external knowledge bases for more accurate and context-aware responses.',
+									{ WEBUI_NAME: $WEBUI_NAME }
+								)}
 							</span>
 						</div>
 					</TimelineContent>
@@ -556,12 +590,14 @@
 					</TimelineSeparator>
 					<TimelineContent>
 						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
-							<span class="text-xl md:text-2xl"> Multimodal Expansion with Voice Support </span>
+							<span class="text-xl md:text-2xl">
+								{$i18n.t('Multimodal Expansion with Voice Support')}
+							</span>
 							<span>
-								We will extend LUCIE's capabilities into <span class="font-semibold"
-									>multimodal AI</span
-								>, with a focus on <span class="font-semibold">voice processing</span> in French, opening
-								new possibilities for applications in education, accessibility, and beyond.
+								{$i18n.t(
+									"We will extend {{WEBUI_NAME}}'s capabilities into multimodal AI, with a focus on voice processing in French, opening new possibilities for applications in education, accessibility, and beyond.",
+									{ WEBUI_NAME: $WEBUI_NAME }
+								)}
 							</span>
 						</div>
 					</TimelineContent>
@@ -576,13 +612,12 @@
 					</TimelineSeparator>
 					<TimelineContent>
 						<div class="flex flex-col max-md:w-52 space-y-2">
-							<span class="text-xl md:text-2xl"> Agentic AI Framework </span>
+							<span class="text-xl md:text-2xl"> {$i18n.t('Agentic AI Framework')} </span>
 							<span>
-								LUCIE will evolve into a robust <span class="font-semibold"
-									>agentic AI framework</span
-								>, harnessing its capabilities to power autonomous systems and lay the foundation
-								for Large Action Models (LAM) all while maintaining transparency, trust, and ethical
-								safeguards.
+								{$i18n.t(
+									'{{WEBUI_NAME}} will evolve into a robust agentic AI framework, harnessing its capabilities to power autonomous systems and lay the foundation for Large Action Models (LAM) all while maintaining transparency, trust, and ethical safeguards.',
+									{ WEBUI_NAME: $WEBUI_NAME }
+								)}
 							</span>
 						</div>
 					</TimelineContent>
@@ -626,11 +661,14 @@
 	</div>
 	<div class="px-8 md:px-48 py-12 md:py-24">
 		<div class="grid md:grid-cols-2 gap-3 md:gap-12 items-center mb-8 md:mb-16">
-			<span class="text-2xl md:text-3xl"> Join the LUCIE movement </span>
+			<span class="text-2xl md:text-3xl">
+				{$i18n.t('Join the {{WEBUI_NAME}} movement', { WEBUI_NAME: $WEBUI_NAME })}
+			</span>
 			<span class="text-sm leading-6">
-				LUCIE is more than a model - it's a community-driven effort to redefine the future of AI. By
-				joining us, you contribute to building AI that aligns with our shared values of openness,
-				transparency, and trust.
+				{$i18n.t(
+					"{{WEBUI_NAME}} is more than a model - it's a community-driven effort to redefine the future of AI. By joining us, you contribute to building AI that aligns with our shared values of openness, transparency, and trust.",
+					{ WEBUI_NAME: $WEBUI_NAME }
+				)}
 			</span>
 		</div>
 		<div class="grid md:grid-cols-4 gap-8">
@@ -645,13 +683,15 @@
 						alt="GitHub logo"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl md:text-2xl"> Collaborate on GitHub </span>
-				<span class="px-8 text-sm max-md:pb-6 md:h-32"> Contribute to LUCIE's development. </span>
+				<span class="md:h-16 px-8 text-xl md:text-2xl"> {$i18n.t('Collaborate on GitHub')} </span>
+				<span class="px-8 text-sm max-md:pb-6 md:h-32">
+					{$i18n.t("Contribute to {{WEBUI_NAME}}'s development.", { WEBUI_NAME: $WEBUI_NAME })}
+				</span>
 				<a
 					href="https://github.com/OpenLLM-France"
 					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
 				>
-					Contribute
+					{$i18n.t('Contribute')}
 				</a>
 			</div>
 			<div class="flex flex-col space-y-4 bg-white rounded border pb-8">
@@ -665,15 +705,19 @@
 						alt="Lucie illustration"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl md:text-2xl"> Experiment on Hugging Face </span>
+				<span class="md:h-16 px-8 text-xl md:text-2xl">
+					{$i18n.t('Experiment on Hugging Face')}
+				</span>
 				<span class="px-8 text-sm max-md:pb-6 md:h-32">
-					Explore LUCIE's capabilities in your projects.
+					{$i18n.t("Explore {{WEBUI_NAME}}'s capabilities in your projects.", {
+						WEBUI_NAME: $WEBUI_NAME
+					})}
 				</span>
 				<a
 					href="https://huggingface.co/OpenLLM-France"
 					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
 				>
-					Experiment
+					{$i18n.t('Experiment')}
 				</a>
 			</div>
 			<div class="flex flex-col space-y-4 bg-white rounded border pb-8">
@@ -687,15 +731,17 @@
 						alt="OpenLLM France Logo"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl md:text-2xl"> Be Part of OpenLLM France </span>
+				<span class="md:h-16 px-8 text-xl md:text-2xl"
+					>{$i18n.t('Be Part of OpenLLM France')}
+				</span>
 				<span class="px-8 text-sm max-md:pb-6 md:h-32">
-					Join the growing community dedicated to sovereign and open AI.
+					{$i18n.t('Join the growing community dedicated to sovereign and open AI.')}
 				</span>
 				<a
 					href="https://www.openllm-france.fr/"
 					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
 				>
-					Join us
+					{$i18n.t('Join us')}
 				</a>
 			</div>
 			<div class="flex flex-col space-y-4 bg-white rounded border pb-8">
@@ -709,15 +755,17 @@
 						alt="OpenLLM Europe logo"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl md:text-2xl"> Other European Initiatives </span>
+				<span class="md:h-16 px-8 text-xl md:text-2xl">
+					{$i18n.t('Other European Initiatives')}
+				</span>
 				<span class="px-8 text-sm max-md:pb-6 md:h-32">
-					Explore other european OpenLLM projects.
+					{$i18n.t('Explore other european OpenLLM projects.')}
 				</span>
 				<a
 					href="https://github.com/OpenLLM-Europe/European-OpenLLM-Projects"
 					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
 				>
-					Explore
+					{$i18n.t('Explore')}
 				</a>
 			</div>
 		</div>
@@ -731,14 +779,14 @@
 			alt="OpenLLM France logo"
 		/>
 		<div class="flex flex-col items-center space-y-2">
-			<span class="text-xs">2025 - All rights reserved ©</span>
+			<span class="text-xs">2025 - {$i18n.t('All rights reserved')} ©</span>
 			<div class="text-[0.6rem]">
 				<a href="https://linagora.com/fr/legal" class="underline hover:text-violet-500">
-					Terms of Use
+					{$i18n.t('Terms of Use')}
 				</a>
 				-
 				<a href="https://linagora.com/fr/privacy" class="underline hover:text-violet-500">
-					Privacy Policy
+					{$i18n.t('Privacy Policy')}
 				</a>
 			</div>
 		</div>

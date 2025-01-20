@@ -662,6 +662,7 @@ async def generate_chat_completion(
 
     idx = 0
     payload = {**form_data}
+    payload['temperature'] = 0.6
     if "metadata" in payload:
         del payload["metadata"]
     log.info(f'payload: {payload}')
@@ -735,9 +736,9 @@ async def generate_chat_completion(
             fails= ', '.join([s.validator_name for s in error.validation_summaries])
             payload['messages'].append({
                 'role': 'system',
-                'content': f"""You are an AI assistant. The user's message is flagged as {fails}. 
-                Respond respectfully in their language, avoid repeating prohibited content, explain the violation, and encourage guideline compliance. 
-                Example: "I'm sorry, I can't assist with that. Your message violates our guidelines.
+                'content': f"""The user's message is flagged as {fails}. 
+                Respond in user's language*, avoid repeating prohibited content, explain the violation, and encourage guideline compliance. 
+                Answer example: "I'm sorry, I can't assist with that. Your message violates our guidelines.
                 """
             })
 

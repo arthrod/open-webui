@@ -99,7 +99,6 @@ class QueueTable:
                     connected_users = db.query(Queue).filter(
                         Queue.status == QueueStatus.CONNECTED
                     ).order_by(Queue.timestamp).all()
-
                     remaining_times = []
                     # Estimate based on session expiration of currently connected users
                     current_time = int(time.time())
@@ -111,7 +110,7 @@ class QueueTable:
                         t = remaining_times[n_users_ahead]
                         return t
                     else:
-                        return max(remaining_times) + ((n_users_ahead - len(remaining_times)) / (self.max_connected)) * self.session_time
+                        return max(remaining_times if connected_users else [0]) + ((n_users_ahead - len(remaining_times)) / (self.max_connected)) * self.session_time
                     
         except Exception as e:
             log.error(f"Error estimating wait time: {e}")

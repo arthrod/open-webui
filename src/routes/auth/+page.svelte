@@ -128,16 +128,15 @@
 		console.log(queueMetrics);
 
 		if (queueStatus.status === 'waiting') {
-			setTimeout(
-				refreshQueue,
-				queueStatus.position > 1000
-					? 30000
-					: queueStatus.position > 100
-						? 15000
-						: queueStatus.position > 25
-							? 5000
-							: 1000
-			);
+			const refreshRatio =
+				queueMetrics.waiting_users < 100
+					? 100
+					: queueMetrics.waiting_users < 500
+						? 250
+						: queueMetrics.waiting_users < 1000
+							? 500
+							: 1000;
+			setTimeout(refreshQueue, Math.max(queueStatus.position * refreshRatio, 2500));
 		} else if (queueStatus.status === 'draft') {
 			toast.info('You are ready to enter LUCIE ! Come back to the queue to enter.');
 			// refreshTimer();

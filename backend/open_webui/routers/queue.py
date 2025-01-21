@@ -93,9 +93,9 @@ async def idle():
 # Queue Metrics
 ############################
 
-@router.post("/metrics", response_model=QueueMetrics)
-async def get_metrics(request: MetricsRequest):
-    return queue.metrics(user_id=request.user_id)
+@router.get("/metrics", response_model=QueueMetrics)
+async def get_metrics():
+    return queue.metrics()
 
 ############################
 # Queue Leave

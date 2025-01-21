@@ -48,9 +48,6 @@ class QueueMetrics(BaseModel):
 class JoinRequest(BaseModel):
     user_id: str
 
-class MetricsRequest(BaseModel):
-    user_id: str
-
 class ConfirmRequest(BaseModel):
     user_id: str
 
@@ -115,7 +112,7 @@ class QueueTable:
             log.error(f"Error estimating wait time: {e}")
 
 
-    def metrics(self, user_id: str = None) -> QueueMetrics:
+    def metrics(self) -> QueueMetrics:
         waiting_users = self._count_in_status(status=QueueStatus.WAITING)
         draft_users = self._count_in_status(status=QueueStatus.DRAFT)
         active_users = self._count_in_status(status=QueueStatus.CONNECTED)

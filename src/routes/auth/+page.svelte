@@ -327,7 +327,7 @@
 	</div>
 	<!-- Logos -->
 	<div
-		class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-6 md:gap-8 gap-8 py-8"
+		class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8"
 	>
 		<img
 			crossorigin="anonymous"
@@ -513,7 +513,7 @@
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
 					{$i18n.t(
-						'Model size : 7 billion parameters - compact and optimized for performance across diverse applications. In 2025, we will build a more compact model size of {{WEBUI_NAME}} (<3B).',
+						'Model size: 7 billion parameters - compact and optimized for performance across diverse applications. In 2025, we will build a more compact model size of {{WEBUI_NAME}} (<3B).',
 						{ WEBUI_NAME: $WEBUI_NAME }
 					)}
 				</span>
@@ -525,7 +525,7 @@
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
 					{$i18n.t(
-						'Training Dataset : 3.1 trillion tokens, carefully curated to balance quality and diversity, including French, English, German, Spanish, Italian, and code.'
+						'Training Dataset: 3.1 trillion tokens, carefully curated to balance quality and diversity, including French, English, German, Spanish, Italian, and code.'
 					)}
 				</span>
 			</div>
@@ -536,7 +536,7 @@
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
 					{$i18n.t(
-						'Training Hours : Over 600,000 GPU hours on the Jean Zay supercomputer, utilizing 512 NVIDIA H100 GPUs in parallel.'
+						'Training Hours: Over 600,000 GPU hours on the Jean Zay supercomputer, utilizing 512 NVIDIA H100 GPUs in parallel.'
 					)}
 				</span>
 			</div>
@@ -569,7 +569,7 @@
 		</div>
 		<div class="md:px-[33vw] mb-8 md:mb-16">
 			{$i18n.t(
-				"The journey of {{WEBUI_NAME}} is far from over. Our 2025 roadmap outlines ambitious milestones to enhance capabilities and expand the model's applications :",
+				"The journey of {{WEBUI_NAME}} is far from over. Our 2025 roadmap outlines ambitious milestones to enhance capabilities and expand the model's applications:",
 				{ WEBUI_NAME: $WEBUI_NAME }
 			)}
 		</div>

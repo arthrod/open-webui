@@ -302,13 +302,13 @@
 				{/if}
 
 				<button
-					class="h-8 md:h-16 px-3 md:px-12 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm md:text-base transition-all"
+					class="h-12 md:h-16 w-64 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm md:text-base transition-all"
 					on:click={() => (showContactUs = !showContactUs)}
 				>
 					{$i18n.t('Contact us')}
 				</button>
 			</div>
-			<span class="md:pt-4 text-base md:text-lg max-md:text-center md:pr-8">
+			<span class="md:pt-4 text-base md:text-lg max-md:text-center">
 				{$i18n.t(
 					"{{WEBUI_NAME}} isn't just open, it's exceptionally transparent and reliable. From its inception, every decision has been guided by principles of trustworthiness, fairness, and accountability. Whether it's for education, government, or research, {{WEBUI_NAME}} is designed to be a model you can count on.",
 					{ WEBUI_NAME: $WEBUI_NAME }
@@ -327,18 +327,18 @@
 	</div>
 	<!-- Logos -->
 	<div
-		class="px-8 md:px-48 max-md:grid max-md:grid-cols-2 max-md:place-items-center max-md:gap-6 md:flex md:items-center md:justify-between py-8"
+		class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-6 md:gap-8 gap-8 py-8"
 	>
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/linagora-ai.png"
-			class="w-28 self-center"
+			class="w-32 self-center"
 			alt="Linagora AI logo"
 		/>
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/france-2030-laureat.png"
-			class="w-28"
+			class="w-32"
 			alt="France 2030 Lauréat logo"
 		/>
 		<img
@@ -356,7 +356,7 @@
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/class-code.png"
-			class="w-28"
+			class="w-24"
 			alt="Class'Code logo"
 		/>
 		<img crossorigin="anonymous" src="/assets/logos/cea.png" class="h-14" alt="CEA logo" />
@@ -380,6 +380,12 @@
 			src="/assets/logos/ovh.png"
 			class="w-28 self-center bg-indigo-700 p-2 rounded-lg"
 			alt="OVH Cloud logo"
+		/>
+		<img
+			crossorigin="anonymous"
+			src="/assets/logos/scaleway.svg"
+			class="w-28 self-center"
+			alt="Scaleway logo"
 		/>
 	</div>
 	<div class="px-8 md:px-48 my-6 md:mt-12">

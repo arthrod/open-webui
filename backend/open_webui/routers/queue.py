@@ -5,7 +5,7 @@ import time
 import logging
 from typing import Optional, Any
 from open_webui.env import SRC_LOG_LEVELS
-from open_webui.models.queue import queue, QueueStatus, QueueMetrics, JoinRequest, ConfirmRequest, ConfirmResponse, DeleteRequest, MetricsRequest
+from open_webui.models.queue import queue, QueueStatus, QueueMetrics, JoinRequest, ConfirmRequest, ConfirmResponse, DeleteRequest
 from fastapi import APIRouter, HTTPException, status
 
 log = logging.getLogger(__name__)
@@ -23,7 +23,6 @@ async def join(request: JoinRequest):
     log.debug(f'-> join({user_id})')
     queue.join(user_id)
     queue.idle()
-    
     user_status = queue.status(user_id)
 
     if user_status is None:

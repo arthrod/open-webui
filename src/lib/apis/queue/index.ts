@@ -123,11 +123,10 @@ export const heartbeat = async (userRequest: UserRequest): Promise<{ success: bo
 // Get Metrics
 export const getMetrics = async (userRequest: UserRequest): Promise<QueueMetrics> => {
     const response = await fetch(`${QUEUE_API_BASE_URL}/metrics`, {
-        method: 'POST',
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userRequest)
     });
 
     if (!response.ok) {

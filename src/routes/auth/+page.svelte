@@ -195,14 +195,20 @@
 
 	let onboarding = false;
 
+	const refreshQueueDisabled = async () => {
+		// Disable joining queue if too many users are already waiting
+		queueDisabled = (await getMetrics()).waiting_users >= $config.features.queue.max_waiting_users;
+
+		if (queueDisabled) setTimeout(refreshQueueDisabled, 5 * 60 * 1000);
+	};
+
 	onMount(async () => {
 		if ($user !== undefined) {
 			await goto('/');
 		}
 		await checkOauthCallback();
 
-		// Disable joining queue if too many users are already waiting
-		queueDisabled = (await getMetrics()).waiting_users >= $config.features.queue.max_waiting_users;
+		await refreshQueueDisabled();
 
 		loaded = true;
 		if (($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false) {

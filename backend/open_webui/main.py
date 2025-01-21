@@ -74,7 +74,7 @@ from open_webui.routers import (
     users,
     utils,
     queue,
-    contact
+    contact,
 )
 
 from open_webui.routers.retrieval import (
@@ -267,6 +267,7 @@ from open_webui.env import (
     CHANGELOG,
     DRAFT_DURATION,
     GLOBAL_LOG_LEVEL,
+    MAX_WAITING_USERS,
     SAFE_MODE,
     SESSION_DURATION,
     SRC_LOG_LEVELS,
@@ -281,7 +282,7 @@ from open_webui.env import (
     BYPASS_MODEL_ACCESS_CONTROL,
     RESET_CONFIG_ON_START,
     OFFLINE_MODE,
-    APPLY_GUARDRAILS_ON_CHAT_COMPLETION
+    APPLY_GUARDRAILS_ON_CHAT_COMPLETION,
 )
 
 
@@ -746,7 +747,6 @@ app.include_router(queue.router, prefix="/queue", tags=["queue"])
 app.include_router(contact.router, prefix="/contact", tags=["contact"])
 
 
-
 app.include_router(pipelines.router, prefix="/api/v1/pipelines", tags=["pipelines"])
 app.include_router(tasks.router, prefix="/api/v1/tasks", tags=["tasks"])
 app.include_router(images.router, prefix="/api/v1/images", tags=["images"])
@@ -776,7 +776,6 @@ app.include_router(
     evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"]
 )
 app.include_router(utils.router, prefix="/api/v1/utils", tags=["utils"])
-
 
 
 ##################################
@@ -888,7 +887,9 @@ async def chat_completion(
         )
 
     try:
-        response = await chat_completion_handler(request, form_data, user, guard=APPLY_GUARDRAILS_ON_CHAT_COMPLETION)
+        response = await chat_completion_handler(
+            request, form_data, user, guard=APPLY_GUARDRAILS_ON_CHAT_COMPLETION
+        )
         return await process_chat_response(
             request, response, form_data, user, events, metadata, tasks
         )
@@ -986,9 +987,10 @@ async def get_app_config(request: Request):
         },
         "features": {
             "auth": WEBUI_AUTH,
-            "timer": {
-                "session_duration" : SESSION_DURATION,
-                "draft_duration" : DRAFT_DURATION
+            "queue": {
+                "session_duration": SESSION_DURATION,
+                "draft_duration": DRAFT_DURATION,
+                "max_waiting_users": MAX_WAITING_USERS,
             },
             "auth_trusted_header": bool(app.state.AUTH_TRUSTED_EMAIL_HEADER),
             "enable_ldap": app.state.config.ENABLE_LDAP,

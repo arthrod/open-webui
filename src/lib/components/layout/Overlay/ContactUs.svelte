@@ -96,7 +96,7 @@
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 	<div
-		class="fixed inset-0 flex items-center justify-center modal-overlay backdrop-blur-sm dark:backdrop-blur-sm"
+		class="fixed inset-0 flex items-center justify-center modal-overlay backdrop-blur-sm dark:backdrop-blur-sm z-50"
 		on:click={handleOverlayClick}
 		on:keydown={handleKeyDown}
 		tabindex="0"

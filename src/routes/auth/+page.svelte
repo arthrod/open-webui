@@ -39,14 +39,14 @@
 	let loaded = false;
 
 	let showContactUs = false;
+	let queueDisabled = false;
 
 	// Queue
-	let queueStatus: QueueStatus = { position: -1, status: 'disconnected' };
+	let queueStatus: QueueStatus = { position: -1, status: 'disconnected', estimated_time: 0 };
 	let queueMetrics: QueueMetrics = {
 		active_users: 0,
 		waiting_users: 0,
-		total_slots: 0,
-		estimated_time: 0
+		total_slots: 0
 	};
 
 	// let mode = $config?.features.enable_ldap ? 'ldap' : 'signin';
@@ -122,25 +122,25 @@
 	};
 
 	// Refresh queue status periodically
-	const refreshQueue = async () => {
+	const refreshQueueStatus = async () => {
 		queueStatus = await getStatus($queueID);
-		queueMetrics = await getMetrics({ user_id: $queueID });
-		console.log(queueMetrics);
 
 		if (queueStatus.status === 'waiting') {
-			setTimeout(
-				refreshQueue,
-				queueStatus.position > 1000
-					? 30000
-					: queueStatus.position > 100
-						? 15000
-						: queueStatus.position > 25
-							? 5000
-							: 1000
-			);
+			const refreshRatio =
+				queueMetrics.waiting_users < 100
+					? 100
+					: queueMetrics.waiting_users < 500
+						? 250
+						: queueMetrics.waiting_users < 1000
+							? 500
+							: 1000;
+			setTimeout(refreshQueueStatus, Math.max(queueStatus.position * refreshRatio, 2500));
 		} else if (queueStatus.status === 'draft') {
-			toast.info('You are ready to enter LUCIE ! Come back to the queue to enter.');
-			// refreshTimer();
+			toast.info(
+				$i18n.t('You are ready to chat with {{WEBUI_NAME}} ! Come back to the queue to start.', {
+					WEBUI_NAME: $WEBUI_NAME
+				})
+			);
 		} else if (queueStatus.status === 'connected') {
 			name = `user-${$queueID}`;
 			email = `${$queueID}@example.com`;
@@ -156,7 +156,7 @@
 
 	const confirmConnectionHandler = async () => {
 		await confirmConnection({ user_id: $queueID });
-		refreshQueue();
+		refreshQueueStatus();
 	};
 
 	// Join the queue and initialize periodic status refresh
@@ -164,7 +164,9 @@
 		$queueID = generateRandomStringId(12);
 		await joinQueue({ user_id: $queueID });
 
-		refreshQueue();
+		queueMetrics = await getMetrics();
+
+		refreshQueueStatus();
 	};
 
 	const checkOauthCallback = async () => {
@@ -199,6 +201,9 @@
 		}
 		await checkOauthCallback();
 
+		// Disable joining queue if too many users are already waiting
+		queueDisabled = (await getMetrics()).waiting_users >= $config.features.queue.max_waiting_users;
+
 		loaded = true;
 		if (($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false) {
 			// await signInHandler();
@@ -221,12 +226,12 @@
 
 <!-- Header -->
 <div
-	class="fixed w-full h-20 px-8 md:px-48 py-3 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-50"
+	class="fixed w-full h-20 px-8 md:px-48 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-30"
 >
 	<img
 		crossorigin="anonymous"
-		src="/assets/logos/openllm-france-horizontal.svg"
-		class="h-full"
+		src="/assets/logos/lucie-with-text.svg"
+		class="h-full py-1"
 		alt="OpenLLM France logo"
 	/>
 	<button
@@ -251,12 +256,18 @@
 				{$i18n.t('Beyond openness, we pioneer transparency and trust.')}
 			</span>
 			<div class="flex items-center md:space-x-6 max-md:flex-col max-md:space-y-8">
-				{#if queueStatus.status === 'disconnected'}
+				{#if queueDisabled}
+					<span
+						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-gray-200 text-gray-700 text-xs md:text-sm px-6 flex items-center justify-center text-center cursor-not-allowed"
+					>
+						{$i18n.t('Sorry, the queue is full. Please come back later.')}
+					</span>
+				{:else if queueStatus.status === 'disconnected'}
 					<button
 						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
 						on:click={joinQueueHandler}
 					>
-						{$i18n.t('Join queue')}
+						{$i18n.t('Try {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
 					</button>
 				{:else if queueStatus.status === 'connected'}
 					<div
@@ -278,7 +289,7 @@
 							{$i18n.t('in queue')}
 						</span>
 						<span class="absolute text-xs translate-y-2 left-1/2 top-full -translate-x-1/2 w-64">
-							{$i18n.t('estimated waiting time')} : ~{Math.floor(queueMetrics.estimated_time / 60)}
+							{$i18n.t('estimated waiting time')} : ~{Math.floor(queueStatus.estimated_time / 60)}
 							{$i18n.t('minutes')}
 						</span>
 						<div
@@ -298,18 +309,17 @@
 						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-all"
 						on:click={confirmConnectionHandler}
 					>
-						{$i18n.t('Confirm connection')}
+						{$i18n.t('Start chatting')}
 					</button>
 				{/if}
-
 				<button
-					class="h-8 md:h-16 px-3 md:px-12 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm md:text-base transition-all"
+					class="h-12 md:h-16 w-64 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm md:text-base transition-all"
 					on:click={() => (showContactUs = !showContactUs)}
 				>
 					{$i18n.t('Contact us')}
 				</button>
 			</div>
-			<span class="md:pt-4 text-base md:text-lg max-md:text-center md:pr-8">
+			<span class="md:pt-4 text-base md:text-lg max-md:text-center">
 				{$i18n.t(
 					"{{WEBUI_NAME}} isn't just open, it's exceptionally transparent and reliable. From its inception, every decision has been guided by principles of trustworthiness, fairness, and accountability. Whether it's for education, government, or research, {{WEBUI_NAME}} is designed to be a model you can count on.",
 					{ WEBUI_NAME: $WEBUI_NAME }
@@ -327,19 +337,17 @@
 		</div>
 	</div>
 	<!-- Logos -->
-	<div
-		class="px-8 md:px-48 max-md:grid max-md:grid-cols-2 max-md:place-items-center max-md:gap-6 md:flex md:items-center md:justify-between py-8"
-	>
+	<div class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/linagora-ai.png"
-			class="w-28 self-center"
+			class="w-32 self-center"
 			alt="Linagora AI logo"
 		/>
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/france-2030-laureat.png"
-			class="w-28"
+			class="w-32"
 			alt="France 2030 Lauréat logo"
 		/>
 		<img
@@ -357,7 +365,7 @@
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/class-code.png"
-			class="w-28"
+			class="w-24"
 			alt="Class'Code logo"
 		/>
 		<img crossorigin="anonymous" src="/assets/logos/cea.png" class="h-14" alt="CEA logo" />
@@ -381,6 +389,12 @@
 			src="/assets/logos/ovh.png"
 			class="w-28 self-center bg-indigo-700 p-2 rounded-lg"
 			alt="OVH Cloud logo"
+		/>
+		<img
+			crossorigin="anonymous"
+			src="/assets/logos/scaleway.svg"
+			class="w-28 self-center"
+			alt="Scaleway logo"
 		/>
 	</div>
 	<div class="px-8 md:px-48 my-6 md:mt-12">
@@ -423,8 +437,10 @@
 		</div>
 		<div class="grid md:grid-cols-3 gap-12 md:gap-24 md:px-6">
 			<div class="flex flex-col space-y-4 md:space-y-8">
-				<EyeInBox className="size-8" />
-				<span class="text-xl md:text-2xl font-medium">{$i18n.t('Transparent Data')}</span>
+				<EyeInBox className="size-10" />
+				<span class="text-xl md:text-2xl font-medium h-16">
+					{$i18n.t('Transparent Data')}
+				</span>
 				<span>
 					{$i18n.t(
 						'All training datasets are openly available and licensed for public use. We ensure transparency at every stage, from collection to curation.'
@@ -432,8 +448,10 @@
 				</span>
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8">
-				<StateGraph className="size-8" />
-				<span class="text-xl md:text-2xl font-medium">{$i18n.t('Open Algorithms')}</span>
+				<StateGraph className="size-10" />
+				<span class="text-xl md:text-2xl font-medium h-16">
+					{$i18n.t('Open Algorithms')}
+				</span>
 				<span>
 					{$i18n.t(
 						'Our training methodologies, fine-tuning processes, and "secret sauce" are thoroughly documented and openly accessible for anyone to explore, use, and improve.'
@@ -442,7 +460,9 @@
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8">
 				<TouchWindow className="size-8" />
-				<span class="text-xl md:text-2xl font-medium">{$i18n.t('Freely Accessible Models')}</span>
+				<span class="text-xl md:text-2xl font-medium h-16 flex items-end">
+					{$i18n.t('A Completely Free-Access Production Line')}
+				</span>
 				<span>
 					{$i18n.t(
 						"{{WEBUI_NAME}}'s weights, checkpoints, and source code are available under the Apache 2.0 license. This permissive, unrestricted license allows anyone, anywhere in the world, to use, adapt, and deploy the model for any purpose, ensuring true global accessibility and innovation.",
@@ -458,7 +478,7 @@
 				{$i18n.t('Designed for sovereignty and sustainability')}
 			</span>
 			<span class="max-md:text-sm max-md:pt-2">
-				ⓘ {$i18n.t(
+				{$i18n.t(
 					'{{WEBUI_NAME}} was built to address the unique challenges of developing ethical, efficient, and accessible AI.',
 					{ WEBUI_NAME: $WEBUI_NAME }
 				)}
@@ -508,7 +528,7 @@
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
 					{$i18n.t(
-						'Model size : 7 billion parameters - compact and optimized for performance across diverse applications. In 2025, we will build a more compact model size of {{WEBUI_NAME}} (<3B).',
+						'Model size: 7 billion parameters - compact and optimized for performance across diverse applications. In 2025, we will build a more compact model size of {{WEBUI_NAME}} (<3B).',
 						{ WEBUI_NAME: $WEBUI_NAME }
 					)}
 				</span>
@@ -520,7 +540,7 @@
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
 					{$i18n.t(
-						'Training Dataset : 3.1 trillion tokens, carefully curated to balance quality and diversity, including French, English, German, Spanish, Italian, and code.'
+						'Training Dataset: 3.1 trillion tokens, carefully curated to balance quality and diversity, including French, English, German, Spanish, Italian, and code.'
 					)}
 				</span>
 			</div>
@@ -531,7 +551,7 @@
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
 					{$i18n.t(
-						'Training Hours : Over 600,000 GPU hours on the Jean Zay supercomputer, utilizing 512 NVIDIA H100 GPUs in parallel.'
+						'Training Hours: Over 600,000 GPU hours on the Jean Zay supercomputer, utilizing 512 NVIDIA H100 GPUs in parallel.'
 					)}
 				</span>
 			</div>
@@ -564,7 +584,7 @@
 		</div>
 		<div class="md:px-[33vw] mb-8 md:mb-16">
 			{$i18n.t(
-				"The journey of {{WEBUI_NAME}} is far from over. Our 2025 roadmap outlines ambitious milestones to enhance capabilities and expand the model's applications :",
+				"The journey of {{WEBUI_NAME}} is far from over. Our 2025 roadmap outlines ambitious milestones to enhance capabilities and expand the model's applications:",
 				{ WEBUI_NAME: $WEBUI_NAME }
 			)}
 		</div>
@@ -625,7 +645,7 @@
 					<TimelineContent>
 						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
 							<span class="text-xl md:text-2xl">
-								{$i18n.t('Multimodal Expansion with Voice Support')}
+								{$i18n.t('Multimodal Version for {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
 							</span>
 							<span>
 								{$i18n.t(

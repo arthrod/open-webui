@@ -330,7 +330,13 @@
 		</div>
 	</div>
 	<!-- Logos -->
+<<<<<<< HEAD
 	<div class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
+=======
+	<div
+		class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8"
+	>
+>>>>>>> b6af5b564 (Remove spaces before ':')
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/linagora-ai.png"

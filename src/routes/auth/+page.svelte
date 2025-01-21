@@ -226,12 +226,12 @@
 
 <!-- Header -->
 <div
-	class="fixed w-full h-20 px-8 md:px-48 py-3 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-30"
+	class="fixed w-full h-20 px-8 md:px-48 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-30"
 >
 	<img
 		crossorigin="anonymous"
-		src="/assets/logos/openllm-france-horizontal.svg"
-		class="h-full"
+		src="/assets/logos/lucie-with-text.svg"
+		class="h-full py-1"
 		alt="OpenLLM France logo"
 	/>
 	<button

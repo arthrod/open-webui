@@ -737,9 +737,21 @@ async def generate_chat_completion(
             fails= ', '.join([s.validator_name for s in error.validation_summaries])
             payload['messages'].append({
                 'role': 'system',
-                'content': f"""The user's message is flagged as {fails}. 
-                Respond in user's language*, avoid repeating prohibited content, explain the violation, and encourage guideline compliance. 
-                Answer example: "I'm sorry, I can't assist with that. Your message violates our guidelines.
+                'content': f"""Le message de l'utilisateur est marqué comme un potentiel {fails}.
+
+                Instructions de réponse :  
+                Évaluer la gravité du message.
+
+                - Si mineur : Fournir une assistance appropriée
+                - Si grave : Ne pas répéter le contenu problématique
+                    - Expliquer poliment la violation sans citer le contenu
+                    - Orienter vers un usage conforme aux conditions d'utilisation
+                    - Proposer des alternatives appropriées si possible
+                
+                Tu dois toujours répondre dans la langue du message de l'utilisateur.
+
+                Exemple de réponse pour violation grave :
+                "Je ne peux malheureusement pas donner suite à cette demande car elle ne respecte pas nos conditions d'utilisation. Je vous invite à reformuler votre question en tenant compte de nos directives."
                 """
             })
 

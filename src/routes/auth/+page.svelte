@@ -220,7 +220,7 @@
 
 <!-- Header -->
 <div
-	class="fixed w-full h-20 px-8 md:px-48 py-3 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-50"
+	class="fixed w-full h-20 px-8 md:px-48 py-3 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-30"
 >
 	<img
 		crossorigin="anonymous"

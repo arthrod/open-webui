@@ -111,7 +111,7 @@ DEFAULT_CONFIG = {
                     "À la découverte de Linagora",
                     "Découvrez notre entreprise"
                 ],
-                "content": "fais moi une présentation de Linagora?",
+                "content": "Fais-moi une présentation de Linagora?",
             },
             {
                 "title": ["À la découverte d'OpenLLM France", "Objectifs et mission d'OpenLLM France"],
@@ -122,6 +122,13 @@ DEFAULT_CONFIG = {
                 "title": ["Innovation technologique en France", "Écosystème technologique français"],
                 "content": "Qu'est-ce qui rend le secteur technologique français unique, et quelles sont les innovations notables de la French Tech ?",
             },
+
+            {
+                "title": ["Site Portfolio Personnel", "Design Élégant Nuance de Lune"],
+                "content": """Create a responsive, modern personal portfolio website in HTML with an elegant "moon haze" color palette (soft grays, pale blues, silver accents). Use a clean, minimalist layout featuring smooth typography, rounded corners, and a professional design. Include:\n- A hero section with a captivating headline.\n- Project showcase cards with hover effects and subtle animations.\n- A contact form with intuitive input fields.\n\nEnsure the design is visually balanced, interactive, and fully optimized for all devices.
+                """
+            },
+
             {
                 "title": ["Mieux télétravailler !!!", "Les bonnes pratiques"],
                 "content": "Quelles stratégies adopter pour rester productif tout en préservant l'équilibre entre travail et vie personnelle en télétravail ?",
@@ -1010,24 +1017,22 @@ TITLE_GENERATION_PROMPT_TEMPLATE = PersistentConfig(
 # {{MESSAGES:END:2}}
 # </chat_history>"""
 
-DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE = """You are an AI assistant that gives titles to chat conversations.
-Given a chat conversation, you should only output a 3-5 word title that captures the main topic of the chat conversation without using quotation marks or any special formatting.
+DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE = """Vous êtes une assistante IA qui attribue des titres aux conversations de chat.  
+Étant donné une conversation de chat, vous devez uniquement produire un titre de 3 à 5 mots qui résume le sujet principal de la conversation, sans utiliser de guillemets ni de formatage spécial.
 
-# Guidelines
-1. Generate a 3-5 words long title in the same language as the chat conversation
-2. Additionally, prepend a suitable emoji to the title to enhance understanding. Here are some examples:
-    - 🕊️ Mindfulness Practices for Stress
-    - 🚀 Startup Success Strategies
-    - 🤝 Salutation
-    - 📉 Stock Market Trends
-    - 🧠 MemoMemoryry Improvement Tricks
-    - 🎮 Video Game Development Insights
-    - 🧑‍💼 Leadership and Team Building
-    - 🕊️ Mindfulness Practices for Stress
-    - 🚀 Startup Success Strategies
-    - 🎤 Public Speaking Confidence Tips
+# Directives
+1. Générez un titre de 3 à 5 mots dans la même langue que la conversation de chat.
+2. Ajoutez un emoji pertinent à la du titre pour améliorer la compréhension. Voici quelques exemples :
+    - 🕊️ Pratiques de pleine conscience
+    - 🚀 Stratégies de réussite pour startups
+    - 🤝 Salutations
+    - 📉 Tendances des marchés financiers
+    - 🧠 Astuces pour améliorer la mémoire
+    - 🎮 Perspectives sur le développement de jeux vidéo
+    - 🧑‍💼 Leadership et gestion d'équipe
+    - 🎤 Conseils pour la prise de parole en public
 
-Here the chat history:
+Voici l'historique de la conversation :
 <chat_history>
 {{MESSAGES:END:2}}
 </chat_history>

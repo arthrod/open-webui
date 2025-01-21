@@ -138,7 +138,11 @@
 							: 1000;
 			setTimeout(refreshQueue, Math.max(queueStatus.position * refreshRatio, 2500));
 		} else if (queueStatus.status === 'draft') {
-			toast.info('You are ready to enter LUCIE ! Come back to the queue to enter.');
+			toast.info(
+				$i18n.t('You are ready to chat with {{WEBUI_NAME}} ! Come back to the queue to start.', {
+					WEBUI_NAME: $WEBUI_NAME
+				})
+			);
 			// refreshTimer();
 		} else if (queueStatus.status === 'connected') {
 			name = `user-${$queueID}`;
@@ -255,7 +259,7 @@
 						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
 						on:click={joinQueueHandler}
 					>
-						{$i18n.t('Join queue')}
+						{$i18n.t('Try {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
 					</button>
 				{:else if queueStatus.status === 'connected'}
 					<div
@@ -297,7 +301,7 @@
 						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-all"
 						on:click={confirmConnectionHandler}
 					>
-						{$i18n.t('Confirm connection')}
+						{$i18n.t('Start chatting')}
 					</button>
 				{/if}
 
@@ -326,9 +330,7 @@
 		</div>
 	</div>
 	<!-- Logos -->
-	<div
-		class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8"
-	>
+	<div class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/linagora-ai.png"
@@ -428,8 +430,10 @@
 		</div>
 		<div class="grid md:grid-cols-3 gap-12 md:gap-24 md:px-6">
 			<div class="flex flex-col space-y-4 md:space-y-8">
-				<EyeInBox className="size-8" />
-				<span class="text-xl md:text-2xl font-medium">{$i18n.t('Transparent Data')}</span>
+				<EyeInBox className="size-10" />
+				<span class="text-xl md:text-2xl font-medium h-16">
+					{$i18n.t('Transparent Data')}
+				</span>
 				<span>
 					{$i18n.t(
 						'All training datasets are openly available and licensed for public use. We ensure transparency at every stage, from collection to curation.'
@@ -437,8 +441,10 @@
 				</span>
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8">
-				<StateGraph className="size-8" />
-				<span class="text-xl md:text-2xl font-medium">{$i18n.t('Open Algorithms')}</span>
+				<StateGraph className="size-10" />
+				<span class="text-xl md:text-2xl font-medium h-16">
+					{$i18n.t('Open Algorithms')}
+				</span>
 				<span>
 					{$i18n.t(
 						'Our training methodologies, fine-tuning processes, and "secret sauce" are thoroughly documented and openly accessible for anyone to explore, use, and improve.'
@@ -447,7 +453,9 @@
 			</div>
 			<div class="flex flex-col space-y-4 md:space-y-8">
 				<TouchWindow className="size-8" />
-				<span class="text-xl md:text-2xl font-medium">{$i18n.t('Freely Accessible Models')}</span>
+				<span class="text-xl md:text-2xl font-medium h-16 flex items-end">
+					{$i18n.t('A Completely Free-Access Production Line')}
+				</span>
 				<span>
 					{$i18n.t(
 						"{{WEBUI_NAME}}'s weights, checkpoints, and source code are available under the Apache 2.0 license. This permissive, unrestricted license allows anyone, anywhere in the world, to use, adapt, and deploy the model for any purpose, ensuring true global accessibility and innovation.",
@@ -463,7 +471,7 @@
 				{$i18n.t('Designed for sovereignty and sustainability')}
 			</span>
 			<span class="max-md:text-sm max-md:pt-2">
-				ⓘ {$i18n.t(
+				{$i18n.t(
 					'{{WEBUI_NAME}} was built to address the unique challenges of developing ethical, efficient, and accessible AI.',
 					{ WEBUI_NAME: $WEBUI_NAME }
 				)}
@@ -630,7 +638,7 @@
 					<TimelineContent>
 						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
 							<span class="text-xl md:text-2xl">
-								{$i18n.t('Multimodal Expansion with Voice Support')}
+								{$i18n.t('Multimodal Version for {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
 							</span>
 							<span>
 								{$i18n.t(

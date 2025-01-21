@@ -56,7 +56,7 @@
 	import ChannelModal from './Sidebar/ChannelModal.svelte';
 	import ChannelItem from './Sidebar/ChannelItem.svelte';
 	import PencilSquare from '../icons/PencilSquare.svelte';
-    import ContactUs from './Overlay/ContactUs.svelte';
+	import ContactUs from './Overlay/ContactUs.svelte';
 
 	const BREAKPOINT = 768;
 
@@ -69,7 +69,7 @@
 	let showDropdown = false;
 	let showPinnedChat = true;
 
-    let showContactUs = false;
+	let showContactUs = false;
 
 	let showCreateChannel = false;
 
@@ -357,7 +357,7 @@
 			}
 		});
 
-		showSidebar.set(!$mobile ? localStorage.sidebar === 'true' : false);
+		showSidebar.set(!$mobile ? true : false);
 		showSidebar.subscribe((value) => {
 			localStorage.sidebar = value;
 		});
@@ -827,23 +827,31 @@
 			</Folder>
 		</div>
 
-        <div class="px-2 flex flex-col items-center">
-            <img src="/assets/images/lucie.png" width="70%" alt="">
-            <div class="font-semibold text-lg text-gray-700 dark:text-gray-300">{$i18n.t('Limitless Possibilities')}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">{$i18n.t('Unlock Lucie\'s full potential now!')}</div>
-            <button 
-            class="rounded-full bg-blue-500 text-white w-full py-3 m-2"
-            on:click={() => showContactUs = true}
-            >
-            {$i18n.t('Contact us')}
-            </button>
-        </div>
+		<div class="px-2 flex flex-col items-center">
+			<img src="/assets/images/lucie.png" width="70%" alt="" />
+			<div class="font-semibold text-lg text-gray-700 dark:text-gray-300">
+				{$i18n.t('Limitless Possibilities')}
+			</div>
+			<div class="text-sm text-gray-500 dark:text-gray-400">
+				{$i18n.t("Unlock Lucie's full potential now!")}
+			</div>
+			<button
+				class="rounded-full bg-blue-500 text-white w-full py-3 m-2"
+				on:click={() => (showContactUs = true)}
+			>
+				{$i18n.t('Contact us')}
+			</button>
+		</div>
 
-        {#if showContactUs}
-            <ContactUs bind:show={showContactUs} isLightMode={window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches}/>
-        {/if}
+		{#if showContactUs}
+			<ContactUs
+				bind:show={showContactUs}
+				isLightMode={window.matchMedia &&
+					window.matchMedia('(prefers-color-scheme: light)').matches}
+			/>
+		{/if}
 
-        <!-- Removing user button from sidebar entirely -->
+		<!-- Removing user button from sidebar entirely -->
 		<!-- <div class="px-2">
 			<div class="flex flex-col font-primary">
 				{#if $user !== undefined}

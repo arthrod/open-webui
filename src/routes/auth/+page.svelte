@@ -330,29 +330,7 @@
 		</div>
 	</div>
 	<!-- Logos -->
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 	<div class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
-=======
-	<div
-<<<<<<< HEAD
-<<<<<<< HEAD
-		class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8"
-=======
-		class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-6 md:gap-8 gap-8 py-8"
->>>>>>> 498bf70ce (Add scaleway logo and improve logos section design)
-=======
-		class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8"
->>>>>>> 013f017bf (Remove spaces before ':')
-	>
->>>>>>> b6af5b564 (Remove spaces before ':')
-=======
-	<div class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
->>>>>>> d75594aa0 (Improve french translations)
-=======
-	<div class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
->>>>>>> d442f9bcc (Improve french translations)
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/linagora-ai.png"

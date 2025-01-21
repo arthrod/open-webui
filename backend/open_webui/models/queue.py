@@ -44,12 +44,8 @@ class QueueMetrics(BaseModel):
     draft_users: int
     active_users: int
     total_slots: int
-    estimated_time: Optional[int] = None
 
 class JoinRequest(BaseModel):
-    user_id: str
-
-class MetricsRequest(BaseModel):
     user_id: str
 
 class ConfirmRequest(BaseModel):
@@ -116,17 +112,15 @@ class QueueTable:
             log.error(f"Error estimating wait time: {e}")
 
 
-    def metrics(self, user_id: str = None) -> QueueMetrics:
+    def metrics(self) -> QueueMetrics:
         waiting_users = self._count_in_status(status=QueueStatus.WAITING)
         draft_users = self._count_in_status(status=QueueStatus.DRAFT)
         active_users = self._count_in_status(status=QueueStatus.CONNECTED)
-        estimated_time = self.estimate_time(user_id=user_id) if user_id else None
         return QueueMetrics(
                 waiting_users=waiting_users,
                 draft_users=draft_users,
                 active_users=active_users,
                 total_slots=self.max_connected,
-                estimated_time=estimated_time
             )
 
     def join(self, user_id: str) -> Optional[QueueModel]:
@@ -158,8 +152,8 @@ class QueueTable:
                     Queue.status == status,
                     Queue.timestamp <= user.timestamp
                 ).count()
-                
-                return {'position': position, 'status': status }
+                estimated_time = self.estimate_time(user_id=user_id)
+                return {'position': position, 'status': status, 'estimated_time': estimated_time}
                                 
         except Exception as e:
             log.error(f"Error calling `status`: {e}")

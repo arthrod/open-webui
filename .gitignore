@@ -310,3 +310,4 @@ cypress/screenshots
 
 # Postgres data directory
 litellm/postgres_data
+test_lucie

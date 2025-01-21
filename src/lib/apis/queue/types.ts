@@ -6,13 +6,13 @@ export interface UserRequest {
 export interface QueueStatus {
     status: 'waiting' | 'draft' | 'connected' | 'disconnected';
     position: number;
+    estimated_time: number;
 }
 
 export interface QueueMetrics {
     active_users: number;
     waiting_users: number;
     total_slots: number;
-    estimated_time: number;
 }
 
 export interface TimerInfo {

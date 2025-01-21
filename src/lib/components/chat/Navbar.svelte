@@ -77,7 +77,7 @@
 				<div
 					class="flex w-full text-left px-0.5 outline-none bg-transparent truncate text-lg justify-between font-medium placeholder-gray-400 focus:outline-none"
 				>
-					Lucie 7B
+					{`${selectedModels[0]}`.replace('_', '-')}
 				</div>
 				{#if showModelSelector}
 					<ModelSelector bind:selectedModels showSetDefault={!shareEnabled} />

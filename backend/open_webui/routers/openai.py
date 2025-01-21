@@ -53,21 +53,19 @@ toxic_threshold = 0.86
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # pre-gu
-toxic_guard = ToxicLanguage(
+pre_guards_list = [
+    DetectJailbreak(
+        on_fail='noop', 
+        threshold=0.81,
+        use_local=True
+    ),
+    ToxicLanguage(
         threshold=toxic_threshold,
         model_name='multilingual',
         validation_method="sentence", on_fail="noop", 
         device=device,
         use_local=True
     )
-
-pre_guards_list = [
-    DetectJailbreak(
-        on_fail='noop', 
-        threshold=0.8,
-        use_local=True
-    ),
-    toxic_guard
 ]
 pre_guard = gd.AsyncGuard(name='pre_guard')
 pre_guard.use_many(
@@ -76,7 +74,13 @@ pre_guard.use_many(
 
 # post-guard
 post_guards_list = [
-    toxic_guard
+    ToxicLanguage(
+        threshold=0.89,
+        model_name='multilingual',
+        validation_method="sentence", on_fail="noop", 
+        device=device,
+        use_local=True
+    )
 ]
 
 post_guard = gd.AsyncGuard(name='post_guard')
@@ -720,6 +724,7 @@ async def generate_chat_completion(
     if prefix_id:
         payload["model"] = payload["model"].replace(f"{prefix_id}.", "")
 
+    payload['temperature'] = 0.6
     # Pre-GUARD
     if guard:
         latest_msg = payload['messages'][-1]['content']
@@ -736,9 +741,19 @@ async def generate_chat_completion(
             fails= ', '.join([s.validator_name for s in error.validation_summaries])
             payload['messages'].append({
                 'role': 'system',
-                'content': f"""The user's message is flagged as {fails}. 
-                Respond in user's language*, avoid repeating prohibited content, explain the violation, and encourage guideline compliance. 
-                Answer example: "I'm sorry, I can't assist with that. Your message violates our guidelines.
+                'content': f"""
+                Statut du message de l'utilisateur : {fails}
+
+                Le statut peut être erroné donc il faudra analyser la gravité du message avant de répondre
+                1. Si message grave :
+                    - Répondre normalement,
+                    - Fournir une assistance appropriée
+
+                2. Si cela viole vraiment tes directives :
+                    - Explique poliment la violation sans citer le contenu si c'est inapproprié
+                    - Proposer des alternatives constructives autour du même sujet pour orienter la conversation
+
+                Tu réponds toujours dans la langue de l'utilisateur.
                 """
             })
 
@@ -777,6 +792,7 @@ async def generate_chat_completion(
     # Convert the modified body back to JSON
     payload = json.dumps(payload)
 
+    log.warning(f"PAYLOAD: {payload}")
     r = None
     session = None
     streaming = False

@@ -1,7 +1,7 @@
 model_list:
   - model_name: Lucie_7B
     litellm_params:
-      model: openai/lucie-7b-v1
+      model: openai/lucie-7b-instruct
       api_base: os.environ/BASE_URL
       api_key: os.environ/LUCIE_API_KEY_V1
       max_tokens: 2048

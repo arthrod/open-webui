@@ -28,7 +28,7 @@
 		timeRemaining = $endTimestamp - Date.now();
 
 		const timer = setInterval(() => {
-			timeRemaining -= SECOND;
+			timeRemaining = $endTimestamp - Date.now();
 			if (Math.floor(timeRemaining / SECOND) <= 0) {
 				console.log('entered');
 				clearInterval(timer);

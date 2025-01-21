@@ -873,7 +873,7 @@ async def generate_chat_completion(
                     yield chunk
                     
             return StreamingResponse(
-                process_stream_with_guard(content=r.content) if guard else r.content,
+                r.content, # process_stream_with_guard(content=r.content) if guard else r.content,
                 status_code=r.status,
                 headers=dict(r.headers),
                 background=BackgroundTask(

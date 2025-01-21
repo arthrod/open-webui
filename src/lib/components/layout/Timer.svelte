@@ -20,7 +20,7 @@
 	onMount(() => {
 		if ($endTimestamp < Date.now()) {
 			// Reset timer and terms of use status
-			$endTimestamp = Date.now() + ($config.features.timer.session_duration * SECOND);
+			$endTimestamp = Date.now() + ($config.features.queue.session_duration * SECOND);
 			$termsOfUse.accepted = false;
 			$termsOfUse.show = false;
 		}

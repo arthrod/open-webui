@@ -5,7 +5,7 @@ import time
 import logging
 from typing import Optional, Any
 from open_webui.env import SRC_LOG_LEVELS
-from open_webui.models.queue import queue, QueueStatus, QueueMetrics, JoinRequest, ConfirmRequest, ConfirmResponse, DeleteRequest, MetricsRequest
+from open_webui.models.queue import queue, QueueStatus, QueueMetrics, JoinRequest, ConfirmRequest, ConfirmResponse, DeleteRequest
 from fastapi import APIRouter, HTTPException, status
 
 log = logging.getLogger(__name__)

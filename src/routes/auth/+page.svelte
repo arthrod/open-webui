@@ -39,14 +39,14 @@
 	let loaded = false;
 
 	let showContactUs = false;
+	let queueDisabled = false;
 
 	// Queue
-	let queueStatus: QueueStatus = { position: -1, status: 'disconnected' };
+	let queueStatus: QueueStatus = { position: -1, status: 'disconnected', estimated_time: 0 };
 	let queueMetrics: QueueMetrics = {
 		active_users: 0,
 		waiting_users: 0,
-		total_slots: 0,
-		estimated_time: 0
+		total_slots: 0
 	};
 
 	// let mode = $config?.features.enable_ldap ? 'ldap' : 'signin';
@@ -122,10 +122,8 @@
 	};
 
 	// Refresh queue status periodically
-	const refreshQueue = async () => {
+	const refreshQueueStatus = async () => {
 		queueStatus = await getStatus($queueID);
-		queueMetrics = await getMetrics({ user_id: $queueID });
-		console.log(queueMetrics);
 
 		if (queueStatus.status === 'waiting') {
 			const refreshRatio =
@@ -136,14 +134,13 @@
 						: queueMetrics.waiting_users < 1000
 							? 500
 							: 1000;
-			setTimeout(refreshQueue, Math.max(queueStatus.position * refreshRatio, 2500));
+			setTimeout(refreshQueueStatus, Math.max(queueStatus.position * refreshRatio, 2500));
 		} else if (queueStatus.status === 'draft') {
 			toast.info(
 				$i18n.t('You are ready to chat with {{WEBUI_NAME}} ! Come back to the queue to start.', {
 					WEBUI_NAME: $WEBUI_NAME
 				})
 			);
-			// refreshTimer();
 		} else if (queueStatus.status === 'connected') {
 			name = `user-${$queueID}`;
 			email = `${$queueID}@example.com`;
@@ -159,7 +156,7 @@
 
 	const confirmConnectionHandler = async () => {
 		await confirmConnection({ user_id: $queueID });
-		refreshQueue();
+		refreshQueueStatus();
 	};
 
 	// Join the queue and initialize periodic status refresh
@@ -167,7 +164,9 @@
 		$queueID = generateRandomStringId(12);
 		await joinQueue({ user_id: $queueID });
 
-		refreshQueue();
+		queueMetrics = await getMetrics();
+
+		refreshQueueStatus();
 	};
 
 	const checkOauthCallback = async () => {
@@ -201,6 +200,9 @@
 			await goto('/');
 		}
 		await checkOauthCallback();
+
+		// Disable joining queue if too many users are already waiting
+		queueDisabled = (await getMetrics()).waiting_users >= $config.features.queue.max_waiting_users;
 
 		loaded = true;
 		if (($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false) {
@@ -254,7 +256,13 @@
 				{$i18n.t('Beyond openness, we pioneer transparency and trust.')}
 			</span>
 			<div class="flex items-center md:space-x-6 max-md:flex-col max-md:space-y-8">
-				{#if queueStatus.status === 'disconnected'}
+				{#if queueDisabled}
+					<span
+						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-gray-200 text-gray-700 text-xs md:text-sm px-6 flex items-center justify-center text-center cursor-not-allowed"
+					>
+						{$i18n.t('Sorry, the queue is full. Please come back later.')}
+					</span>
+				{:else if queueStatus.status === 'disconnected'}
 					<button
 						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
 						on:click={joinQueueHandler}
@@ -281,7 +289,7 @@
 							{$i18n.t('in queue')}
 						</span>
 						<span class="absolute text-xs translate-y-2 left-1/2 top-full -translate-x-1/2 w-64">
-							{$i18n.t('estimated waiting time')} : ~{Math.floor(queueMetrics.estimated_time / 60)}
+							{$i18n.t('estimated waiting time')} : ~{Math.floor(queueStatus.estimated_time / 60)}
 							{$i18n.t('minutes')}
 						</span>
 						<div
@@ -304,7 +312,6 @@
 						{$i18n.t('Start chatting')}
 					</button>
 				{/if}
-
 				<button
 					class="h-12 md:h-16 w-64 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm md:text-base transition-all"
 					on:click={() => (showContactUs = !showContactUs)}

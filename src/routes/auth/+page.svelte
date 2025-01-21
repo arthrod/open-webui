@@ -332,6 +332,7 @@
 	<!-- Logos -->
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	<div class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
 =======
 	<div
@@ -349,6 +350,9 @@
 =======
 	<div class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
 >>>>>>> d75594aa0 (Improve french translations)
+=======
+	<div class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
+>>>>>>> d442f9bcc (Improve french translations)
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/linagora-ai.png"

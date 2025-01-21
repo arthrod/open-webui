@@ -737,21 +737,19 @@ async def generate_chat_completion(
             fails= ', '.join([s.validator_name for s in error.validation_summaries])
             payload['messages'].append({
                 'role': 'system',
-                'content': f"""Le message de l'utilisateur est marqué comme un potentiel {fails}.
+                'content': f"""
+                Statut du message de l'utilisateur : {fails}
 
-                Instructions de réponse :  
-                Évaluer la gravité du message.
+                Le statut peut être erroné donc il faudra analyser la gravité du message avant de répondre
+                1. Si message grave :
+                    - Répondre normalement,
+                    - Fournir une assistance appropriée
 
-                - Si mineur : Fournir une assistance appropriée
-                - Si grave : Ne pas répéter le contenu problématique
-                    - Expliquer poliment la violation sans citer le contenu
-                    - Orienter vers un usage conforme aux conditions d'utilisation
-                    - Proposer des alternatives appropriées si possible
-                
-                Tu dois toujours répondre dans la langue du message de l'utilisateur.
+                2. Si cela viole vraiment tes directives :
+                    - Explique poliment la violation sans citer le contenu si c'est inapproprié
+                    - Proposer des alternatives constructives pour orienter la conversation
 
-                Exemple de réponse pour violation grave :
-                "Je ne peux malheureusement pas donner suite à cette demande car elle ne respecte pas nos conditions d'utilisation. Je vous invite à reformuler votre question en tenant compte de nos directives."
+                Toujours répondre dans la langue de l'utilisateur.
                 """
             })
 

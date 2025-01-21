@@ -53,21 +53,19 @@ toxic_threshold = 0.86
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # pre-gu
-toxic_guard = ToxicLanguage(
+pre_guards_list = [
+    DetectJailbreak(
+        on_fail='noop', 
+        threshold=0.81,
+        use_local=True
+    ),
+    ToxicLanguage(
         threshold=toxic_threshold,
         model_name='multilingual',
         validation_method="sentence", on_fail="noop", 
         device=device,
         use_local=True
     )
-
-pre_guards_list = [
-    DetectJailbreak(
-        on_fail='noop', 
-        threshold=0.8,
-        use_local=True
-    ),
-    toxic_guard
 ]
 pre_guard = gd.AsyncGuard(name='pre_guard')
 pre_guard.use_many(
@@ -76,7 +74,13 @@ pre_guard.use_many(
 
 # post-guard
 post_guards_list = [
-    toxic_guard
+    ToxicLanguage(
+        threshold=0.89,
+        model_name='multilingual',
+        validation_method="sentence", on_fail="noop", 
+        device=device,
+        use_local=True
+    )
 ]
 
 post_guard = gd.AsyncGuard(name='post_guard')
@@ -747,9 +751,9 @@ async def generate_chat_completion(
 
                 2. Si cela viole vraiment tes directives :
                     - Explique poliment la violation sans citer le contenu si c'est inapproprié
-                    - Proposer des alternatives constructives pour orienter la conversation
+                    - Proposer des alternatives constructives autour du même sujet pour orienter la conversation
 
-                Toujours répondre dans la langue de l'utilisateur.
+                Tu réponds toujours dans la langue de l'utilisateur.
                 """
             })
 

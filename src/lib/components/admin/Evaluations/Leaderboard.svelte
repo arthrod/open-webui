@@ -266,8 +266,8 @@
 	});
 </script>
 
-<div class="mt-0.5 mb-2 gap-1 flex flex-col md:flex-row justify-between">
-	<div class="flex md:self-center text-lg font-medium px-0.5 shrink-0 items-center">
+<div class="mt-0.5 mb-2 gap-1 flex flex-col lg:flex-row justify-between">
+	<div class="flex lg:self-center text-lg font-medium px-0.5 shrink-0 items-center">
 		<div class=" gap-1">
 			{$i18n.t('Leaderboard')}
 		</div>

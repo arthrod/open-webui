@@ -188,7 +188,7 @@
 </script>
 
 <div class=" flex flex-col justify-between w-full overflow-y-auto h-full">
-	<div class="mx-auto w-full md:px-0 h-full relative">
+	<div class="mx-auto w-full lg:px-0 h-full relative">
 		<Sidebar bind:show={showSettings} className=" bg-white dark:bg-gray-900" width="300px">
 			<div class="flex flex-col px-5 py-3 text-sm">
 				<div class="flex justify-between items-center mb-2">

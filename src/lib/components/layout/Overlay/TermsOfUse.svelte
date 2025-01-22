@@ -12,7 +12,7 @@
 	const handleScroll = (event: { target: EventTarget | null }) => {
 		if (!termsScrolled) {
 			const terms = event.target as HTMLDivElement;
-			termsScrolled = terms.scrollTop + terms.clientHeight >= terms.scrollHeight - 25;
+			termsScrolled = terms.scrollTop + terms.clientHeight >= terms.scrollHeight - 10;
 		}
 	};
 
@@ -77,23 +77,25 @@
 	/>
 	<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 	<div
-		class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 md:w-1/2 h-4/5 md:h-2/3 p-6 md:p-12 pb-4 md:pb-8 flex flex-col border shadow-xl rounded-3xl bg-white z-50
+		class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 h-4/5 p-6 pb-4 flex flex-col border shadow-xl rounded-3xl bg-white z-50
+		sm:w-3/4 sm:h-3/4
+		lg:w-1/2 lg:h-2/3 lg:p-12 lg:pb-8
 		dark:bg-gray-900 dark:text-gray-200 dark:border-gray-800 dark:border-2 dark:shadow-none"
 		tabindex="0"
 		bind:this={popupRef}
 	>
-		<div class="mb-4 md:mb-8 md:text-3xl font-bold">
+		<div class="mb-4 lg:mb-8 lg:text-3xl font-bold">
 			{$i18n.t('Please accept the terms of use to keep chatting')}
 		</div>
 
 		<div
 			id="terms"
-			class="overflow-y-auto shadow-inner border p-2 md:p-4 md:pt-3 flex flex-col space-y-4 md:space-y-6 text-xs md:text-sm text-gray-600
+			class="overflow-y-auto shadow-inner border p-2 lg:p-4 lg:pt-3 flex flex-col space-y-4 lg:space-y-6 text-xs lg:text-sm text-gray-600
 			dark:border-gray-800 dark:text-gray-400"
 			on:scroll={handleScroll}
 		>
 			<div class="flex flex-col space-y-2">
-				<span class="font-semibold text-sm md:text-base"> Free Access </span>
+				<span class="font-semibold text-sm lg:text-base"> Free Access </span>
 				<div>
 					Lucie.chat is freely available until February 15th, allowing you to explore and test the
 					first version of the Lucie model.
@@ -115,7 +117,7 @@
 				</div>
 			</div>
 			<div class="flex flex-col space-y-2">
-				<span class="font-semibold text-sm md:text-base"> Data Collection </span>
+				<span class="font-semibold text-sm lg:text-base"> Data Collection </span>
 				<div>
 					By accessing Lucie.chat for free, you agree to authorize us to collect your chat history
 					with Lucie.
@@ -140,7 +142,7 @@
 				</div>
 			</div>
 			<div class="flex flex-col space-y-2">
-				<span class="font-semibold text-sm md:text-base"> Privacy and Security </span>
+				<span class="font-semibold text-sm lg:text-base"> Privacy and Security </span>
 				<div>
 					We are deeply committed to protecting your privacy and ensuring the security of your data.
 					For more information on how your data is stored, processed, and used responsibly, please
@@ -151,7 +153,7 @@
 				</div>
 			</div>
 			<div class="flex flex-col space-y-2">
-				<span class="font-semibold text-sm md:text-base"> Usage Guidelines </span>
+				<span class="font-semibold text-sm lg:text-base"> Usage Guidelines </span>
 				<div>
 					We kindly ask that you use Lucie.chat responsibly and in compliance with applicable laws
 					and regulations.
@@ -162,7 +164,7 @@
 				</div>
 			</div>
 			<div class="flex flex-col space-y-2">
-				<span class="font-semibold text-sm md:text-base"> Thank You </span>
+				<span class="font-semibold text-sm lg:text-base"> Thank You </span>
 				<div>
 					Thank you for using Lucie.chat ! We hope you enjoy exploring and testing the Lucie model
 					while contributing to the advancement of Open Source AI.
@@ -171,15 +173,15 @@
 		</div>
 
 		<div
-			class="mt-4 md:mt-8 h-24 w-full flex justify-end items-center space-x-3 md:space-x-6 group"
+			class="mt-4 lg:mt-8 h-24 w-full flex justify-end items-center space-x-3 lg:space-x-6 group"
 		>
 			{#if !termsScrolled}
-				<span class="grow text-sm md:text-base md:text-right text-red-400">
+				<span class="grow text-sm lg:text-base lg:text-right text-red-400">
 					ⓘ Please read the terms of use to continue.
 				</span>
 			{:else}
 				<button
-					class="py-2 md:py-3 px-4 md:px-6 rounded-full text-sm md:text-base text-gray-500 hover:text-red-800 disabled:text-gray-500 disabled:cursor-not-allowed
+					class="py-2 lg:py-3 px-4 lg:px-6 rounded-full text-sm lg:text-base text-gray-500 hover:text-red-800 disabled:text-gray-500 disabled:cursor-not-allowed
 			dark:disabled:text-gray-700 dark:text-gray-600"
 					disabled={!termsScrolled}
 					on:click={() => {
@@ -190,7 +192,7 @@
 					{$i18n.t('Decline')}
 				</button>
 				<button
-					class="py-2 md:py-3 px-4 md:px-6 bg-black text-white rounded-full text-sm md:text-base hover:bg-gray-800 disabled:bg-gray-500 disabled:cursor-not-allowed
+					class="py-2 lg:py-3 px-4 lg:px-6 bg-black text-white rounded-full text-sm lg:text-base hover:bg-gray-800 disabled:bg-gray-500 disabled:cursor-not-allowed
 			dark:disabled:bg-gray-800 dark:disabled:text-gray-400 dark:bg-gray-700 dark:text-gray-200"
 					disabled={!termsScrolled}
 					on:click={() => {

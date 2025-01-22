@@ -232,7 +232,7 @@
 
 <!-- Header -->
 <div
-	class="fixed w-full h-20 px-8 md:px-48 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-30"
+	class="fixed w-full h-20 px-8 lg:px-48 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-30"
 >
 	<img
 		crossorigin="anonymous"
@@ -241,7 +241,7 @@
 		alt="OpenLLM France logo"
 	/>
 	<button
-		class="h-8 md:h-14 px-3 md:px-12 rounded-full border border-black bg-white hover:bg-gray-50 text-sm md:text-base transition-all"
+		class="h-8 lg:h-14 px-3 lg:px-12 rounded-full border border-black bg-white hover:bg-gray-50 text-sm lg:text-base transition-all"
 		on:click={() => (showContactUs = !showContactUs)}
 	>
 		{$i18n.t('Contact us')}
@@ -250,34 +250,34 @@
 
 <!-- Page -->
 <div class="h-screen overflow-y-scroll pt-20 text-gray-700">
-	<div class="grid md:grid-cols-2">
-		<div class="p-8 md:px-48 md:py-24 flex flex-col justify-center space-y-6 bg-slate-100">
-			<span class="text-2xl md:text-5xl max-md:text-center">
+	<div class="grid lg:grid-cols-2">
+		<div class="p-8 lg:px-48 lg:py-24 flex flex-col justify-center space-y-6 bg-slate-100">
+			<span class="text-2xl lg:text-5xl max-lg:text-center">
 				{$i18n.t(
 					'{{WEBUI_NAME}} — The truly open source AI built on transparency, trust, and efficiency.',
 					{ WEBUI_NAME: $WEBUI_NAME }
 				)}
 			</span>
-			<span class="text-lg md:text-2xl max-md:text-center text-gray-500">
+			<span class="text-lg lg:text-2xl max-lg:text-center text-gray-500">
 				{$i18n.t('Beyond openness, we pioneer transparency and trust.')}
 			</span>
-			<div class="flex items-center md:space-x-6 max-md:flex-col max-md:space-y-8">
+			<div class="flex items-center lg:space-x-6 max-lg:flex-col max-lg:space-y-8">
 				{#if queueDisabled}
 					<span
-						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-gray-200 text-gray-700 text-xs md:text-sm px-6 flex items-center justify-center text-center cursor-not-allowed"
+						class="max-lg:self-center h-12 lg:h-16 w-64 rounded-full bg-gray-200 text-gray-700 text-xs lg:text-sm px-6 flex items-center justify-center text-center cursor-not-allowed"
 					>
 						{$i18n.t('Sorry, the queue is full. Please come back later.')}
 					</span>
 				{:else if queueStatus.status === 'disconnected'}
 					<button
-						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
+						class="max-lg:self-center h-12 lg:h-16 w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
 						on:click={joinQueueHandler}
 					>
 						{$i18n.t('Try {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
 					</button>
 				{:else if queueStatus.status === 'connected'}
 					<div
-						class="max-md:self-center h-12 md:h-16 w-64 flex items-center justify-center gap-3 text-lg sm:text-lg text-center font-semibold dark:text-gray-200"
+						class="max-lg:self-center h-12 lg:h-16 w-64 flex items-center justify-center gap-3 text-lg sm:text-lg text-center font-semibold dark:text-gray-200"
 					>
 						<div>{$i18n.t('Signing in to {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}</div>
 
@@ -287,7 +287,7 @@
 					</div>
 				{:else if queueStatus.status === 'waiting'}
 					<button
-						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-slate-400 font-medium transition-all relative"
+						class="max-lg:self-center h-12 lg:h-16 w-64 rounded-full bg-slate-400 font-medium transition-all relative"
 						disabled
 					>
 						<span class="relative z-20 text-white">
@@ -312,27 +312,27 @@
 					</button>
 				{:else if queueStatus.status === 'draft'}
 					<button
-						class="max-md:self-center h-12 md:h-16 w-64 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-all"
+						class="max-lg:self-center h-12 lg:h-16 w-64 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-all"
 						on:click={confirmConnectionHandler}
 					>
 						{$i18n.t('Start chatting')}
 					</button>
 				{/if}
 				<button
-					class="h-12 md:h-16 w-64 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm md:text-base transition-all"
+					class="h-12 lg:h-16 w-64 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm lg:text-base transition-all"
 					on:click={() => (showContactUs = !showContactUs)}
 				>
 					{$i18n.t('Contact us')}
 				</button>
 			</div>
-			<span class="md:pt-4 text-base md:text-lg max-md:text-center">
+			<span class="md:pt-4 text-base lg:text-lg max-lg:text-center">
 				{$i18n.t(
 					"{{WEBUI_NAME}} isn't just open, it's exceptionally transparent and reliable. From its inception, every decision has been guided by principles of trustworthiness, fairness, and accountability. Whether it's for education, government, or research, {{WEBUI_NAME}} is designed to be a model you can count on.",
 					{ WEBUI_NAME: $WEBUI_NAME }
 				)}
 			</span>
 		</div>
-		<div class="max-md:p-8 max-md:pt-0 bg-white flex items-center justify-center">
+		<div class="max-lg:p-8 max-lg:pt-0 bg-white flex items-center justify-center">
 			<!-- Lucie Illustration -->
 			<img
 				crossorigin="anonymous"
@@ -343,7 +343,7 @@
 		</div>
 	</div>
 	<!-- Logos -->
-	<div class="px-8 md:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
+	<div class="px-8 lg:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/linagora-ai.png"
@@ -403,11 +403,11 @@
 			alt="Scaleway logo"
 		/>
 	</div>
-	<div class="px-8 md:px-48 my-6 md:mt-12">
-		<div class="text-2xl md:text-3xl mb-4 md:mb-8">
+	<div class="px-8 lg:px-48 my-6 lg:mt-12">
+		<div class="text-2xl lg:text-3xl mb-4 lg:mb-8">
 			{$i18n.t('Origins of the name of {{WEBUI_NAME}} model', { WEBUI_NAME: $WEBUI_NAME })}
 		</div>
-		<div class="flex flex-col space-y-4 text-sm md:text-base">
+		<div class="flex flex-col space-y-4 text-sm lg:text-base">
 			<span>
 				{$i18n.t(
 					'{{WEBUI_NAME}} is our truly Open Source artificial intelligence, developed in collaboration with the OpenLLM-France community and supported by the French General Secretariat for Investment.',
@@ -437,14 +437,14 @@
 			</span>
 		</div>
 	</div>
-	<div class="px-8 md:px-48 my-12 md:my-24">
-		<div class="text-2xl md:text-3xl mb-8 md:mb-16">
+	<div class="px-8 lg:px-48 my-12 lg:my-24">
+		<div class="text-2xl lg:text-3xl mb-8 lg:mb-16">
 			{$i18n.t('What makes {{WEBUI_NAME}} truly Open Source ?', { WEBUI_NAME: $WEBUI_NAME })}
 		</div>
-		<div class="grid md:grid-cols-3 gap-12 md:gap-24 md:px-6">
-			<div class="flex flex-col space-y-4 md:space-y-8">
+		<div class="grid lg:grid-cols-3 gap-12 lg:gap-24 lg:px-6">
+			<div class="flex flex-col space-y-4 lg:space-y-8">
 				<EyeInBox className="size-10" />
-				<span class="text-xl md:text-2xl font-medium h-16">
+				<span class="text-xl lg:text-2xl font-medium h-16">
 					{$i18n.t('Transparent Data')}
 				</span>
 				<span>
@@ -453,9 +453,9 @@
 					)}
 				</span>
 			</div>
-			<div class="flex flex-col space-y-4 md:space-y-8">
+			<div class="flex flex-col space-y-4 lg:space-y-8">
 				<StateGraph className="size-10" />
-				<span class="text-xl md:text-2xl font-medium h-16">
+				<span class="text-xl lg:text-2xl font-medium h-16">
 					{$i18n.t('Open Algorithms')}
 				</span>
 				<span>
@@ -464,9 +464,9 @@
 					)}
 				</span>
 			</div>
-			<div class="flex flex-col space-y-4 md:space-y-8">
+			<div class="flex flex-col space-y-4 lg:space-y-8">
 				<TouchWindow className="size-8" />
-				<span class="text-xl md:text-2xl font-medium h-16 flex items-end">
+				<span class="text-xl lg:text-2xl font-medium h-16 flex items-end">
 					{$i18n.t('A Completely Free-Access Production Line')}
 				</span>
 				<span>
@@ -478,22 +478,22 @@
 			</div>
 		</div>
 	</div>
-	<div class="px-8 md:px-48 py-12 md:py-24 bg-gray-50">
-		<div class="grid md:grid-cols-2 items-center mb-8 md:mb-16">
-			<span class="text-2xl md:text-3xl">
+	<div class="px-8 lg:px-48 py-12 lg:py-24 bg-gray-50">
+		<div class="grid lg:grid-cols-2 items-center mb-8 lg:mb-16">
+			<span class="text-2xl lg:text-3xl">
 				{$i18n.t('Designed for sovereignty and sustainability')}
 			</span>
-			<span class="max-md:text-sm max-md:pt-2">
+			<span class="max-lg:text-sm max-lg:pt-2">
 				{$i18n.t(
 					'{{WEBUI_NAME}} was built to address the unique challenges of developing ethical, efficient, and accessible AI.',
 					{ WEBUI_NAME: $WEBUI_NAME }
 				)}
 			</span>
 		</div>
-		<div class="grid md:grid-cols-3 gap-6">
-			<div class="flex flex-col space-y-4 md:space-y-8 bg-white rounded p-8">
+		<div class="grid lg:grid-cols-3 gap-6">
+			<div class="flex flex-col space-y-4 lg:space-y-8 bg-white rounded p-8">
 				<EuLogo className="size-16 p-1 border-2 border-gray-700 rounded-full" />
-				<span class="text-2xl md:text-3xl font-medium">{$i18n.t('European Sovereignty')}</span>
+				<span class="text-2xl lg:text-3xl font-medium">{$i18n.t('European Sovereignty')}</span>
 				<span>
 					{$i18n.t(
 						'{{WEBUI_NAME}} embodies a commitment to European values by respecting cultural diversity, promoting ethical AI development and ensuring compliance with the AI Act.',
@@ -501,9 +501,9 @@
 					)}
 				</span>
 			</div>
-			<div class="flex flex-col space-y-4 md:space-y-8 bg-white rounded p-8">
+			<div class="flex flex-col space-y-4 lg:space-y-8 bg-white rounded p-8">
 				<Speedometer className="size-16" />
-				<span class="text-2xl md:text-3xl font-medium">{$i18n.t('Compact and Efficient')}</span>
+				<span class="text-2xl lg:text-3xl font-medium">{$i18n.t('Compact and Efficient')}</span>
 				<span>
 					{$i18n.t(
 						'Optimized for low-resource environments, {{WEBUI_NAME}}\'s architecture enables deployment on "GPU poor" infrastructures and even on mobile devices.',
@@ -511,9 +511,9 @@
 					)}
 				</span>
 			</div>
-			<div class="flex flex-col space-y-4 md:space-y-8 bg-white rounded p-8">
+			<div class="flex flex-col space-y-4 lg:space-y-8 bg-white rounded p-8">
 				<PlanetLeaf className="size-16" />
-				<span class="text-2xl md:text-3xl font-medium">{$i18n.t('Eco-Responsibility')}</span>
+				<span class="text-2xl lg:text-3xl font-medium">{$i18n.t('Eco-Responsibility')}</span>
 				<span>
 					{$i18n.t(
 						'By focusing on quality over quantity in training data, we ensure a lighter environmental footprint without compromising performance.'
@@ -522,13 +522,13 @@
 			</div>
 		</div>
 	</div>
-	<div class="px-8 md:px-48 my-12 md:my-24">
-		<div class="text-2xl md:text-3xl mb-8 md:mb-16">
+	<div class="px-8 lg:px-48 my-12 lg:my-24">
+		<div class="text-2xl lg:text-3xl mb-8 lg:mb-16">
 			{$i18n.t('{{WEBUI_NAME}} in figures', { WEBUI_NAME: $WEBUI_NAME })}
 		</div>
-		<div class="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-24">
-			<div class="flex flex-col space-y-3 md:space-y-6">
-				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">
+		<div class="grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-24">
+			<div class="flex flex-col space-y-3 lg:space-y-6">
+				<span class="text-xl lg:text-3xl h-14 lg:h-20 flex items-end">
 					{$i18n.t('7 billion parameters')}
 				</span>
 				<div class="w-full h-px bg-black"></div>
@@ -539,8 +539,8 @@
 					)}
 				</span>
 			</div>
-			<div class="flex flex-col space-y-3 md:space-y-6">
-				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end"
+			<div class="flex flex-col space-y-3 lg:space-y-6">
+				<span class="text-xl lg:text-3xl h-14 lg:h-20 flex items-end"
 					>{$i18n.t('3.1 trillion tokens')}</span
 				>
 				<div class="w-full h-px bg-black"></div>
@@ -550,8 +550,8 @@
 					)}
 				</span>
 			</div>
-			<div class="flex flex-col space-y-3 md:space-y-6">
-				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">
+			<div class="flex flex-col space-y-3 lg:space-y-6">
+				<span class="text-xl lg:text-3xl h-14 lg:h-20 flex items-end">
 					{$i18n.t('600k GPU Hours')}
 				</span>
 				<div class="w-full h-px bg-black"></div>
@@ -561,8 +561,8 @@
 					)}
 				</span>
 			</div>
-			<div class="flex flex-col space-y-3 md:space-y-6">
-				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">
+			<div class="flex flex-col space-y-3 lg:space-y-6">
+				<span class="text-xl lg:text-3xl h-14 lg:h-20 flex items-end">
 					{$i18n.t('Languages supported')}
 				</span>
 				<div class="w-full h-px bg-black"></div>
@@ -572,8 +572,8 @@
 					)}
 				</span>
 			</div>
-			<div class="flex flex-col space-y-3 md:space-y-6">
-				<span class="text-xl md:text-3xl h-14 md:h-20 flex items-end">2023 - 2025</span>
+			<div class="flex flex-col space-y-3 lg:space-y-6">
+				<span class="text-xl lg:text-3xl h-14 lg:h-20 flex items-end">2023 - 2025</span>
 				<div class="w-full h-px bg-black"></div>
 				<span class="text-sm">
 					{$i18n.t(
@@ -584,29 +584,29 @@
 		</div>
 	</div>
 	<!-- Timeline -->
-	<div class="max-md:px-8 py-12 md:py-24 bg-gray-50 flex flex-col items-center text-center">
+	<div class="max-lg:px-8 py-12 lg:py-24 bg-gray-50 flex flex-col items-center text-center">
 		<div class="text-3xl mb-8">
 			{$i18n.t('Future of {{WEBUI_NAME}} in 2025', { WEBUI_NAME: $WEBUI_NAME })}
 		</div>
-		<div class="md:px-[33vw] mb-8 md:mb-16">
+		<div class="md:px-[33vw] mb-8 lg:mb-16">
 			{$i18n.t(
 				"The journey of {{WEBUI_NAME}} is far from over. Our 2025 roadmap outlines ambitious milestones to enhance capabilities and expand the model's applications:",
 				{ WEBUI_NAME: $WEBUI_NAME }
 			)}
 		</div>
-		<div class="md:px-[25vw] md:-translate-x-44">
+		<div class="md:px-[25vw] lg:-translate-x-44">
 			<Timeline>
 				<TimelineItem>
 					<TimelineOppositeContent slot="opposite-content">
-						<span class="font-bold text-base md:text-xl">Q1</span>
+						<span class="font-bold text-base lg:text-xl">Q1</span>
 					</TimelineOppositeContent>
 					<TimelineSeparator>
 						<TimelineDot style={'background-color: transparent !important;'} />
 						<TimelineConnector />
 					</TimelineSeparator>
 					<TimelineContent>
-						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
-							<span class="text-xl md:text-2xl">
+						<div class="flex flex-col max-lg:w-52 space-y-2 pb-12">
+							<span class="text-xl lg:text-2xl">
 								{$i18n.t('Enhanced fine-tuning and better toolkit for AI makers')}
 							</span>
 							<span>
@@ -620,15 +620,15 @@
 				</TimelineItem>
 				<TimelineItem>
 					<TimelineOppositeContent slot="opposite-content">
-						<span class="font-bold text-base md:text-xl">Q2</span>
+						<span class="font-bold text-base lg:text-xl">Q2</span>
 					</TimelineOppositeContent>
 					<TimelineSeparator>
 						<TimelineDot />
 						<TimelineConnector />
 					</TimelineSeparator>
 					<TimelineContent>
-						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
-							<span class="text-xl md:text-2xl">
+						<div class="flex flex-col max-lg:w-52 space-y-2 pb-12">
+							<span class="text-xl lg:text-2xl">
 								{$i18n.t('Advanced Retrieval-Augmented Generation (RAG)')}
 							</span>
 							<span>
@@ -642,15 +642,15 @@
 				</TimelineItem>
 				<TimelineItem>
 					<TimelineOppositeContent slot="opposite-content">
-						<span class="font-bold text-base md:text-xl">Q3</span>
+						<span class="font-bold text-base lg:text-xl">Q3</span>
 					</TimelineOppositeContent>
 					<TimelineSeparator>
 						<TimelineDot />
 						<TimelineConnector />
 					</TimelineSeparator>
 					<TimelineContent>
-						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
-							<span class="text-xl md:text-2xl">
+						<div class="flex flex-col max-lg:w-52 space-y-2 pb-12">
+							<span class="text-xl lg:text-2xl">
 								{$i18n.t('Multimodal Version for {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
 							</span>
 							<span>
@@ -664,15 +664,15 @@
 				</TimelineItem>
 				<TimelineItem>
 					<TimelineOppositeContent slot="opposite-content">
-						<span class="font-bold text-base md:text-xl">Q4</span>
+						<span class="font-bold text-base lg:text-xl">Q4</span>
 					</TimelineOppositeContent>
 					<TimelineSeparator>
 						<TimelineDot />
 						<TimelineConnector />
 					</TimelineSeparator>
 					<TimelineContent>
-						<div class="flex flex-col max-md:w-52 space-y-2">
-							<span class="text-xl md:text-2xl"> {$i18n.t('Agentic AI Framework')} </span>
+						<div class="flex flex-col max-lg:w-52 space-y-2">
+							<span class="text-xl lg:text-2xl"> {$i18n.t('Agentic AI Framework')} </span>
 							<span>
 								{$i18n.t(
 									'{{WEBUI_NAME}} will evolve into a robust agentic AI framework, harnessing its capabilities to power autonomous systems and lay the foundation for Large Action Models (LAM) all while maintaining transparency, trust, and ethical safeguards.',
@@ -719,9 +719,9 @@
 			</style>
 		</div>
 	</div>
-	<div class="px-8 md:px-48 py-12 md:py-24">
-		<div class="grid md:grid-cols-2 gap-3 md:gap-12 items-center mb-8 md:mb-16">
-			<span class="text-2xl md:text-3xl">
+	<div class="px-8 lg:px-48 py-12 lg:py-24">
+		<div class="grid lg:grid-cols-2 gap-3 lg:gap-12 items-center mb-8 lg:mb-16">
+			<span class="text-2xl lg:text-3xl">
 				{$i18n.t('Join the {{WEBUI_NAME}} movement', { WEBUI_NAME: $WEBUI_NAME })}
 			</span>
 			<span class="text-sm leading-6">
@@ -731,7 +731,7 @@
 				)}
 			</span>
 		</div>
-		<div class="grid md:grid-cols-4 gap-8">
+		<div class="grid lg:grid-cols-4 gap-8">
 			<div class="flex flex-col space-y-4 bg-white rounded border pb-8">
 				<div
 					class="h-72 p-8 flex justify-center bg-[url('/assets/design/abstract-circle.png')] bg-contain bg-no-repeat"
@@ -743,8 +743,8 @@
 						alt="GitHub logo"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl md:text-2xl"> {$i18n.t('Collaborate on GitHub')} </span>
-				<span class="px-8 text-sm max-md:pb-6 md:h-32">
+				<span class="md:h-16 px-8 text-xl lg:text-2xl"> {$i18n.t('Collaborate on GitHub')} </span>
+				<span class="px-8 text-sm max-lg:pb-6 lg:h-32">
 					{$i18n.t("Contribute to {{WEBUI_NAME}}'s development.", { WEBUI_NAME: $WEBUI_NAME })}
 				</span>
 				<a
@@ -765,10 +765,10 @@
 						alt="Lucie illustration"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl md:text-2xl">
+				<span class="md:h-16 px-8 text-xl lg:text-2xl">
 					{$i18n.t('Experiment on Hugging Face')}
 				</span>
-				<span class="px-8 text-sm max-md:pb-6 md:h-32">
+				<span class="px-8 text-sm max-lg:pb-6 lg:h-32">
 					{$i18n.t("Explore {{WEBUI_NAME}}'s capabilities in your projects.", {
 						WEBUI_NAME: $WEBUI_NAME
 					})}
@@ -791,10 +791,10 @@
 						alt="OpenLLM France Logo"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl md:text-2xl"
+				<span class="md:h-16 px-8 text-xl lg:text-2xl"
 					>{$i18n.t('Be Part of OpenLLM France')}
 				</span>
-				<span class="px-8 text-sm max-md:pb-6 md:h-32">
+				<span class="px-8 text-sm max-lg:pb-6 lg:h-32">
 					{$i18n.t('Join the growing community dedicated to sovereign and open AI.')}
 				</span>
 				<a
@@ -815,10 +815,10 @@
 						alt="OpenLLM Europe logo"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl md:text-2xl">
+				<span class="md:h-16 px-8 text-xl lg:text-2xl">
 					{$i18n.t('Other European Initiatives')}
 				</span>
-				<span class="px-8 text-sm max-md:pb-6 md:h-32">
+				<span class="px-8 text-sm max-lg:pb-6 lg:h-32">
 					{$i18n.t('Explore other european OpenLLM projects.')}
 				</span>
 				<a
@@ -830,7 +830,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="px-8 md:px-48 flex flex-col items-center space-y-6 mb-8">
+	<div class="px-8 lg:px-48 flex flex-col items-center space-y-6 mb-8">
 		<div class="h-px w-full my-4 bg-gray-300" />
 		<img
 			crossorigin="anonymous"

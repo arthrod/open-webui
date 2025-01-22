@@ -135,7 +135,7 @@
 									>
 										<tr>
 											<th scope="col" class="px-3 py-2"> {$i18n.t('Name')} </th>
-											<th scope="col" class="px-3 py-2 hidden md:flex">
+											<th scope="col" class="px-3 py-2 hidden lg:flex">
 												{$i18n.t('Created At')}
 											</th>
 											<th scope="col" class="px-3 py-2 text-right" />
@@ -157,7 +157,7 @@
 													</a>
 												</td>
 
-												<td class=" px-3 py-1 hidden md:flex h-[2.5rem]">
+												<td class=" px-3 py-1 hidden lg:flex h-[2.5rem]">
 													<div class="my-auto">
 														{dayjs(chat.created_at * 1000).format($i18n.t('MMMM DD, YYYY HH:mm'))}
 													</div>

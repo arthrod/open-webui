@@ -349,12 +349,12 @@
 
 		{#if !edit || (edit && model)}
 			<form
-				class="flex flex-col md:flex-row w-full gap-3 md:gap-6"
+				class="flex flex-col lg:flex-row w-full gap-3 lg:gap-6"
 				on:submit|preventDefault={() => {
 					submitHandler();
 				}}
 			>
-				<div class="self-center md:self-start flex justify-center my-2 flex-shrink-0">
+				<div class="self-center lg:self-start flex justify-center my-2 flex-shrink-0">
 					<div class="self-center">
 						<button
 							class="rounded-xl flex flex-shrink-0 items-center {info.meta.profile_image_url !==
@@ -370,13 +370,13 @@
 								<img
 									src={info.meta.profile_image_url}
 									alt="model profile"
-									class="rounded-xl size-72 md:size-60 object-cover shrink-0"
+									class="rounded-xl size-72 lg:size-60 object-cover shrink-0"
 								/>
 							{:else}
 								<img
 									src="/static/favicon.png"
 									alt="model profile"
-									class=" rounded-xl size-72 md:size-60 object-cover shrink-0"
+									class=" rounded-xl size-72 lg:size-60 object-cover shrink-0"
 								/>
 							{/if}
 

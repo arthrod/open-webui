@@ -669,7 +669,7 @@
 </script>
 
 {#if $showCallOverlay}
-	<div class="max-w-lg w-full h-full max-h-[100dvh] flex flex-col justify-between p-3 md:p-6">
+	<div class="max-w-lg w-full h-full max-h-[100dvh] flex flex-col justify-between p-3 lg:p-6">
 		{#if camera}
 			<button
 				type="button"
@@ -832,7 +832,7 @@
 					{/if}
 				</button>
 			{:else}
-				<div class="relative flex video-container w-full max-h-full pt-2 pb-4 md:py-6 px-2 h-full">
+				<div class="relative flex video-container w-full max-h-full pt-2 pb-4 lg:py-6 px-2 h-full">
 					<video
 						id="camera-feed"
 						autoplay
@@ -842,7 +842,7 @@
 
 					<canvas id="camera-canvas" style="display:none;" />
 
-					<div class=" absolute top-4 md:top-8 left-4">
+					<div class=" absolute top-4 lg:top-8 left-4">
 						<button
 							type="button"
 							class="p-1.5 text-white cursor-pointer backdrop-blur-xl bg-black/10 rounded-full"

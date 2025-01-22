@@ -121,8 +121,8 @@
 />
 <UserChatsModal bind:show={showUserChatsModal} user={selectedUser} />
 
-<div class="mt-0.5 mb-2 gap-1 flex flex-col md:flex-row justify-between">
-	<div class="flex md:self-center text-lg font-medium px-0.5">
+<div class="mt-0.5 mb-2 gap-1 flex flex-col lg:flex-row justify-between">
+	<div class="flex lg:self-center text-lg font-medium px-0.5">
 		{$i18n.t('Users')}
 		<div class="flex self-center w-[1px] h-6 mx-2.5 bg-gray-50 dark:bg-gray-850" />
 

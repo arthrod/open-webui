@@ -107,7 +107,7 @@
 
 	<div class="flex flex-col gap-1 my-1.5">
 		<div class="flex justify-between items-center">
-			<div class="flex md:self-center text-xl font-medium px-0.5 items-center">
+			<div class="flex lg:self-center text-xl font-medium px-0.5 items-center">
 				{$i18n.t('Prompts')}
 				<div class="flex self-center w-[1px] h-6 mx-2.5 bg-gray-50 dark:bg-gray-850" />
 				<span class="text-lg font-medium text-gray-500 dark:text-gray-300"

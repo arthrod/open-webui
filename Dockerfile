@@ -27,6 +27,7 @@ ARG BUILD_HASH
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+RUN npm add -D terser
 RUN npm ci
 
 COPY . .

@@ -121,7 +121,7 @@
 </script>
 
 <div class=" flex flex-col justify-between w-full overflow-y-auto h-full">
-	<div class="mx-auto w-full md:px-0 h-full">
+	<div class="mx-auto w-full lg:px-0 h-full">
 		<div class=" flex flex-col h-full px-4">
 			<div class="flex flex-col justify-between mb-1 gap-1">
 				<div class="flex flex-col gap-1 w-full">

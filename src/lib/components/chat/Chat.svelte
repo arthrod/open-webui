@@ -1844,7 +1844,7 @@
 		{#if $settings?.backgroundImageUrl ?? null}
 			<div
 				class="absolute {$showSidebar
-					? 'md:max-w-[calc(100%-260px)] md:translate-x-[260px]'
+					? 'md:max-w-[calc(100%-260px)] lg:translate-x-[260px]'
 					: ''} top-0 left-0 w-full h-full bg-cover bg-center bg-no-repeat"
 				style="background-image: url({$settings.backgroundImageUrl})  "
 			/>

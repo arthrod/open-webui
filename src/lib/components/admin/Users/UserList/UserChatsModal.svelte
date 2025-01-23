@@ -72,7 +72,7 @@
 		</button>
 	</div>
 
-	<div class="flex flex-col md:flex-row w-full px-5 pt-2 pb-4 md:space-x-4 dark:text-gray-200">
+	<div class="flex flex-col lg:flex-row w-full px-5 pt-2 pb-4 lg:space-x-4 dark:text-gray-200">
 		<div class=" flex flex-col w-full sm:flex-row sm:justify-center sm:space-x-6">
 			{#if chats}
 				{#if chats.length > 0}
@@ -97,7 +97,7 @@
 										</th>
 										<th
 											scope="col"
-											class="px-3 py-2 hidden md:flex cursor-pointer select-none justify-end"
+											class="px-3 py-2 hidden lg:flex cursor-pointer select-none justify-end"
 											on:click={() => setSortKey('updated_at')}
 										>
 											{$i18n.t('Updated at')}
@@ -128,7 +128,7 @@
 												</a>
 											</td>
 
-											<td class=" px-3 py-1 hidden md:flex h-[2.5rem] justify-end">
+											<td class=" px-3 py-1 hidden lg:flex h-[2.5rem] justify-end">
 												<div class="my-auto shrink-0">
 													{dayjs(chat.updated_at * 1000).format($i18n.t('MMMM DD, YYYY HH:mm'))}
 												</div>

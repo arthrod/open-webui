@@ -232,7 +232,7 @@
 
 <!-- Header -->
 <div
-	class="fixed w-full h-20 px-8 lg:px-48 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-30"
+	class="fixed w-full h-20 px-8 md:px-12 lg:px-48 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-30"
 >
 	<img
 		crossorigin="anonymous"
@@ -241,7 +241,9 @@
 		alt="OpenLLM France logo"
 	/>
 	<button
-		class="h-8 lg:h-14 px-3 lg:px-12 rounded-full border border-black bg-white hover:bg-gray-50 text-sm lg:text-base transition-all"
+		class="h-8 px-3 rounded-full border border-black bg-white hover:bg-gray-50 text-sm transition-all
+		md:h-12 md:px-8
+		lg:h-14 lg:px-12 lg:text-base"
 		on:click={() => (showContactUs = !showContactUs)}
 	>
 		{$i18n.t('Contact us')}
@@ -251,17 +253,21 @@
 <!-- Page -->
 <div class="h-screen overflow-y-scroll pt-20 text-gray-700">
 	<div class="grid lg:grid-cols-2">
-		<div class="p-8 lg:px-48 lg:py-24 flex flex-col justify-center space-y-6 bg-slate-100">
+		<div class="p-8 md:p-12 lg:px-48 lg:py-24 flex flex-col justify-center space-y-6 bg-slate-100">
 			<span class="text-2xl lg:text-5xl max-lg:text-center">
 				{$i18n.t(
 					'{{WEBUI_NAME}} — The truly open source AI built on transparency, trust, and efficiency.',
 					{ WEBUI_NAME: $WEBUI_NAME }
 				)}
 			</span>
-			<span class="text-lg lg:text-2xl max-lg:text-center text-gray-500">
+			<span class="pb-2 text-lg lg:text-2xl max-lg:text-center text-gray-500">
 				{$i18n.t('Beyond openness, we pioneer transparency and trust.')}
 			</span>
-			<div class="flex items-center lg:space-x-6 max-lg:flex-col max-lg:space-y-8">
+			<div
+				class="flex flex-col items-center
+				md:flex-row md:justify-center md:gap-8
+				lg:space-x-6"
+			>
 				{#if queueDisabled}
 					<span
 						class="max-lg:self-center h-12 lg:h-16 w-64 rounded-full bg-gray-200 text-gray-700 text-xs lg:text-sm px-6 flex items-center justify-center text-center cursor-not-allowed"
@@ -285,7 +291,7 @@
 							<Spinner />
 						</div>
 					</div>
-				{:else if queueStatus.status === 'waiting'}
+				{:else if queueStatus.status === 'draft'}
 					<button
 						class="max-lg:self-center h-12 lg:h-16 w-64 rounded-full bg-slate-400 font-medium transition-all relative"
 						disabled
@@ -319,13 +325,13 @@
 					</button>
 				{/if}
 				<button
-					class="h-12 lg:h-16 w-64 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-600 text-sm lg:text-base transition-all"
+					class="max-md:mt-8 h-12 lg:h-16 w-64 rounded-full border border-slate-300 text-slate-500 bg-transparent hover:bg-white hover:text-slate-600 text-sm lg:text-base transition-all"
 					on:click={() => (showContactUs = !showContactUs)}
 				>
 					{$i18n.t('Contact us')}
 				</button>
 			</div>
-			<span class="lg:pt-4 text-base lg:text-lg max-lg:text-center">
+			<span class="md:pt-4 text-base lg:text-lg max-lg:text-center">
 				{$i18n.t(
 					"{{WEBUI_NAME}} isn't just open, it's exceptionally transparent and reliable. From its inception, every decision has been guided by principles of trustworthiness, fairness, and accountability. Whether it's for education, government, or research, {{WEBUI_NAME}} is designed to be a model you can count on.",
 					{ WEBUI_NAME: $WEBUI_NAME }
@@ -337,13 +343,13 @@
 			<img
 				crossorigin="anonymous"
 				src="/assets/images/lucie.png"
-				class="lg:max-h-[75vh]"
+				class="md:max-h-[50vh] md:mt-8 lg:max-h-[75vh]"
 				alt="Lucie illustration"
 			/>
 		</div>
 	</div>
 	<!-- Logos -->
-	<div class="px-8 lg:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
+	<div class="px-8 md:px-12 lg:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/linagora-ai.png"
@@ -403,7 +409,7 @@
 			alt="Scaleway logo"
 		/>
 	</div>
-	<div class="px-8 lg:px-48 my-6 lg:mt-12">
+	<div class="px-8 md:px-12 lg:px-48 my-6 lg:mt-12">
 		<div class="text-2xl lg:text-3xl mb-4 lg:mb-8">
 			{$i18n.t('Origins of the name of {{WEBUI_NAME}} model', { WEBUI_NAME: $WEBUI_NAME })}
 		</div>
@@ -437,11 +443,11 @@
 			</span>
 		</div>
 	</div>
-	<div class="px-8 lg:px-48 my-12 lg:my-24">
+	<div class="px-8 md:px-12 lg:px-48 my-12 lg:my-24">
 		<div class="text-2xl lg:text-3xl mb-8 lg:mb-16">
 			{$i18n.t('What makes {{WEBUI_NAME}} truly Open Source ?', { WEBUI_NAME: $WEBUI_NAME })}
 		</div>
-		<div class="grid lg:grid-cols-3 gap-12 lg:gap-24 lg:px-6">
+		<div class="grid gap-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-24 lg:px-6">
 			<div class="flex flex-col space-y-4 lg:space-y-8">
 				<EyeInBox className="size-10" />
 				<span class="text-xl lg:text-2xl font-medium lg:h-16">
@@ -478,7 +484,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="px-8 lg:px-48 py-12 lg:py-24 bg-gray-50">
+	<div class="px-8 md:px-12 lg:px-48 py-12 lg:py-24 bg-gray-50">
 		<div class="grid lg:grid-cols-2 items-center mb-8 lg:mb-16">
 			<span class="text-2xl lg:text-3xl">
 				{$i18n.t('Designed for sovereignty and sustainability')}
@@ -490,7 +496,7 @@
 				)}
 			</span>
 		</div>
-		<div class="grid lg:grid-cols-3 gap-6">
+		<div class="grid gap-6 md:grid-cols-2 md:gap-12 lg:grid-cols-3">
 			<div class="flex flex-col space-y-4 lg:space-y-8 bg-white rounded p-8">
 				<EuLogo className="size-16 p-1 border-2 border-gray-700 rounded-full" />
 				<span class="text-2xl lg:text-3xl font-medium">{$i18n.t('European Sovereignty')}</span>
@@ -522,7 +528,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="px-8 lg:px-48 my-12 lg:my-24">
+	<div class="px-8 md:px-12 lg:px-48 my-12 lg:my-24">
 		<div class="text-2xl lg:text-3xl mb-8 lg:mb-16">
 			{$i18n.t('{{WEBUI_NAME}} in figures', { WEBUI_NAME: $WEBUI_NAME })}
 		</div>
@@ -594,7 +600,7 @@
 				{ WEBUI_NAME: $WEBUI_NAME }
 			)}
 		</div>
-		<div class="lg:px-[25vw] lg:-translate-x-44">
+		<div class="lg:px-[25vw] md:-translate-x-32 lg:-translate-x-44">
 			<Timeline>
 				<TimelineItem>
 					<TimelineOppositeContent slot="opposite-content">
@@ -605,7 +611,7 @@
 						<TimelineConnector />
 					</TimelineSeparator>
 					<TimelineContent>
-						<div class="flex flex-col max-lg:w-52 space-y-2 pb-12">
+						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
 							<span class="text-lg lg:text-2xl">
 								{$i18n.t('Enhanced fine-tuning and better toolkit for AI makers')}
 							</span>
@@ -627,7 +633,7 @@
 						<TimelineConnector />
 					</TimelineSeparator>
 					<TimelineContent>
-						<div class="flex flex-col max-lg:w-52 space-y-2 pb-12">
+						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
 							<span class="text-lg lg:text-2xl">
 								{$i18n.t('Advanced Retrieval-Augmented Generation (RAG)')}
 							</span>
@@ -649,7 +655,7 @@
 						<TimelineConnector />
 					</TimelineSeparator>
 					<TimelineContent>
-						<div class="flex flex-col max-lg:w-52 space-y-2 pb-12">
+						<div class="flex flex-col max-md:w-52 space-y-2 pb-12">
 							<span class="text-lg lg:text-2xl">
 								{$i18n.t('Multimodal Version for {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
 							</span>
@@ -671,7 +677,7 @@
 						<TimelineConnector />
 					</TimelineSeparator>
 					<TimelineContent>
-						<div class="flex flex-col max-lg:w-52 space-y-2">
+						<div class="flex flex-col max-md:w-52 space-y-2">
 							<span class="text-lg lg:text-2xl"> {$i18n.t('Agentic AI Framework')} </span>
 							<span class="text-sm">
 								{$i18n.t(
@@ -719,7 +725,7 @@
 			</style>
 		</div>
 	</div>
-	<div class="px-8 lg:px-48 py-12 lg:py-24">
+	<div class="px-8 md:px-12 lg:px-48 py-12 lg:py-24">
 		<div class="grid lg:grid-cols-2 gap-3 lg:gap-12 items-center mb-8 lg:mb-16">
 			<span class="text-2xl lg:text-3xl">
 				{$i18n.t('Join the {{WEBUI_NAME}} movement', { WEBUI_NAME: $WEBUI_NAME })}
@@ -731,7 +737,7 @@
 				)}
 			</span>
 		</div>
-		<div class="grid lg:grid-cols-4 gap-8">
+		<div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
 			<div
 				class="flex flex-col bg-white rounded border bg-[url('/assets/design/abstract-circle.png')] bg-contain bg-no-repeat"
 			>
@@ -746,7 +752,7 @@
 				<span class="px-8 pb-2 text-xl lg:text-2xl lg:h-16">
 					{$i18n.t('Collaborate on GitHub')}
 				</span>
-				<span class="px-8 text-sm lg:h-32">
+				<span class="px-8 text-sm md:h-10 lg:h-32">
 					{$i18n.t("Contribute to {{WEBUI_NAME}}'s development.", { WEBUI_NAME: $WEBUI_NAME })}
 				</span>
 				<a
@@ -832,7 +838,7 @@
 			</div>
 		</div>
 	</div>
-	<div class="px-8 lg:px-48 flex flex-col items-center space-y-6 mb-8">
+	<div class="px-8 md:px-12 lg:px-48 flex flex-col items-center space-y-6 mb-8">
 		<div class="h-px w-full my-4 bg-gray-300" />
 		<img
 			crossorigin="anonymous"

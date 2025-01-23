@@ -1,4 +1,31 @@
 {
+    "Please accept the terms of use to keep chatting": "Veuillez accepter les conditions d'utilisation pour continuer",
+    "Free Access": "Accès Gratuit",
+    "Lucie.chat is freely available until February 15th, allowing you to explore and test the first version of the Lucie model.": "Lucie.chat est accessible librement jusqu'au 15 février 2025, vous permettant d'explorer et expérimenter avec la première version du modèle Lucie.",
+    "Lucie": "Lucie",
+    "is a fully Open Source AI model, developed by the": "est un modèle d'IA entièrement Open Source, développé par la communauté",
+    "OpenLLM France": "OpenLLM France",
+    "community with the support of": "avec le soutien de",
+    "to promote transparency and collaboration in AI innovation.": "afin de promouvoir la transparence et la collaboration dans l'innovation IA.",
+    "Data Collection": "Collecte de données",
+    "By accessing Lucie.chat for free, you agree to authorize us to collect your chat history with Lucie.": "En accédant gratuitement à Lucie.chat, vous nous autorisez à collecter votre historique de conversations avec Lucie.",
+    "The data collected will serve two key purposes:": "Les données enregistrées répondront à deux objectifs principaux :",
+    "Improvement of the Lucie Model :": "Améliorer le modèle Lucie :",
+    "Your interactions help us refine and enhance Lucie's quality, ensuring she becomes more accurate, reliable, and useful.": "Vos interactions nous aident à améliorer et perfectionner Lucie, garantissant qu'elle devienne plus précise, fiable et utile.",
+    "Contribution to Open Source Innovation :": "Contribuer à l'innovation open source :",
+    "By using Lucie.chat, you are actively contributing to the development of a 100% Open Source AI model. This initiative fosters transparency, collaboration, and accessibility in the AI ecosystem, benefiting a global community.": "En utilisant Lucie.chat, vous contribuez activement au développement d'un modele AI 100% Open Source. Cette initiative favorise la transparence, la collaboration et l'accessibilité dans l'écosystème de l'IA Open Source, au profit d'une communauté mondiale.",
+    "Rest assured, all data will be handled in accordance with our strict privacy and security standards.": "Toutes les données seront traitées conformément à nos strictes normes de confidentialité et sécurité.",
+    "Privacy and Security": "Confidentialité et sécurité",
+    "We are deeply committed to protecting your privacy and ensuring the security of your data. For more information on how your data is stored, processed, and used responsibly, please refer to our": "Nous nous engageons à protéger votre vie privée et à assurer la sécurité de vos données. Pour plus d'informations sur la manière dont vos données sont stockées, traitées et utilisées, veuillez consulter notre",
+    "Usage Guidelines": "Conditions d'utilisation",
+    "We kindly ask that you use Lucie.chat responsibly and in compliance with applicable laws and regulations.": "Nous vous demandons de bien vouloir utiliser Lucie.chat de manière responsable et conformément aux lois et régulations applicables.",
+    "Any misuse of the service, including but not limited to offensive, harmful, or unlawful behavior, is strictly prohibited.": "Toute utilisation abusive du service, dont des comportements offensants, nuisibles ou illégaux est strictement interdite.",
+    "Thank You": "Remerciements",
+    "Thank you for using Lucie.chat ! We hope you enjoy exploring and testing the Lucie model while contributing to the advancement of Open Source AI.": "Merci d'utiliser Lucie.chat ! Nous espérons que vous apprécierez explorer et expérimenter avec le modèle Lucie tout en contribuant à l’avancement de l’IA Open Source.",
+
+
+
+
 	"-1 for no limit, or a positive integer for a specific limit": "-1 pour aucune limite, ou un entier positif pour une limite spécifique",
 	"'s', 'm', 'h', 'd', 'w' or '-1' for no expiration.": " 's', 'm', 'h', 'd', 'w' ou '-1' pour une durée illimitée.",
 	"(e.g. `sh webui.sh --api --api-auth username_password`)": "(par ex. `sh webui.sh --api --api-auth username_password`)",

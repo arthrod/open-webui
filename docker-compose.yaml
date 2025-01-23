@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - GUARDRAILS_TOKEN=${GUARDRAILS_TOKEN}
     env_file:
       - .env
     environment:

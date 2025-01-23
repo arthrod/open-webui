@@ -84,79 +84,66 @@
 			on:scroll={handleScroll}
 		>
 			<div class="flex flex-col space-y-2">
-				<span class="font-semibold text-sm md:text-base"> Free Access </span>
+				<span class="font-semibold text-sm md:text-base"> {$i18n.t('Free Access')} </span>
 				<div>
-					Lucie.chat is freely available until February 15th, allowing you to explore and test the
-					first version of the Lucie model.
+					{$i18n.t('Lucie.chat is freely available until February 15th, allowing you to explore and test the first version of the Lucie model.')}
 				</div>
 				<div>
 					<a
 						href="https://huggingface.co/collections/OpenLLM-France/lucie-llm-67099ba7b992dee2c32b1f92"
 						class="hover:underline text-violet-500"
 					>
-						Lucie
+						{$i18n.t('Lucie')}
 					</a>
-					is a fully Open Source AI model, developed by the
+					{$i18n.t('is a fully Open Source AI model, developed by the')}
 					<a href="https://www.openllm-france.fr/" class="hover:underline text-violet-500">
-						OpenLLM France
+						{$i18n.t('OpenLLM France')}
 					</a>
-					community with the support of
+					{$i18n.t('community with the support of')}
 					<a href="https://www.linagora.com/" class="hover:underline text-violet-500"> LINAGORA </a>
-					to promote transparency and collaboration in AI innovation.
+					{$i18n.t('to promote transparency and collaboration in AI innovation.')}
 				</div>
 			</div>
 			<div class="flex flex-col space-y-2">
-				<span class="font-semibold text-sm md:text-base"> Data Collection </span>
+				<span class="font-semibold text-sm md:text-base"> {$i18n.t('Data Collection')} </span>
 				<div>
-					By accessing Lucie.chat for free, you agree to authorize us to collect your chat history
-					with Lucie.
+					{$i18n.t('By accessing Lucie.chat for free, you agree to authorize us to collect your chat history with Lucie.')}
 				</div>
-				<div>The data collected will serve two key purposes:</div>
+				<div>{$i18n.t('The data collected will serve two key purposes:')}</div>
 				<ol class="list-decimal list-inside space-y-2">
 					<li>
-						<span class="font-medium"> Improvement of the Lucie Model : </span> Your interactions help
-						us refine and enhance Lucie's quality, ensuring she becomes more accurate, reliable, and
-						useful.
+						<span class="font-medium"> {$i18n.t('Improvement of the Lucie Model :')} </span> {$i18n.t('Your interactions help us refine and enhance Lucie\'s quality, ensuring she becomes more accurate, reliable, and useful.')}
 					</li>
 					<li>
-						<span class="font-medium"> Contribution to Open Source Innovation : </span> By using Lucie.chat,
-						you are actively contributing to the development of a 100% Open Source AI model. This initiative
-						fosters transparency, collaboration, and accessibility in the AI ecosystem, benefiting a
-						global community.
+						<span class="font-medium"> {$i18n.t('Contribution to Open Source Innovation :')} </span> {$i18n.t('By using Lucie.chat, you are actively contributing to the development of a 100% Open Source AI model. This initiative fosters transparency, collaboration, and accessibility in the AI ecosystem, benefiting a global community.')}
 					</li>
 				</ol>
 				<div>
-					Rest assured, all data will be handled in accordance with our strict privacy and security
-					standards.
+					{$i18n.t('Rest assured, all data will be handled in accordance with our strict privacy and security standards.')}
 				</div>
 			</div>
 			<div class="flex flex-col space-y-2">
-				<span class="font-semibold text-sm md:text-base"> Privacy and Security </span>
+				<span class="font-semibold text-sm md:text-base"> {$i18n.t('Privacy and Security')} </span>
 				<div>
-					We are deeply committed to protecting your privacy and ensuring the security of your data.
-					For more information on how your data is stored, processed, and used responsibly, please
-					refer to our
+					{$i18n.t('We are deeply committed to protecting your privacy and ensuring the security of your data. For more information on how your data is stored, processed, and used responsibly, please refer to our')}
 					<a href="https://linagora.com/fr/privacy" class="hover:underline text-violet-500"
-						>Privacy Policy</a
+						>{$i18n.t('Privacy Policy')}</a
 					>.
 				</div>
 			</div>
 			<div class="flex flex-col space-y-2">
-				<span class="font-semibold text-sm md:text-base"> Usage Guidelines </span>
+				<span class="font-semibold text-sm md:text-base"> {$i18n.t('Usage Guidelines')} </span>
 				<div>
-					We kindly ask that you use Lucie.chat responsibly and in compliance with applicable laws
-					and regulations.
+					{$i18n.t('We kindly ask that you use Lucie.chat responsibly and in compliance with applicable laws and regulations.')}
 				</div>
 				<div>
-					Any misuse of the service, including but not limited to offensive, harmful, or unlawful
-					behavior, is strictly prohibited.
+					{$i18n.t('Any misuse of the service, including but not limited to offensive, harmful, or unlawful behavior, is strictly prohibited.')}
 				</div>
 			</div>
 			<div class="flex flex-col space-y-2">
-				<span class="font-semibold text-sm md:text-base"> Thank You </span>
+				<span class="font-semibold text-sm md:text-base"> {$i18n.t('Thank You')} </span>
 				<div>
-					Thank you for using Lucie.chat ! We hope you enjoy exploring and testing the Lucie model
-					while contributing to the advancement of Open Source AI.
+					{$i18n.t('Thank you for using Lucie.chat ! We hope you enjoy exploring and testing the Lucie model while contributing to the advancement of Open Source AI.')}
 				</div>
 			</div>
 		</div>

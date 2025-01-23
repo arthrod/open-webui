@@ -1,4 +1,31 @@
 {
+
+    "Please accept the terms of use to keep chatting": "",
+    "Free Access": "",
+    "Lucie.chat is freely available until February 15th, allowing you to explore and test the first version of the Lucie model.": "",
+    "Lucie": "",
+    "is a fully Open Source AI model, developed by the": "",
+    "OpenLLM France": "",
+    "community with the support of": "",
+    "to promote transparency and collaboration in AI innovation.": "",
+    "Data Collection": "",
+    "By accessing Lucie.chat for free, you agree to authorize us to collect your chat history with Lucie.": "",
+    "The data collected will serve two key purposes:": "",
+    "Improvement of the Lucie Model :": "",
+    "Your interactions help us refine and enhance Lucie's quality, ensuring she becomes more accurate, reliable, and useful.": "",
+    "Contribution to Open Source Innovation :": "",
+    "By using Lucie.chat, you are actively contributing to the development of a 100% Open Source AI model. This initiative fosters transparency, collaboration, and accessibility in the AI ecosystem, benefiting a global community.": "",
+    "Rest assured, all data will be handled in accordance with our strict privacy and security standards.": "",
+    "Privacy and Security": "",
+    "We are deeply committed to protecting your privacy and ensuring the security of your data. For more information on how your data is stored, processed, and used responsibly, please refer to our": "",
+    "Usage Guidelines": "",
+    "We kindly ask that you use Lucie.chat responsibly and in compliance with applicable laws and regulations.": "",
+    "Any misuse of the service, including but not limited to offensive, harmful, or unlawful behavior, is strictly prohibited.": "",
+    "Thank You": "",
+    "Thank you for using Lucie.chat ! We hope you enjoy exploring and testing the Lucie model while contributing to the advancement of Open Source AI.": "",
+
+
+
 	"-1 for no limit, or a positive integer for a specific limit": "",
 	"'s', 'm', 'h', 'd', 'w' or '-1' for no expiration.": "",
 	"(e.g. `sh webui.sh --api --api-auth username_password`)": "",

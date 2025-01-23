@@ -325,7 +325,7 @@
 					{$i18n.t('Contact us')}
 				</button>
 			</div>
-			<span class="md:pt-4 text-base lg:text-lg max-lg:text-center">
+			<span class="lg:pt-4 text-base lg:text-lg max-lg:text-center">
 				{$i18n.t(
 					"{{WEBUI_NAME}} isn't just open, it's exceptionally transparent and reliable. From its inception, every decision has been guided by principles of trustworthiness, fairness, and accountability. Whether it's for education, government, or research, {{WEBUI_NAME}} is designed to be a model you can count on.",
 					{ WEBUI_NAME: $WEBUI_NAME }
@@ -337,7 +337,7 @@
 			<img
 				crossorigin="anonymous"
 				src="/assets/images/lucie.png"
-				class="md:max-h-[75vh]"
+				class="lg:max-h-[75vh]"
 				alt="Lucie illustration"
 			/>
 		</div>
@@ -444,7 +444,7 @@
 		<div class="grid lg:grid-cols-3 gap-12 lg:gap-24 lg:px-6">
 			<div class="flex flex-col space-y-4 lg:space-y-8">
 				<EyeInBox className="size-10" />
-				<span class="text-xl lg:text-2xl font-medium h-16">
+				<span class="text-xl lg:text-2xl font-medium lg:h-16">
 					{$i18n.t('Transparent Data')}
 				</span>
 				<span>
@@ -455,7 +455,7 @@
 			</div>
 			<div class="flex flex-col space-y-4 lg:space-y-8">
 				<StateGraph className="size-10" />
-				<span class="text-xl lg:text-2xl font-medium h-16">
+				<span class="text-xl lg:text-2xl font-medium lg:h-16">
 					{$i18n.t('Open Algorithms')}
 				</span>
 				<span>
@@ -466,7 +466,7 @@
 			</div>
 			<div class="flex flex-col space-y-4 lg:space-y-8">
 				<TouchWindow className="size-8" />
-				<span class="text-xl lg:text-2xl font-medium h-16 flex items-end">
+				<span class="text-xl lg:text-2xl font-medium lg:h-16 flex items-end">
 					{$i18n.t('A Completely Free-Access Production Line')}
 				</span>
 				<span>
@@ -588,13 +588,13 @@
 		<div class="text-3xl mb-8">
 			{$i18n.t('Future of {{WEBUI_NAME}} in 2025', { WEBUI_NAME: $WEBUI_NAME })}
 		</div>
-		<div class="md:px-[33vw] mb-8 lg:mb-16">
+		<div class="lg:px-[33vw] mb-8 lg:mb-16">
 			{$i18n.t(
 				"The journey of {{WEBUI_NAME}} is far from over. Our 2025 roadmap outlines ambitious milestones to enhance capabilities and expand the model's applications:",
 				{ WEBUI_NAME: $WEBUI_NAME }
 			)}
 		</div>
-		<div class="md:px-[25vw] lg:-translate-x-44">
+		<div class="lg:px-[25vw] lg:-translate-x-44">
 			<Timeline>
 				<TimelineItem>
 					<TimelineOppositeContent slot="opposite-content">
@@ -606,10 +606,10 @@
 					</TimelineSeparator>
 					<TimelineContent>
 						<div class="flex flex-col max-lg:w-52 space-y-2 pb-12">
-							<span class="text-xl lg:text-2xl">
+							<span class="text-lg lg:text-2xl">
 								{$i18n.t('Enhanced fine-tuning and better toolkit for AI makers')}
 							</span>
-							<span>
+							<span class="text-sm">
 								{$i18n.t(
 									"We will refine {{WEBUI_NAME}}'s instruction-following capabilities (fine-instruct), introduce function calling for better integration with external systems, and release at least one model with fewer than 3 billion parameters to ensure accessibility for resource-constrained environments.",
 									{ WEBUI_NAME: $WEBUI_NAME }
@@ -628,10 +628,10 @@
 					</TimelineSeparator>
 					<TimelineContent>
 						<div class="flex flex-col max-lg:w-52 space-y-2 pb-12">
-							<span class="text-xl lg:text-2xl">
+							<span class="text-lg lg:text-2xl">
 								{$i18n.t('Advanced Retrieval-Augmented Generation (RAG)')}
 							</span>
-							<span>
+							<span class="text-sm">
 								{$i18n.t(
 									'{{WEBUI_NAME}} will gain an advanced RAG function, enabling it to leverage external knowledge bases for more accurate and context-aware responses.',
 									{ WEBUI_NAME: $WEBUI_NAME }
@@ -650,10 +650,10 @@
 					</TimelineSeparator>
 					<TimelineContent>
 						<div class="flex flex-col max-lg:w-52 space-y-2 pb-12">
-							<span class="text-xl lg:text-2xl">
+							<span class="text-lg lg:text-2xl">
 								{$i18n.t('Multimodal Version for {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
 							</span>
-							<span>
+							<span class="text-sm">
 								{$i18n.t(
 									"We will extend {{WEBUI_NAME}}'s capabilities into multimodal AI, with a focus on voice processing in French, opening new possibilities for applications in education, accessibility, and beyond.",
 									{ WEBUI_NAME: $WEBUI_NAME }
@@ -672,8 +672,8 @@
 					</TimelineSeparator>
 					<TimelineContent>
 						<div class="flex flex-col max-lg:w-52 space-y-2">
-							<span class="text-xl lg:text-2xl"> {$i18n.t('Agentic AI Framework')} </span>
-							<span>
+							<span class="text-lg lg:text-2xl"> {$i18n.t('Agentic AI Framework')} </span>
+							<span class="text-sm">
 								{$i18n.t(
 									'{{WEBUI_NAME}} will evolve into a robust agentic AI framework, harnessing its capabilities to power autonomous systems and lay the foundation for Large Action Models (LAM) all while maintaining transparency, trust, and ethical safeguards.',
 									{ WEBUI_NAME: $WEBUI_NAME }
@@ -707,13 +707,13 @@
 					margin-top: 0px !important;
 					transform: translateY(-7px);
 				}
-				@media not all and (min-width: 768px) {
+				@media not all and (min-width: 1024px) {
 					.timeline-opposite-content {
 						width: 28px;
 						transform: translateY(-3px);
 					}
 					.timeline-content {
-						transform: translateY(-4px);
+						transform: translateY(-5px);
 					}
 				}
 			</style>
@@ -732,98 +732,100 @@
 			</span>
 		</div>
 		<div class="grid lg:grid-cols-4 gap-8">
-			<div class="flex flex-col space-y-4 bg-white rounded border pb-8">
-				<div
-					class="h-72 p-8 flex justify-center bg-[url('/assets/design/abstract-circle.png')] bg-contain bg-no-repeat"
-				>
+			<div
+				class="flex flex-col bg-white rounded border bg-[url('/assets/design/abstract-circle.png')] bg-contain bg-no-repeat"
+			>
+				<div class="py-6 flex justify-center lg:h-72 lg:p-8">
 					<img
 						crossorigin="anonymous"
 						src="/assets/logos/github.png"
-						class="w-36 self-center"
+						class="h-28"
 						alt="GitHub logo"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl lg:text-2xl"> {$i18n.t('Collaborate on GitHub')} </span>
-				<span class="px-8 text-sm max-lg:pb-6 lg:h-32">
+				<span class="px-8 pb-2 text-xl lg:text-2xl lg:h-16">
+					{$i18n.t('Collaborate on GitHub')}
+				</span>
+				<span class="px-8 text-sm lg:h-32">
 					{$i18n.t("Contribute to {{WEBUI_NAME}}'s development.", { WEBUI_NAME: $WEBUI_NAME })}
 				</span>
 				<a
 					href="https://github.com/OpenLLM-France"
-					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
+					class="my-6 py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
 				>
 					{$i18n.t('Contribute')}
 				</a>
 			</div>
-			<div class="flex flex-col space-y-4 bg-white rounded border pb-8">
-				<div
-					class="h-72 p-8 flex justify-center bg-[url('/assets/design/abstract-circle.png')] bg-contain bg-no-repeat"
-				>
+			<div
+				class="flex flex-col bg-white rounded border bg-[url('/assets/design/abstract-circle.png')] bg-contain bg-no-repeat"
+			>
+				<div class="py-2 flex justify-center lg:h-72 lg:p-8">
 					<img
 						crossorigin="anonymous"
-						src="/assets/images/lucie.png"
-						class="h-full w-fit self-center"
+						src="/assets/logos/lucie.svg"
+						class="h-36"
 						alt="Lucie illustration"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl lg:text-2xl">
+				<span class="px-8 pb-2 text-xl lg:text-2xl lg:h-16">
 					{$i18n.t('Experiment on Hugging Face')}
 				</span>
-				<span class="px-8 text-sm max-lg:pb-6 lg:h-32">
+				<span class="px-8 text-sm lg:h-32">
 					{$i18n.t("Explore {{WEBUI_NAME}}'s capabilities in your projects.", {
 						WEBUI_NAME: $WEBUI_NAME
 					})}
 				</span>
 				<a
 					href="https://huggingface.co/OpenLLM-France"
-					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
+					class="my-6 py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
 				>
 					{$i18n.t('Experiment')}
 				</a>
 			</div>
-			<div class="flex flex-col space-y-4 bg-white rounded border pb-8">
-				<div
-					class="h-72 p-8 flex justify-center bg-[url('/assets/design/abstract-circle.png')] bg-contain bg-no-repeat"
-				>
+			<div
+				class="flex flex-col bg-white rounded border bg-[url('/assets/design/abstract-circle.png')] bg-contain bg-no-repeat"
+			>
+				<div class="py-6 flex justify-center lg:h-72 lg:p-8">
 					<img
 						crossorigin="anonymous"
 						src="/assets/logos/openllm-france.png"
-						class="w-36 self-center"
+						class="h-32"
 						alt="OpenLLM France Logo"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl lg:text-2xl"
-					>{$i18n.t('Be Part of OpenLLM France')}
+				<span class="px-8 pb-2 text-xl lg:text-2xl lg:h-16">
+					{$i18n.t('Be Part of OpenLLM France')}
 				</span>
-				<span class="px-8 text-sm max-lg:pb-6 lg:h-32">
+				<span class="px-8 text-sm lg:h-32">
 					{$i18n.t('Join the growing community dedicated to sovereign and open AI.')}
 				</span>
 				<a
 					href="https://www.openllm-france.fr/"
-					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
+					class="my-6 py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
 				>
 					{$i18n.t('Join us')}
 				</a>
 			</div>
-			<div class="flex flex-col space-y-4 bg-white rounded border pb-8">
-				<div
-					class="h-72 p-8 flex justify-center bg-[url('/assets/design/abstract-circle.png')] bg-contain bg-no-repeat"
-				>
+			<div
+				class="flex flex-col bg-white rounded border bg-[url('/assets/design/abstract-circle.png')] bg-contain bg-no-repeat"
+			>
+				<div class="py-6 flex justify-center lg:h-72 lg:p-8">
 					<img
 						crossorigin="anonymous"
 						src="/assets/logos/openllm-europe.png"
-						class="w-36 self-center"
+						class="h-32"
 						alt="OpenLLM Europe logo"
 					/>
 				</div>
-				<span class="md:h-16 px-8 text-xl lg:text-2xl">
+				<span class="px-8 pb-2 text-xl lg:text-2xl lg:h-16">
 					{$i18n.t('Other European Initiatives')}
 				</span>
-				<span class="px-8 text-sm max-lg:pb-6 lg:h-32">
+				<span class="px-8 text-sm lg:h-32">
 					{$i18n.t('Explore other european OpenLLM projects.')}
 				</span>
 				<a
 					href="https://github.com/OpenLLM-Europe/European-OpenLLM-Projects"
-					class="py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
+					class="my-6 py-3 px-12 self-center rounded-full border border-black bg-white hover:bg-gray-50 transition-all"
 				>
 					{$i18n.t('Explore')}
 				</a>

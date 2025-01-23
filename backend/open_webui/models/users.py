@@ -34,7 +34,7 @@ class User(Base):
     info = Column(JSONField, nullable=True)
 
     oauth_sub = Column(Text, unique=True)
-    llm_api_key = Column(String, nullable=True) # litellm api key: TODO: Get rid of the default value
+    llm_api_key = Column(String, nullable=True) # litellm api key
 
 class UserSettings(BaseModel):
     ui: Optional[dict] = {}

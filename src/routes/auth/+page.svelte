@@ -291,7 +291,7 @@
 							<Spinner />
 						</div>
 					</div>
-				{:else if queueStatus.status === 'draft'}
+				{:else if queueStatus.status === 'waiting'}
 					<button
 						class="max-lg:self-center h-12 lg:h-16 w-64 rounded-full bg-slate-400 font-medium transition-all relative"
 						disabled

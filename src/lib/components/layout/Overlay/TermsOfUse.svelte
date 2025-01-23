@@ -1,17 +1,19 @@
 <script lang="ts">
 	// Imports
 	import { termsOfUse } from '$lib/stores';
-	import { getContext, onMount } from 'svelte';
+	import { afterUpdate, getContext, onMount } from 'svelte';
 
 	const i18n = getContext('i18n'); // Translations
 
-	let termsScrolled = false;
-	let popupRef: HTMLDivElement | null = null;
+	let termsScrolled = false; // true if the terms of use have been scrolled all the way to the bottom
+	let popupRef: HTMLDivElement | null = null; // Represents the popup element
 
 	// Function to check if the terms of use are fully scrolled
-	const handleScroll = (event: Event) => {
-		const element = event.target as HTMLDivElement;
-		termsScrolled = element.scrollTop + element.clientHeight >= element.scrollHeight - 25;
+	const handleScroll = (event: { target: EventTarget | null }) => {
+		if (!termsScrolled) {
+			const terms = event.target as HTMLDivElement;
+			termsScrolled = terms.scrollTop + terms.clientHeight >= terms.scrollHeight - 25;
+		}
 	};
 
 	// Stick focus within the popup
@@ -51,6 +53,7 @@
 			}
 		};
 
+		// Listen to events
 		document.addEventListener('focusin', handleFocus);
 		document.addEventListener('keydown', stickFocus);
 
@@ -59,6 +62,12 @@
 			document.removeEventListener('focusin', handleFocus);
 			document.removeEventListener('keydown', stickFocus);
 		};
+	});
+
+	afterUpdate(() => {
+		// Ensures that the buttons become available if the terms are not scrollable (i.e. on large screens)
+		const terms = document.getElementById('terms') as HTMLDivElement;
+		if (terms) handleScroll({ target: terms });
 	});
 </script>
 
@@ -161,29 +170,37 @@
 			</div>
 		</div>
 
-		<div class="mt-4 md:mt-8 self-end flex space-x-3 md:space-x-6">
-			<button
-				class="py-2 md:py-3 px-4 md:px-6 rounded-full text-sm md:text-base text-gray-500 hover:text-red-800 disabled:text-gray-500 disabled:cursor-not-allowed
-				dark:disabled:text-gray-700 dark:text-gray-600"
-				disabled={!termsScrolled}
-				on:click={() => {
-					$termsOfUse.show = false;
-					$termsOfUse.accepted = false;
-				}}
-			>
-				{$i18n.t('Decline')}
-			</button>
-			<button
-				class="py-2 md:py-3 px-4 md:px-6 bg-black text-white rounded-full text-sm md:text-base hover:bg-gray-800 disabled:bg-gray-500 disabled:cursor-not-allowed
-				dark:disabled:bg-gray-800 dark:disabled:text-gray-400 dark:bg-gray-700 dark:text-gray-200"
-				disabled={!termsScrolled}
-				on:click={() => {
-					$termsOfUse.show = false;
-					$termsOfUse.accepted = true;
-				}}
-			>
-				{$i18n.t('Accept')}
-			</button>
+		<div
+			class="mt-4 md:mt-8 h-24 w-full flex justify-end items-center space-x-3 md:space-x-6 group"
+		>
+			{#if !termsScrolled}
+				<span class="grow text-sm md:text-base md:text-right text-red-400">
+					ⓘ Please read the terms of use to continue.
+				</span>
+			{:else}
+				<button
+					class="py-2 md:py-3 px-4 md:px-6 rounded-full text-sm md:text-base text-gray-500 hover:text-red-800 disabled:text-gray-500 disabled:cursor-not-allowed
+			dark:disabled:text-gray-700 dark:text-gray-600"
+					disabled={!termsScrolled}
+					on:click={() => {
+						$termsOfUse.show = false;
+						$termsOfUse.accepted = false;
+					}}
+				>
+					{$i18n.t('Decline')}
+				</button>
+				<button
+					class="py-2 md:py-3 px-4 md:px-6 bg-black text-white rounded-full text-sm md:text-base hover:bg-gray-800 disabled:bg-gray-500 disabled:cursor-not-allowed
+			dark:disabled:bg-gray-800 dark:disabled:text-gray-400 dark:bg-gray-700 dark:text-gray-200"
+					disabled={!termsScrolled}
+					on:click={() => {
+						$termsOfUse.show = false;
+						$termsOfUse.accepted = true;
+					}}
+				>
+					{$i18n.t('Accept')}
+				</button>
+			{/if}
 		</div>
 	</div>
 {/if}

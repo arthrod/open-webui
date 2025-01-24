@@ -107,15 +107,26 @@ DEFAULT_CONFIG = {
         "default_locale": "",
         "prompt_suggestions": [
             {
+                "title": ["À la découverte d'OpenLLM France", "Objectifs et mission d'OpenLLM France"],
+                "content": "Quels sont les objectifs et la mission d'OpenLLM France ?",
+            },
+
+            {
+                "title": ["Révolution française", "Prise de la Bastille et son impact"],
+                "content": "Décrire l'importance de la prise de la Bastille et son impact sur l'histoire de la France.",
+            },
+
+            {
+                "title": ["Évaluer de l'IA par le test de turing", "Test de Turing"],
+                "content": "Peux-tu passer le test de Turing ?",
+            },
+
+            {
                 "title": [
                     "À la découverte de Linagora",
                     "Découvrez notre entreprise"
                 ],
                 "content": "Fais-moi une présentation de Linagora?",
-            },
-            {
-                "title": ["À la découverte d'OpenLLM France", "Objectifs et mission d'OpenLLM France"],
-                "content": "Quels sont les objectifs et la mission d'OpenLLM France ?",
             },
 
             {
@@ -145,10 +156,6 @@ DEFAULT_CONFIG = {
             {
                 "title": ["Mode de vie durable", "Actions concrètes pour un impact environnemental réduit"],
                 "content": "Quelles actions concrètes puis-je entreprendre pour réduire mon impact environnemental au quotidien ?",
-            },
-            {
-                "title": ["Révolution française", "Événements majeurs de la Révolution"],
-                "content": "Quels sont les événements majeurs de la Révolution française ?",
             },
             {
                 "title": ["Surmonter la procrastination", "Conseils pour surmonter la procrastination"],

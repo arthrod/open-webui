@@ -32,7 +32,7 @@
 			<XMark className="size-3.5" />
 		</button>
 	</div>
-	<div class="flex flex-col md:flex-row w-full h-full md:space-x-4 dark:text-gray-200">
+	<div class="flex flex-col lg:flex-row w-full h-full lg:space-x-4 dark:text-gray-200">
 		<form
 			class="flex flex-col w-full h-full"
 			on:submit|preventDefault={() => {
@@ -53,7 +53,7 @@
 			}}
 		>
 			<div class=" flex-1 w-full h-full flex justify-center overflow-auto px-5 py-4">
-				<div class=" max-w-3xl py-2 md:py-10 w-full flex flex-col gap-2">
+				<div class=" max-w-3xl py-2 lg:py-10 w-full flex flex-col gap-2">
 					<div class="flex-shrink-0 w-full flex justify-between items-center">
 						<div class="w-full">
 							<input

@@ -546,7 +546,7 @@
 {#if dragged}
 	<div
 		class="fixed {$showSidebar
-			? 'left-0 md:left-[260px] md:w-[calc(100%-260px)]'
+			? 'left-0 lg:left-[260px] lg:w-[calc(100%-260px)]'
 			: 'left-0'}  w-full h-full flex z-50 touch-none pointer-events-none"
 		id="dropzone"
 		role="region"

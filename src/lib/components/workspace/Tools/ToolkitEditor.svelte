@@ -182,7 +182,7 @@ class Tools:
 <AccessControlModal bind:show={showAccessControlModal} bind:accessControl />
 
 <div class=" flex flex-col justify-between w-full overflow-y-auto h-full">
-	<div class="mx-auto w-full md:px-0 h-full">
+	<div class="mx-auto w-full lg:px-0 h-full">
 		<form
 			bind:this={formElement}
 			class=" flex flex-col max-h-[100dvh] h-full"

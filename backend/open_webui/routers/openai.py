@@ -52,7 +52,7 @@ log.setLevel(SRC_LOG_LEVELS["OPENAI"])
 toxic_threshold = 0.86
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# pre-gu
+# pre-guard
 pre_guards_list = [
     DetectJailbreak(
         on_fail='noop', 

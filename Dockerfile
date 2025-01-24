@@ -27,6 +27,7 @@ ARG BUILD_HASH
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+RUN npm add -D terser
 RUN npm ci
 
 COPY . .
@@ -151,7 +152,9 @@ RUN pip3 install uv && \
     chown -R $UID:$GID /app/backend/data/
 
 
-ENV GUARDRAILS_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJnb29nbGUtb2F1dGgyfDEwNzg1MzE1Njc2NTQ4NDU1MDcyNCIsImFwaUtleUlkIjoiNDJlNzJmMzItMWZkMC00YjgzLTllZDQtZWZjMjRhZDQ1NWFjIiwic2NvcGUiOiJyZWFkOnBhY2thZ2VzIiwicGVybWlzc2lvbnMiOltdLCJpYXQiOjE3MzYyMzg2NzQsImV4cCI6NDg4OTgzODY3NH0.t7XWdkB0q8vzbsrNsquFvJpGR_CzPhVlxsmyOyataEk
+# ENV GUARDRAILS_TOKEN=
+ARG GUARDRAILS_TOKEN
+
 # Run the Guardrails configure command to create a .guardrailsrc file
 RUN pip install guardrails-ai --upgrade
 RUN guardrails configure --disable-metrics --disable-remote-inferencing  --token $GUARDRAILS_TOKEN

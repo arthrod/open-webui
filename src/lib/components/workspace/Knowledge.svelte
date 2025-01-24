@@ -86,7 +86,7 @@
 
 	<div class="flex flex-col gap-1 my-1.5">
 		<div class="flex justify-between items-center">
-			<div class="flex md:self-center text-xl font-medium px-0.5 items-center">
+			<div class="flex lg:self-center text-xl font-medium px-0.5 items-center">
 				{$i18n.t('Knowledge')}
 				<div class="flex self-center w-[1px] h-6 mx-2.5 bg-gray-50 dark:bg-gray-850" />
 				<span class="text-lg font-medium text-gray-500 dark:text-gray-300"
@@ -121,7 +121,7 @@
 		</div>
 	</div>
 
-	<div class="mb-5 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
+	<div class="mb-5 grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-3 gap-2">
 		{#each filteredItems as item}
 			<button
 				class=" flex space-x-4 cursor-pointer text-left w-full px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-850 transition rounded-xl"

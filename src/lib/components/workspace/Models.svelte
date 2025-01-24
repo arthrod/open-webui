@@ -198,7 +198,7 @@
 
 	<div class="flex flex-col gap-1 my-1.5">
 		<div class="flex justify-between items-center">
-			<div class="flex items-center md:self-center text-xl font-medium px-0.5">
+			<div class="flex items-center lg:self-center text-xl font-medium px-0.5">
 				{$i18n.t('Models')}
 				<div class="flex self-center w-[1px] h-6 mx-2.5 bg-gray-50 dark:bg-gray-850" />
 				<span class="text-lg font-medium text-gray-500 dark:text-gray-300"
@@ -230,7 +230,7 @@
 		</div>
 	</div>
 
-	<div class=" my-2 mb-5 gap-2 grid lg:grid-cols-2 xl:grid-cols-3" id="model-list">
+	<div class=" my-2 mb-5 gap-2 grid lg:grid-cols-2 lg:grid-cols-3" id="model-list">
 		{#each filteredModels as model}
 			<div
 				class=" flex flex-col cursor-pointer w-full px-3 py-2 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl transition"

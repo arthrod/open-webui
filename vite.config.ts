@@ -22,7 +22,8 @@ export default defineConfig({
 		APP_BUILD_HASH: JSON.stringify(process.env.APP_BUILD_HASH || 'dev-build')
 	},
 	build: {
-		sourcemap: true
+		sourcemap: false, // 'true' useful for debugging but exposes the code structure / 'false' to privatize the code
+		minify: 'terser', // code compressor
 	},
 	worker: {
 		format: 'es'

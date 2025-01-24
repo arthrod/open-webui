@@ -175,4 +175,7 @@ ARG BUILD_HASH
 ENV WEBUI_BUILD_VERSION=${BUILD_HASH}
 ENV DOCKER=true
 
+LABEL org.opencontainers.image.description="An Open-Webui fork branded for OpenLLM France's Lucie AI model."
+LABEL org.opencontainers.image.source https://github.com/OpenLLM-France/open-webui
+
 CMD [ "bash", "start.sh"]

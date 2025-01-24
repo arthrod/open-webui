@@ -184,7 +184,7 @@
 					type="submit"
 					class="form-button mt-4 w-full inline-flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-3xl focus:outline-none focus:ring-2 focus:ring-offset-2"
 				>
-					Submit
+					{$i18n.t('Submit')}
 				</button>
 			</div>
 		</form>

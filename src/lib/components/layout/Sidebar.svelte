@@ -19,7 +19,8 @@
 		temporaryChatEnabled,
 		channels,
 		socket,
-		config
+		config,
+		WEBUI_NAME
 	} from '$lib/stores';
 	import { onMount, getContext, tick, onDestroy } from 'svelte';
 
@@ -832,8 +833,8 @@
 			<div class="font-semibold text-lg text-gray-700 dark:text-gray-300">
 				{$i18n.t('Limitless Possibilities')}
 			</div>
-			<div class="text-sm text-gray-500 dark:text-gray-400">
-				{$i18n.t("Unlock Lucie's full potential now!")}
+			<div class="text-sm text-center text-gray-500 dark:text-gray-400">
+				{$i18n.t("Unlock {{WEBUI_NAME}}'s full potential now!", { WEBUI_NAME: $WEBUI_NAME })}
 			</div>
 			<button
 				class="rounded-full bg-blue-500 text-white w-full py-3 m-2"

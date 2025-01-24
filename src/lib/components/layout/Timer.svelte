@@ -43,7 +43,7 @@
 </script>
 
 <div
-	class="fixed top-1.5 lg:top-3 right-1/2 translate-x-2/3 flex justify-center items-center space-x-1 lg:space-x-3 lg:bg-white lg:border px-5 py-3 rounded-lg lg:shadow-md z-50
+	class="fixed top-1.5 lg:top-3 right-1/2 translate-x-2/3 flex justify-center items-center space-x-1 lg:space-x-3 lg:bg-white lg:border px-5 py-3 rounded-lg lg:shadow-md z-40
   dark:md:bg-gray-900 dark:text-gray-200 dark:md:border-2 dark:border-gray-800 dark:shadow-none
 	{timeRemaining < MINUTE ? 'md:border-red-500 lg:border-2 text-red-500 font-bold' : ''} "
 >

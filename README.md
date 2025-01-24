@@ -24,7 +24,7 @@ services:
     image: ghcr.io/openllm-france/open-webui-lucie:latest
     container_name: open-webui-lucie
     volumes:
-      - open-webui-lucie:/app/backend/data
+      - open-webui:/app/backend/data
     depends_on:
       - ollama
     ports:

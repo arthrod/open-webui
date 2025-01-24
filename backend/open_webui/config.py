@@ -108,46 +108,53 @@ DEFAULT_CONFIG = {
         "prompt_suggestions": [
             {
                 "title": [
-                    "Help me study",
-                    "vocabulary for a college entrance exam",
+                    "Linagora",
+                    "to discover our company"
                 ],
-                "content": "Help me study vocabulary: write a sentence for me to fill in the blank, and I'll try to pick the correct option.",
+                "content": "What can you tell me about Linagora ?",
+            },
+            {
+                "title": ["OpenLLM France", "Objective & Mission"],
+                "content": "Could you tell me about OpenLLM France and its mission ?",
+            },
+            {
+                "title": ["Digital Sovereignty", "Understanding the Concept"],
+                "content": "Can you explain what digital sovereignty means and why it's important for countries and organizations?",
             },
             {
                 "title": [
-                    "Give me ideas",
-                    "for what to do with my kids' art",
+                    "Data Protection",
+                    "A Practical Guide to Writing a GDPR Privacy Policy",
                 ],
-                "content": "What are 5 creative things I could do with my kids' art? I don't want to throw them away, but it's also so much clutter.",
+                "content": "I am creating a SaaS and I want to write a GDPR-compliant privacy policy. Give me a simple template to adapt.",
             },
             {
-                "title": ["Tell me a fun fact", "about the Roman Empire"],
-                "content": "Tell me a random fun fact about the Roman Empire",
+                "title": ["Innovation", "French Tech Scene"],
+                "content": "What makes France's technology sector unique, and what are some notable French tech innovations?",
             },
             {
-                "title": [
-                    "Show me a code snippet",
-                    "of a website's sticky header",
-                ],
-                "content": "Show me a code snippet of a website's sticky header in CSS and JavaScript.",
+                "title": ["Remote Work", "Best Practices"],
+                "content": "What are the most effective strategies for maintaining productivity and work-life balance while working remotely?",
             },
             {
-                "title": [
-                    "Explain options trading",
-                    "if I'm familiar with buying and selling stocks",
-                ],
-                "content": "Explain options trading in simple terms if I'm familiar with buying and selling stocks.",
+                "title": ["Sustainable Living", "Eco-friendly Tips"],
+                "content": "What are some practical ways to reduce my environmental impact in daily life?",
             },
             {
-                "title": ["Overcome procrastination", "give me tips"],
+                "title": ["French Revolution", "Timeline of historical events"],
+                "content": "Tell me about the key events of the French Revolution.",
+            },
+            {
+                "title": ["Tell me a fun fact", "About France"],
+                "content": "Tell me a fun fact about France ",
+            },
+            {
+                "title": ["Overcome procrastination", "Give me tips"],
                 "content": "Could you start by asking me about instances when I procrastinate the most and then give me some suggestions to overcome it?",
             },
             {
-                "title": [
-                    "Grammar check",
-                    "rewrite it for better readability ",
-                ],
-                "content": 'Check the following sentence for grammar and clarity: "[sentence]". Rewrite it for better readability while maintaining its original meaning.',
+                "title": ["Love Poem", "To get some inspiration"],
+                "content": "Please write a short love poem.",
             },
         ],
     },
@@ -838,31 +845,54 @@ DEFAULT_PROMPT_SUGGESTIONS = PersistentConfig(
     "ui.prompt_suggestions",
     [
         {
-            "title": ["Help me study", "vocabulary for a college entrance exam"],
-            "content": "Help me study vocabulary: write a sentence for me to fill in the blank, and I'll try to pick the correct option.",
+            "title": [
+                "Linagora",
+                "to discover our company"
+            ],
+            "content": "What can you tell me about Linagora ?",
         },
         {
-            "title": ["Give me ideas", "for what to do with my kids' art"],
-            "content": "What are 5 creative things I could do with my kids' art? I don't want to throw them away, but it's also so much clutter.",
+            "title": ["OpenLLM France", "Objective & Mission"],
+            "content": "Could you tell me about OpenLLM France and its mission ?",
         },
         {
-            "title": ["Tell me a fun fact", "about the Roman Empire"],
-            "content": "Tell me a random fun fact about the Roman Empire",
-        },
-        {
-            "title": ["Show me a code snippet", "of a website's sticky header"],
-            "content": "Show me a code snippet of a website's sticky header in CSS and JavaScript.",
+            "title": ["Digital Sovereignty", "Understanding the Concept"],
+            "content": "Can you explain what digital sovereignty means and why it's important for countries and organizations?",
         },
         {
             "title": [
-                "Explain options trading",
-                "if I'm familiar with buying and selling stocks",
+                "Data Protection",
+                "A Practical Guide to Writing a GDPR Privacy Policy",
             ],
-            "content": "Explain options trading in simple terms if I'm familiar with buying and selling stocks.",
+            "content": "I am creating a SaaS and I want to write a GDPR-compliant privacy policy. Give me a simple template to adapt.",
         },
         {
-            "title": ["Overcome procrastination", "give me tips"],
+            "title": ["Innovation", "French Tech Scene"],
+            "content": "What makes France's technology sector unique, and what are some notable French tech innovations?",
+        },
+        {
+            "title": ["Remote Work", "Best Practices"],
+            "content": "What are the most effective strategies for maintaining productivity and work-life balance while working remotely?",
+        },
+        {
+            "title": ["Sustainable Living", "Eco-friendly Tips"],
+            "content": "What are some practical ways to reduce my environmental impact in daily life?",
+        },
+        {
+            "title": ["French Revolution", "Timeline of historical events"],
+            "content": "Tell me about the key events of the French Revolution.",
+        },
+        {
+            "title": ["Tell me a fun fact", "About France"],
+            "content": "Tell me a fun fact about France ",
+        },
+        {
+            "title": ["Overcome procrastination", "Give me tips"],
             "content": "Could you start by asking me about instances when I procrastinate the most and then give me some suggestions to overcome it?",
+        },
+        {
+            "title": ["Love Poem", "To get some inspiration"],
+            "content": "Please write a short love poem.",
         },
     ],
 )

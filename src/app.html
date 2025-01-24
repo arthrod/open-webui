@@ -2,11 +2,11 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96" />
-		<link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
-		<link rel="shortcut icon" href="/favicon/favicon.ico" />
-		<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
-		<meta name="apple-mobile-web-app-title" content="Open WebUI" />
+		<link rel="icon" type="image/png" href="/favicon/favicon.png" sizes="96x96" />
+		<link rel="icon" type="image/svg+xml" href="/favicon/favicon.png" />
+		<link rel="shortcut icon" href="/favicon/favicon.png" />
+		<link rel="apple-touch-icon" sizes="180x180" href="/favicon/favicon.png" />
+		<meta name="apple-mobile-web-app-title" content="LUCIE" />
 		<link rel="manifest" href="/favicon/site.webmanifest" />
 		<meta
 			name="viewport"
@@ -14,11 +14,11 @@
 		/>
 		<meta name="theme-color" content="#171717" />
 		<meta name="robots" content="noindex,nofollow" />
-		<meta name="description" content="Open WebUI" />
+		<meta name="description" content="LUCIE" />
 		<link
 			rel="search"
 			type="application/opensearchdescription+xml"
-			title="Open WebUI"
+			title="LUCIE"
 			href="/opensearch.xml"
 		/>
 
@@ -76,7 +76,7 @@
 			})();
 		</script>
 
-		<title>Open WebUI</title>
+		<title>LUCIE</title>
 
 		%sveltekit.head%
 	</head>
@@ -104,7 +104,7 @@
 					left: 50%;
 					transform: translateX(-50%);
 				"
-				src="/static/splash.png"
+				src="/static/favicon.png"
 			/>
 
 			<div
@@ -124,7 +124,7 @@
 				<img
 					id="logo-her"
 					style="width: auto; height: 13rem"
-					src="/static/splash.png"
+					src="/static/favicon.png"
 					class="animate-pulse-fast"
 				/>
 
@@ -175,9 +175,9 @@
 		background: #000;
 	}
 
-	html.dark #splash-screen img {
-		filter: invert(1);
-	}
+	/* html.dark #splash-screen img {
+		filter: invert(1);  # Removed disgusting invert
+	} */
 
 	html.her #splash-screen {
 		background: #983724;

@@ -23,7 +23,8 @@
 		currentChatPage,
 		tags,
 		temporaryChatEnabled,
-		isLastActiveTab
+		isLastActiveTab,
+		locale
 	} from '$lib/stores';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -91,7 +92,7 @@
 			console.log('user-count', data);
 			activeUserCount.set(data.count);
 		});
-		
+
 		_socket.on('user-list', (data) => {
 			console.log('user-list', data);
 			activeUserIds.set(data.user_ids);
@@ -238,6 +239,9 @@
 				: bestMatchingLanguage(languages, browserLanguages, 'en-US');
 			$i18n.changeLanguage(lang);
 		}
+
+		// Load language from user preferences
+		$i18n.changeLanguage($locale);
 
 		if (backendConfig) {
 			// Save Backend Status to Store

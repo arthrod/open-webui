@@ -9,7 +9,7 @@
 	import { ldapUserSignIn, getSessionUser, userSignIn, userSignUp } from '$lib/apis/auths';
 
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
-	import { WEBUI_NAME, config, user, socket, mobile, queueID } from '$lib/stores';
+	import { WEBUI_NAME, config, user, socket, mobile, queueID, locale } from '$lib/stores';
 
 	import { generateInitialsImage, canvasPixelTest } from '$lib/utils';
 
@@ -33,6 +33,10 @@
 		TimelineOppositeContent
 	} from 'svelte-vertical-timeline';
 	import ContactUs from '$lib/components/layout/Overlay/ContactUs.svelte';
+	import { getLanguages } from '$lib/i18n';
+	import { languages } from '@codemirror/language-data';
+	import GlobeAlt from '$lib/components/icons/GlobeAlt.svelte';
+	import LanguageSelector from '$lib/components/layout/LanguageSelector.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -234,16 +238,19 @@
 <div
 	class="fixed w-full h-20 px-8 md:px-12 xl:px-24 2xl:px-48 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-30"
 >
-	<img
-		crossorigin="anonymous"
-		src="/assets/logos/lucie-with-text.svg"
-		class="h-full py-1"
-		alt="OpenLLM France logo"
-	/>
+	<div class="flex h-full items-center relative">
+		<img
+			crossorigin="anonymous"
+			src="/assets/logos/lucie-with-text.svg"
+			class="h-full py-1"
+			alt="OpenLLM France logo"
+		/>
+		<LanguageSelector isLightMode={true} isInHorizontalNavbar={true} />
+	</div>
 	<button
 		class="h-8 px-3 rounded-full border border-black bg-white hover:bg-gray-50 text-sm transition-all
-		md:h-12 md:px-8
-		xl:h-14 xl:px-12 xl:text-base"
+			md:h-12 md:px-8
+			xl:h-14 xl:px-12 xl:text-base"
 		on:click={() => (showContactUs = !showContactUs)}
 	>
 		{$i18n.t('Contact us')}
@@ -253,7 +260,9 @@
 <!-- Page -->
 <div class="h-screen overflow-y-scroll pt-20 text-gray-700">
 	<div class="grid xl:grid-cols-2">
-		<div class="p-8 md:p-12 xl:px-24 2xl:px-48 xl:py-24 flex flex-col justify-center space-y-6 bg-slate-100">
+		<div
+			class="p-8 md:p-12 xl:px-24 2xl:px-48 xl:py-24 flex flex-col justify-center space-y-6 bg-slate-100"
+		>
 			<span class="text-2xl xl:text-3xl 2xl:text-5xl max-xl:text-center">
 				{$i18n.t(
 					'{{WEBUI_NAME}} — The truly open source AI built on transparency, trust, and efficiency.',
@@ -282,7 +291,7 @@
 					</button>
 				{:else if queueStatus.status === 'connected'}
 					<div
-						class="max-xl:self-center h-12 xl:h-16 w-64 flex items-center justify-center gap-3 text-lg sm:text-lg text-center font-semibold dark:text-gray-200"
+						class="max-xl:self-center h-12 xl:h-16 w-64 flex items-center justify-center gap-3 text-lg sm:text-lg text-center font-semibold"
 					>
 						<div>{$i18n.t('Signing in to {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}</div>
 
@@ -348,7 +357,9 @@
 		</div>
 	</div>
 	<!-- Logos -->
-	<div class="px-8 md:px-12 xl:px-24 2xl:px-48 flex flex-wrap items-center justify-center gap-8 py-8">
+	<div
+		class="px-8 md:px-12 xl:px-24 2xl:px-48 flex flex-wrap items-center justify-center gap-8 py-8"
+	>
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/linagora-ai.png"
@@ -531,7 +542,9 @@
 		<div class="text-2xl xl:text-3xl mb-8 xl:mb-16">
 			{$i18n.t('{{WEBUI_NAME}} in figures', { WEBUI_NAME: $WEBUI_NAME })}
 		</div>
-		<div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8 xl:gap-16 2xl:gap-24">
+		<div
+			class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8 xl:gap-16 2xl:gap-24"
+		>
 			<div class="flex flex-col space-y-3 xl:space-y-6">
 				<span class="text-xl xl:text-3xl h-14 xl:h-20 flex items-end">
 					{$i18n.t('7 billion parameters')}

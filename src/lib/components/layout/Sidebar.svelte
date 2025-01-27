@@ -58,6 +58,7 @@
 	import ChannelItem from './Sidebar/ChannelItem.svelte';
 	import PencilSquare from '../icons/PencilSquare.svelte';
 	import ContactUs from './Overlay/ContactUs.svelte';
+	import LanguageSelector from './LanguageSelector.svelte';
 
 	const BREAKPOINT = 768;
 
@@ -484,12 +485,12 @@
 				</div>
 
 				<div>
-					<PencilSquare className=" size-5" strokeWidth="2" />
+					<PencilSquare className="size-5" strokeWidth="2" />
 				</div>
 			</a>
 
 			<button
-				class=" cursor-pointer p-[7px] flex rounded-xl hover:bg-gray-100 dark:hover:bg-gray-900 transition"
+				class=" cursor-pointer p-[7px] pl-0 flex rounded-xl hover:bg-gray-100 dark:hover:bg-gray-900 transition"
 				on:click={() => {
 					showSidebar.set(!$showSidebar);
 				}}
@@ -513,6 +514,9 @@
 			</button>
 		</div>
 
+		<div class="p-2">
+			<LanguageSelector />
+		</div>
 		<!-- {#if $user?.role === 'admin' || $user?.permissions?.workspace?.models || $user?.permissions?.workspace?.knowledge || $user?.permissions?.workspace?.prompts || $user?.permissions?.workspace?.tools}
 			<div class="px-1.5 flex justify-center text-gray-800 dark:text-gray-200">
 				<a

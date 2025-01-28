@@ -10,6 +10,8 @@ Please refer to the original project for manual installation instructions and fa
 
 We provide a Docker image for easy deployment. Please note the model expects 11Gb of VRAM (falling back to system memory on CPU) to run. If additional parallel request handling is needed, expect 5Gb of additional memory necessary per additional request added to the `OLLAMA_NUM_PARALLEL` environment variable.
 
+If using Docker Desktop, it is beneficial to increase the memory limit to at least 12Gb in order to avoid using swap.
+
 Use the following docker-compose for a quick start:
 
 ```yaml

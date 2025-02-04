@@ -44,6 +44,7 @@
 	import ChangelogModal from '$lib/components/ChangelogModal.svelte';
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
 	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
+	import { redirectWebAuth } from '$lib/apis/auths';
 	import { get } from 'svelte/store';
 
 	const i18n = getContext('i18n');
@@ -55,6 +56,9 @@
 	let version;
 
 	onMount(async () => {
+		if ($user === undefined) {
+			redirectWebAuth();
+		} else if (['user', 'admin'].includes($user.role)) {
 		if ($user === undefined || $user === null) {
 			await goto('/auth');
 		} else if (['user', 'admin'].includes($user?.role)) {

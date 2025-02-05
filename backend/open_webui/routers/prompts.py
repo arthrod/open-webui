@@ -105,6 +105,28 @@ async def update_prompt_by_command(
     form_data: PromptForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Update an existing prompt identified by its command.
+    
+    This asynchronous function retrieves a prompt using the provided command (with a preceding "/"),
+    checks whether the user is permitted to update it, and then applies the update using the supplied form data.
+    A user is allowed to update the prompt if they are the original creator, belong to a group with write access to the prompt,
+    or have an administrator role.
+    
+    Parameters:
+        command (str): The command identifier of the prompt to update.
+        form_data (PromptForm): The form data containing the new prompt values.
+        user (User, optional): The authenticated user, injected by the dependency `get_verified_user`.
+    
+    Returns:
+        The updated prompt object if the update is successful.
+    
+    Raises:
+        HTTPException: 
+            - If no prompt is found for the given command.
+            - If the user does not have permission to update the prompt.
+            - If the update operation fails.
+    """
     prompt = Prompts.get_prompt_by_command(f"/{command}")
     if not prompt:
         raise HTTPException(
@@ -112,7 +134,12 @@ async def update_prompt_by_command(
             detail=ERROR_MESSAGES.NOT_FOUND,
         )
 
-    if prompt.user_id != user.id and user.role != "admin":
+    # Is the user the original creator, in a group with write access, or an admin
+    if (
+        prompt.user_id != user.id
+        and not has_access(user.id, "write", prompt.access_control)
+        and user.role != "admin"
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=ERROR_MESSAGES.ACCESS_PROHIBITED,

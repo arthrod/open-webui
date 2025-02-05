@@ -51,11 +51,34 @@ class ChromaClient:
 
     def has_collection(self, collection_name: str) -> bool:
         # Check if the collection exists based on the collection name.
-        collections = self.client.list_collections()
-        return collection_name in [collection.name for collection in collections]
+        """
+        Check if a collection with the given name exists in the database.
+        
+        This method retrieves the list of collections from the client and checks if the specified collection name is present.
+        
+        Parameters:
+            collection_name (str): The name of the collection to verify.
+        
+        Returns:
+            bool: True if the collection exists, False otherwise.
+        """
+        collection_names = self.client.list_collections()
+        return collection_name in collection_names
 
     def delete_collection(self, collection_name: str):
         # Delete the collection based on the collection name.
+        """
+        Delete a collection with the specified name.
+        
+        This method invokes the underlying client's `delete_collection` function to remove the collection identified by `collection_name`.
+        Any exceptions raised during the deletion process are propagated to the caller.
+        
+        Parameters:
+            collection_name (str): The name of the collection to delete.
+        
+        Returns:
+            The result of the client's delete_collection operation.
+        """
         return self.client.delete_collection(name=collection_name)
 
     def search(

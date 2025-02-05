@@ -217,9 +217,58 @@ def tags_generation_template(
     return template
 
 
+def image_prompt_generation_template(
+    template: str, messages: list[dict], user: Optional[dict] = None
+) -> str:
+    """
+    Generates a formatted image prompt template by incorporating the last user message, replacing prompt variables, and integrating user details.
+    
+    Parameters:
+        template (str): The input template containing placeholders for prompt and message variables.
+        messages (list[dict]): A list of message dictionaries from which the last user message is extracted.
+        user (Optional[dict]): An optional dictionary with user details (e.g., "name" and "location") used to further format the template.
+    
+    Returns:
+        str: The formatted image prompt template with all placeholders replaced by the corresponding values.
+    """
+    prompt = get_last_user_message(messages)
+    template = replace_prompt_variable(template, prompt)
+    template = replace_messages_variable(template, messages)
+
+    template = prompt_template(
+        template,
+        **(
+            {"user_name": user.get("name"), "user_location": user.get("location")}
+            if user
+            else {}
+        ),
+    )
+    return template
+
+
 def emoji_generation_template(
     template: str, prompt: str, user: Optional[dict] = None
 ) -> str:
+    """
+    Generates an emoji prompt template by replacing prompt-related placeholders with the provided prompt text and user information.
+    
+    This function first replaces any prompt-related placeholders in the given template using the `replace_prompt_variable` function. It then applies further formatting via the `prompt_template` function, substituting user-specific placeholders (e.g., 'user_name' and 'user_location') with values from the provided user dictionary. If no user information is supplied, the template remains unmodified for those placeholders.
+    
+    Parameters:
+        template (str): The string template containing placeholders for prompt and user details.
+        prompt (str): The prompt text used to replace the prompt-related placeholders.
+        user (Optional[dict]): A dictionary with user details, expected to include 'name' and 'location' keys. Defaults to None.
+    
+    Returns:
+        str: The formatted emoji prompt template.
+        
+    Example:
+        >>> template_str = "Emoji prompt for {user_name}: {prompt}"
+        >>> prompt_text = "😊"
+        >>> user_info = {"name": "Alice", "location": "Wonderland"}
+        >>> emoji_generation_template(template_str, prompt_text, user_info)
+        'Emoji prompt for Alice: 😊'
+    """
     template = replace_prompt_variable(template, prompt)
     template = prompt_template(
         template,

@@ -40,9 +40,46 @@ router = APIRouter()
 
 @router.get("/config")
 async def get_config(request: Request, user=Depends(get_admin_user)):
+    """
+    Retrieve the current image generation configuration.
+    
+    This asynchronous endpoint returns a dictionary containing all configuration settings for image generation,
+    including engine selection, prompt generation status, and API credentials/settings for OpenAI, Automatic1111, and ComfyUI.
+    The endpoint requires admin authentication, enforced by the dependency injected via the 'user' parameter.
+    
+    Parameters:
+        request (Request): The FastAPI request instance containing the application state and configuration.
+        user: A dependency injected admin user; access is restricted to admin users.
+    
+    Returns:
+        dict: A dictionary with the following structure:
+            {
+                "enabled": bool,                     # Indicates if image generation is enabled.
+                "engine": str,                       # The image generation engine selected.
+                "prompt_generation": bool,           # Flag to enable or disable prompt generation.
+                "openai": {
+                    "OPENAI_API_BASE_URL": str,      # Base URL for the OpenAI image generation API.
+                    "OPENAI_API_KEY": str,           # API key for accessing OpenAI services.
+                },
+                "automatic1111": {
+                    "AUTOMATIC1111_BASE_URL": str,   # Base URL for the Automatic1111 API.
+                    "AUTOMATIC1111_API_AUTH": str,   # Encoded authentication details for Automatic1111.
+                    "AUTOMATIC1111_CFG_SCALE": float,# Configuration scale for Automatic1111 image generation.
+                    "AUTOMATIC1111_SAMPLER": str,    # Sampler type used for image generation.
+                    "AUTOMATIC1111_SCHEDULER": str,  # Scheduler configuration for image generation.
+                },
+                "comfyui": {
+                    "COMFYUI_BASE_URL": str,         # Base URL for the ComfyUI API.
+                    "COMFYUI_API_KEY": str,          # API key for accessing ComfyUI services.
+                    "COMFYUI_WORKFLOW": str,         # Workflow name for ComfyUI image generation.
+                    "COMFYUI_WORKFLOW_NODES": list,    # List of nodes defining the ComfyUI workflow.
+                },
+            }
+    """
     return {
         "enabled": request.app.state.config.ENABLE_IMAGE_GENERATION,
         "engine": request.app.state.config.IMAGE_GENERATION_ENGINE,
+        "prompt_generation": request.app.state.config.ENABLE_IMAGE_PROMPT_GENERATION,
         "openai": {
             "OPENAI_API_BASE_URL": request.app.state.config.IMAGES_OPENAI_API_BASE_URL,
             "OPENAI_API_KEY": request.app.state.config.IMAGES_OPENAI_API_KEY,
@@ -86,6 +123,7 @@ class ComfyUIConfigForm(BaseModel):
 class ConfigForm(BaseModel):
     enabled: bool
     engine: str
+    prompt_generation: bool
     openai: OpenAIConfigForm
     automatic1111: Automatic1111ConfigForm
     comfyui: ComfyUIConfigForm
@@ -95,8 +133,59 @@ class ConfigForm(BaseModel):
 async def update_config(
     request: Request, form_data: ConfigForm, user=Depends(get_admin_user)
 ):
+    """
+    Update the image generation configuration settings.
+    
+    This asynchronous endpoint updates the application's image generation configuration using the data provided in the ConfigForm.
+    The configuration settings updated include the image generation engine, enablement flags (including prompt generation),
+    API endpoints and keys for OpenAI, Automatic1111, and ComfyUI, as well as additional engine-specific parameters.
+    
+    Parameters:
+        request (Request): The FastAPI request object that contains the application state.
+        form_data (ConfigForm): An instance of ConfigForm containing the updated configuration values, including:
+            - engine (str): The image generation engine to use.
+            - enabled (bool): Flag indicating if image generation is enabled.
+            - prompt_generation (bool): Flag indicating if prompt generation is enabled.
+            - openai (OpenAIConfigForm): OpenAI-specific configuration including OPENAI_API_BASE_URL and OPENAI_API_KEY.
+            - automatic1111 (Automatic1111ConfigForm): Automatic1111-specific configuration including base URL, API auth,
+              CFG scale, sampler, and scheduler.
+            - comfyui (ComfyUIConfigForm): ComfyUI-specific configuration including base URL, API key, workflow, and workflow nodes.
+        user: The authenticated admin user, provided via dependency injection (get_admin_user), used to authorize access.
+    
+    Returns:
+        dict: A dictionary representing the updated configuration with the following structure:
+            {
+                "enabled": bool,
+                "engine": str,
+                "prompt_generation": bool,
+                "openai": {
+                    "OPENAI_API_BASE_URL": str,
+                    "OPENAI_API_KEY": str
+                },
+                "automatic1111": {
+                    "AUTOMATIC1111_BASE_URL": str,
+                    "AUTOMATIC1111_API_AUTH": str,
+                    "AUTOMATIC1111_CFG_SCALE": float or None,
+                    "AUTOMATIC1111_SAMPLER": str or None,
+                    "AUTOMATIC1111_SCHEDULER": str or None
+                },
+                "comfyui": {
+                    "COMFYUI_BASE_URL": str,
+                    "COMFYUI_API_KEY": str,
+                    "COMFYUI_WORKFLOW": str,
+                    "COMFYUI_WORKFLOW_NODES": Any
+                }
+            }
+    
+    Raises:
+        This endpoint relies on the get_admin_user dependency to ensure only authorized administrators can update the configuration.
+    """
     request.app.state.config.IMAGE_GENERATION_ENGINE = form_data.engine
     request.app.state.config.ENABLE_IMAGE_GENERATION = form_data.enabled
+
+    request.app.state.config.ENABLE_IMAGE_PROMPT_GENERATION = (
+        form_data.prompt_generation
+    )
 
     request.app.state.config.IMAGES_OPENAI_API_BASE_URL = (
         form_data.openai.OPENAI_API_BASE_URL
@@ -137,6 +226,7 @@ async def update_config(
     return {
         "enabled": request.app.state.config.ENABLE_IMAGE_GENERATION,
         "engine": request.app.state.config.IMAGE_GENERATION_ENGINE,
+        "prompt_generation": request.app.state.config.ENABLE_IMAGE_PROMPT_GENERATION,
         "openai": {
             "OPENAI_API_BASE_URL": request.app.state.config.IMAGES_OPENAI_API_BASE_URL,
             "OPENAI_API_KEY": request.app.state.config.IMAGES_OPENAI_API_KEY,
@@ -408,10 +498,43 @@ def save_b64_image(b64_str):
         return None
 
 
-def save_url_image(url):
+def save_url_image(url, headers=None):
+    """
+    Download an image from the provided URL and save it to the designated image cache directory.
+    
+    This function attempts to retrieve an image using an HTTP GET request. An optional headers
+    parameter allows customized request headers (e.g., for authentication). The response is validated
+    to ensure it contains image data, and the image MIME type is used to determine the correct file
+    extension before saving. If the URL does not point to an image or an error occurs during the download
+    or file-saving process, the function logs the error and returns None.
+    
+    Parameters:
+        url (str): The URL from which to download the image.
+        headers (dict, optional): Optional HTTP headers to include in the GET request.
+    
+    Returns:
+        str: The filename (including its extension) of the saved image upon a successful download.
+        None: If the URL does not point to an image or an error occurs during the download or save process.
+        
+    Example:
+        >>> filename = save_url_image("https://example.com/image.jpg")
+        >>> if filename:
+        ...     print("Image saved as:", filename)
+        ... else:
+        ...     print("Failed to save image.")
+        
+    Notes:
+        All exceptions are handled within the function. In case of any errors (e.g., failed HTTP
+        request, undetermined image format), a logged error message will be generated and the function
+        will return None.
+    """
     image_id = str(uuid.uuid4())
     try:
-        r = requests.get(url)
+        if headers:
+            r = requests.get(url, headers=headers)
+        else:
+            r = requests.get(url)
+
         r.raise_for_status()
         if r.headers["content-type"].split("/")[0] == "image":
             mime_type = r.headers["content-type"]
@@ -442,6 +565,22 @@ async def image_generations(
     form_data: GenerateImageForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Generates images based on the requested prompt using the configured image generation engine.
+    
+    This asynchronous function processes an image generation request by selecting the appropriate engine ("openai", "comfyui", or "automatic1111") based on the application configuration. It builds the necessary payload, makes an HTTP POST request (using asyncio.to_thread for non-blocking I/O) to the selected API endpoint, and downloads or processes the returned image(s). The function then saves the generated images to a cache directory and creates accompanying JSON files containing the request or response details.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing the application state and configuration.
+        form_data (GenerateImageForm): Form data with parameters for image generation, including the prompt, number of images (n), optional size, negative prompt, and optionally the model for "automatic1111" engine.
+        user (Depends(get_verified_user)): The verified user dependency providing user details (name, id, email, role). When user info headers forwarding is enabled, these details are included in the request headers.
+    
+    Returns:
+        List[dict]: A list of dictionaries, each containing a 'url' key that points to the generated image file stored in the cache directory.
+    
+    Raises:
+        HTTPException: If the image generation process fails or an error occurs when processing the external API response, an HTTPException with status code 400 is raised.
+    """
     width, height = tuple(map(int, request.app.state.config.IMAGE_SIZE.split("x")))
 
     r = None
@@ -472,7 +611,7 @@ async def image_generations(
                     if form_data.size
                     else request.app.state.config.IMAGE_SIZE
                 ),
-                "response_format": "b64_json",
+                "response_format": "url",
             }
 
             # Use asyncio.to_thread for the requests.post call
@@ -489,7 +628,7 @@ async def image_generations(
             images = []
 
             for image in res["data"]:
-                image_filename = save_b64_image(image["b64_json"])
+                image_filename = save_url_image(image["url"])
                 images.append({"url": f"/cache/image/generations/{image_filename}"})
                 file_body_path = IMAGE_CACHE_DIR.joinpath(f"{image_filename}.json")
 
@@ -535,7 +674,13 @@ async def image_generations(
             images = []
 
             for image in res["data"]:
-                image_filename = save_url_image(image["url"])
+                headers = None
+                if request.app.state.config.COMFYUI_API_KEY:
+                    headers = {
+                        "Authorization": f"Bearer {request.app.state.config.COMFYUI_API_KEY}"
+                    }
+
+                image_filename = save_url_image(image["url"], headers)
                 images.append({"url": f"/cache/image/generations/{image_filename}"})
                 file_body_path = IMAGE_CACHE_DIR.joinpath(f"{image_filename}.json")
 

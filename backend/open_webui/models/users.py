@@ -2,7 +2,12 @@ import time
 from typing import Optional
 
 from open_webui.internal.db import Base, JSONField, get_db
+
+
 from open_webui.models.chats import Chats
+from open_webui.models.groups import Groups
+
+
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import BigInteger, Column, String, Text
 
@@ -267,10 +272,28 @@ class UsersTable:
             return None
 
     def delete_user_by_id(self, id: str) -> bool:
+        """
+        Delete a user and all associated data by user ID.
+        
+        This method performs the following operations:
+            1. Removes the user from all groups via Groups.remove_user_from_all_groups.
+            2. Deletes all chats associated with the user using Chats.delete_chats_by_user_id.
+            3. If the chat deletion is successful, deletes the user record from the database and commits the transaction.
+        
+        If the chat deletion fails or an exception occurs at any step, the method returns False without deleting the user.
+        
+        Parameters:
+            id (str): The unique identifier of the user to delete.
+        
+        Returns:
+            bool: True if the user and all associated data are successfully deleted; otherwise, False.
+        """
         try:
+            # Remove User from Groups
+            Groups.remove_user_from_all_groups(id)
+
             # Delete User Chats
             result = Chats.delete_chats_by_user_id(id)
-
             if result:
                 with get_db() as db:
                     # Delete User
@@ -293,12 +316,42 @@ class UsersTable:
             return False
 
     def get_user_api_key_by_id(self, id: str) -> Optional[str]:
+        """
+        Retrieve the API key for the user with the specified unique identifier.
+        
+        This method queries the database for a user matching the provided ID. If the user is found,
+        their API key is returned. If no user is found or if any error occurs during the query,
+        the method returns None.
+        
+        Parameters:
+            id (str): The unique identifier of the user.
+        
+        Returns:
+            Optional[str]: The API key associated with the user if found, otherwise None.
+        """
         try:
             with get_db() as db:
                 user = db.query(User).filter_by(id=id).first()
                 return user.api_key
         except Exception:
             return None
+
+    def get_valid_user_ids(self, user_ids: list[str]) -> list[str]:
+        """
+        Retrieve valid user IDs from the database for a given list of user IDs.
+        
+        This method opens a database session and queries the User table to check which of the provided user IDs 
+        exist in the database. It returns a list containing only the valid IDs found.
+        
+        Parameters:
+            user_ids (list[str]): A list of user IDs to validate against the database.
+        
+        Returns:
+            list[str]: A list of user IDs that are present in the database.
+        """
+        with get_db() as db:
+            users = db.query(User).filter(User.id.in_(user_ids)).all()
+            return [user.id for user in users]
 
 
 Users = UsersTable()

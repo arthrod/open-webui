@@ -9,26 +9,38 @@ from urllib.parse import urlparse
 
 import chromadb
 import requests
-import yaml
-from open_webui.internal.db import Base, get_db
+from pydantic import BaseModel
+from sqlalchemy import JSON, Column, DateTime, Integer, func
+
 from open_webui.env import (
-    OPEN_WEBUI_DIR,
     DATA_DIR,
+    DATABASE_URL,
     ENV,
     FRONTEND_BUILD_DIR,
+    OFFLINE_MODE,
+    OPEN_WEBUI_DIR,
     WEBUI_AUTH,
     WEBUI_FAVICON_URL,
     WEBUI_NAME,
     log,
-    DATABASE_URL,
-    OFFLINE_MODE,
 )
-from pydantic import BaseModel
-from sqlalchemy import JSON, Column, DateTime, Integer, func
+from open_webui.internal.db import Base, get_db
 
 
 class EndpointFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
+        """
+        Exclude log records that contain the '/health' endpoint.
+        
+        This filter checks if the log record's message does not include the substring '/health'.
+        It is used to prevent health check related logs from being recorded.
+        
+        Parameters:
+            record (logging.LogRecord): The log record to evaluate.
+        
+        Returns:
+            bool: True if the log record's message does not contain '/health', otherwise False.
+        """
         return record.getMessage().find("/health") == -1
 
 
@@ -104,14 +116,16 @@ if os.path.exists(f"{DATA_DIR}/config.json"):
 DEFAULT_CONFIG = {
     "version": 0,
     "ui": {
-        "default_locale": "",
+        "default_locale": "en-GB",
         "prompt_suggestions": [
+            # English prompts
             {
                 "title": [
                     "Help me study",
                     "vocabulary for a college entrance exam",
                 ],
                 "content": "Help me study vocabulary: write a sentence for me to fill in the blank, and I'll try to pick the correct option.",
+                "lang": "en-GB",
             },
             {
                 "title": [
@@ -119,10 +133,12 @@ DEFAULT_CONFIG = {
                     "for what to do with my kids' art",
                 ],
                 "content": "What are 5 creative things I could do with my kids' art? I don't want to throw them away, but it's also so much clutter.",
+                "lang": "en-GB",
             },
             {
                 "title": ["Tell me a fun fact", "about the Roman Empire"],
                 "content": "Tell me a random fun fact about the Roman Empire",
+                "lang": "en-GB",
             },
             {
                 "title": [
@@ -130,6 +146,7 @@ DEFAULT_CONFIG = {
                     "of a website's sticky header",
                 ],
                 "content": "Show me a code snippet of a website's sticky header in CSS and JavaScript.",
+                "lang": "en-GB",
             },
             {
                 "title": [
@@ -137,10 +154,12 @@ DEFAULT_CONFIG = {
                     "if I'm familiar with buying and selling stocks",
                 ],
                 "content": "Explain options trading in simple terms if I'm familiar with buying and selling stocks.",
+                "lang": "en-GB",
             },
             {
                 "title": ["Overcome procrastination", "give me tips"],
                 "content": "Could you start by asking me about instances when I procrastinate the most and then give me some suggestions to overcome it?",
+                "lang": "en-GB",
             },
             {
                 "title": [
@@ -148,6 +167,58 @@ DEFAULT_CONFIG = {
                     "rewrite it for better readability ",
                 ],
                 "content": 'Check the following sentence for grammar and clarity: "[sentence]". Rewrite it for better readability while maintaining its original meaning.',
+                "lang": "en-GB",
+            },
+            # French prompts
+            {
+                "title": [
+                    "Aidez-moi à étudier",
+                    "le vocabulaire pour un examen d'entrée au CÉGEP",
+                ],
+                "content": "Aidez-moi à étudier le vocabulaire : écrivez une phrase avec un blanc à remplir, et je vais essayer de choisir la bonne option.",
+                "lang": "fr-CA",
+            },
+            {
+                "title": [
+                    "Donnez-moi des idées",
+                    "pour ce que je peux faire avec les dessins de mes enfants",
+                ],
+                "content": "Quelles sont 5 idées créatives pour utiliser les dessins de mes enfants ? Je ne veux pas les jeter, mais ils prennent beaucoup de place.",
+                "lang": "fr-CA",
+            },
+            {
+                "title": ["Dites-moi un fait intéressant", "sur l'Empire romain"],
+                "content": "Dites-moi un fait intéressant et aléatoire sur l'Empire romain.",
+                "lang": "fr-CA",
+            },
+            {
+                "title": [
+                    "Montrez-moi un extrait de code",
+                    "pour un en-tête fixe sur un site web",
+                ],
+                "content": "Montrez-moi un extrait de code pour un en-tête fixe sur un site web en CSS et JavaScript.",
+                "lang": "fr-CA",
+            },
+            {
+                "title": [
+                    "Expliquez les options de trading",
+                    "si je connais l'achat et la vente d'actions",
+                ],
+                "content": "Expliquez les options de trading en termes simples, sachant que je suis familier avec l'achat et la vente d'actions.",
+                "lang": "fr-CA",
+            },
+            {
+                "title": ["Surmonter la procrastination", "donnez-moi des conseils"],
+                "content": "Pourriez-vous commencer par me demander dans quelles situations je procrastine le plus, puis me donner des suggestions pour y remédier ?",
+                "lang": "fr-CA",
+            },
+            {
+                "title": [
+                    "Vérification grammaticale",
+                    "réécrivez pour une meilleure clarté",
+                ],
+                "content": 'Vérifiez la grammaire et la clarté de cette phrase : "[phrase]". Réécrivez-la pour une meilleure clarté tout en conservant son sens original.',
+                "lang": "fr-CA",
             },
         ],
     },
@@ -362,6 +433,30 @@ MICROSOFT_REDIRECT_URI = PersistentConfig(
     os.environ.get("MICROSOFT_REDIRECT_URI", ""),
 )
 
+GITHUB_CLIENT_ID = PersistentConfig(
+    "GITHUB_CLIENT_ID",
+    "oauth.github.client_id",
+    os.environ.get("GITHUB_CLIENT_ID", ""),
+)
+
+GITHUB_CLIENT_SECRET = PersistentConfig(
+    "GITHUB_CLIENT_SECRET",
+    "oauth.github.client_secret",
+    os.environ.get("GITHUB_CLIENT_SECRET", ""),
+)
+
+GITHUB_CLIENT_SCOPE = PersistentConfig(
+    "GITHUB_CLIENT_SCOPE",
+    "oauth.github.scope",
+    os.environ.get("GITHUB_CLIENT_SCOPE", "user:email"),
+)
+
+GITHUB_CLIENT_REDIRECT_URI = PersistentConfig(
+    "GITHUB_CLIENT_REDIRECT_URI",
+    "oauth.github.redirect_uri",
+    os.environ.get("GITHUB_CLIENT_REDIRECT_URI", ""),
+)
+
 OAUTH_CLIENT_ID = PersistentConfig(
     "OAUTH_CLIENT_ID",
     "oauth.oidc.client_id",
@@ -466,14 +561,67 @@ OAUTH_ALLOWED_DOMAINS = PersistentConfig(
 
 
 def load_oauth_providers():
+    """
+    Configure and register available OAuth providers for user authentication.
+    
+    This function clears the global OAUTH_PROVIDERS dictionary and conditionally registers
+    OAuth providers based on defined environment configuration values. It supports registering
+    the following providers:
+    
+    - Google: Registered if both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set.
+      The registration uses Google's OpenID Connect metadata endpoint and the specified OAuth
+      scope and redirect URI.
+    - Microsoft: Registered if MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, and MICROSOFT_CLIENT_TENANT_ID
+      are set. This provider uses Microsoft's OpenID Connect endpoint constructed from the tenant ID,
+      along with specified OAuth scope, redirect URI, and a picture URL for user photos.
+    - GitHub: Registered if both GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET are set.
+      The registration uses GitHub's OAuth endpoints, specifying access token, authorization, API base,
+      and user info retrieval details. An additional "sub_claim" identifier is included.
+    - Generic OpenID Connect (OIDC): Registered if OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, and OPENID_PROVIDER_URL
+      are provided. It uses the provider's metadata URL and specified OAuth scopes and redirect URI.
+      
+    For each registered provider, an inner function is defined that handles the client registration
+    with its corresponding endpoints, scopes, and redirect URI. No value is returned by this function;
+    instead, the global OAUTH_PROVIDERS dictionary is populated with the registration functions and
+    configuration parameters for later use.
+      
+    Raises:
+        None
+    
+    Usage:
+        Call load_oauth_providers() at application startup to initialize OAuth provider settings.
+    """
     OAUTH_PROVIDERS.clear()
     if GOOGLE_CLIENT_ID.value and GOOGLE_CLIENT_SECRET.value:
+
+        def google_oauth_register(client):
+            """
+            Register the Google OAuth provider with the given OAuth client.
+            
+            This function configures the provided OAuth client by registering Google as an OAuth
+            provider using pre-configured global settings. It sets up the client with the required
+            parameters including the client ID, client secret, OpenID configuration URL, OAuth scope,
+            and redirect URI.
+            
+            Parameters:
+                client (object): An OAuth client instance that has a register() method for setting
+                                 up OAuth providers.
+                                 
+            Example:
+                >>> google_oauth_register(oauth_client)
+            """
+            client.register(
+                name="google",
+                client_id=GOOGLE_CLIENT_ID.value,
+                client_secret=GOOGLE_CLIENT_SECRET.value,
+                server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+                client_kwargs={"scope": GOOGLE_OAUTH_SCOPE.value},
+                redirect_uri=GOOGLE_REDIRECT_URI.value,
+            )
+
         OAUTH_PROVIDERS["google"] = {
-            "client_id": GOOGLE_CLIENT_ID.value,
-            "client_secret": GOOGLE_CLIENT_SECRET.value,
-            "server_metadata_url": "https://accounts.google.com/.well-known/openid-configuration",
-            "scope": GOOGLE_OAUTH_SCOPE.value,
             "redirect_uri": GOOGLE_REDIRECT_URI.value,
+            "register": google_oauth_register,
         }
 
     if (
@@ -481,12 +629,78 @@ def load_oauth_providers():
         and MICROSOFT_CLIENT_SECRET.value
         and MICROSOFT_CLIENT_TENANT_ID.value
     ):
+
+        def microsoft_oauth_register(client):
+            """
+            Register Microsoft OAuth provider with the given client.
+            
+            This function configures the provided OAuth client for Microsoft's authentication
+            flow. It registers the provider by specifying the provider name ("microsoft"), client
+            ID, client secret, and the server metadata URL constructed using the tenant ID.
+            Additional client parameters, such as the OAuth scope and redirect URI, are also set,
+            leveraging global configuration values.
+            
+            Parameters:
+                client: An OAuth client instance with a register() method used to configure OAuth providers.
+            
+            Returns:
+                None
+            
+            Raises:
+                Any exceptions raised during registration by the client's register() method.
+            """
+            client.register(
+                name="microsoft",
+                client_id=MICROSOFT_CLIENT_ID.value,
+                client_secret=MICROSOFT_CLIENT_SECRET.value,
+                server_metadata_url=f"https://login.microsoftonline.com/{MICROSOFT_CLIENT_TENANT_ID.value}/v2.0/.well-known/openid-configuration",
+                client_kwargs={
+                    "scope": MICROSOFT_OAUTH_SCOPE.value,
+                },
+                redirect_uri=MICROSOFT_REDIRECT_URI.value,
+            )
+
         OAUTH_PROVIDERS["microsoft"] = {
-            "client_id": MICROSOFT_CLIENT_ID.value,
-            "client_secret": MICROSOFT_CLIENT_SECRET.value,
-            "server_metadata_url": f"https://login.microsoftonline.com/{MICROSOFT_CLIENT_TENANT_ID.value}/v2.0/.well-known/openid-configuration",
-            "scope": MICROSOFT_OAUTH_SCOPE.value,
             "redirect_uri": MICROSOFT_REDIRECT_URI.value,
+            "picture_url": "https://graph.microsoft.com/v1.0/me/photo/$value",
+            "register": microsoft_oauth_register,
+        }
+
+    if GITHUB_CLIENT_ID.value and GITHUB_CLIENT_SECRET.value:
+
+        def github_oauth_register(client):
+            """
+            Register GitHub as an OAuth provider with the given OAuth client.
+            
+            This function configures the GitHub OAuth endpoints and credentials by invoking the
+            client's `register` method with the necessary parameters for GitHub OAuth integration.
+            It utilizes persistent configuration values for the client ID, client secret, scope, and redirect URI.
+            
+            Parameters:
+                client (object): An OAuth client instance that supports a `register` method for setting up OAuth providers.
+            
+            Example:
+                >>> from some_oauth_library import OAuth
+                >>> oauth_client = OAuth()
+                >>> github_oauth_register(oauth_client)
+                >>> # The oauth_client now has GitHub registered as an OAuth provider.
+            """
+            client.register(
+                name="github",
+                client_id=GITHUB_CLIENT_ID.value,
+                client_secret=GITHUB_CLIENT_SECRET.value,
+                access_token_url="https://github.com/login/oauth/access_token",
+                authorize_url="https://github.com/login/oauth/authorize",
+                api_base_url="https://api.github.com",
+                userinfo_endpoint="https://api.github.com/user",
+                client_kwargs={"scope": GITHUB_CLIENT_SCOPE.value},
+                redirect_uri=GITHUB_CLIENT_REDIRECT_URI.value,
+            )
+
+        OAUTH_PROVIDERS["github"] = {
+            "redirect_uri": GITHUB_CLIENT_REDIRECT_URI.value,
+            "register": github_oauth_register,
+            "sub_claim": "id",
         }
 
     if (
@@ -494,13 +708,39 @@ def load_oauth_providers():
         and OAUTH_CLIENT_SECRET.value
         and OPENID_PROVIDER_URL.value
     ):
+
+        def oidc_oauth_register(client):
+            """
+            Register the OpenID Connect (OIDC) provider with the given OAuth client.
+            
+            This function configures the provided OAuth client for OIDC authentication by
+            registering it using globally defined configuration values. It sets up the client
+            with parameters including client ID, client secret, server metadata URL, and
+            redirect URI, as well as specifying the authorization scope in the client kwargs.
+            
+            Parameters:
+                client (object): An instance of an OAuth client that implements the `register`
+                                 method to configure authentication providers.
+            
+            Raises:
+                Exception: Propagates any exception raised during registration if the underlying
+                           configuration values are invalid or missing.
+            """
+            client.register(
+                name="oidc",
+                client_id=OAUTH_CLIENT_ID.value,
+                client_secret=OAUTH_CLIENT_SECRET.value,
+                server_metadata_url=OPENID_PROVIDER_URL.value,
+                client_kwargs={
+                    "scope": OAUTH_SCOPES.value,
+                },
+                redirect_uri=OPENID_REDIRECT_URI.value,
+            )
+
         OAUTH_PROVIDERS["oidc"] = {
-            "client_id": OAUTH_CLIENT_ID.value,
-            "client_secret": OAUTH_CLIENT_SECRET.value,
-            "server_metadata_url": OPENID_PROVIDER_URL.value,
-            "scope": OAUTH_SCOPES.value,
             "name": OAUTH_PROVIDER_NAME.value,
             "redirect_uri": OPENID_REDIRECT_URI.value,
+            "register": oidc_oauth_register,
         }
 
 
@@ -580,13 +820,18 @@ if CUSTOM_NAME:
 # STORAGE PROVIDER
 ####################################
 
-STORAGE_PROVIDER = os.environ.get("STORAGE_PROVIDER", "")  # defaults to local, s3
+STORAGE_PROVIDER = os.environ.get("STORAGE_PROVIDER", "local")  # defaults to local, s3
 
 S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID", None)
 S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY", None)
 S3_REGION_NAME = os.environ.get("S3_REGION_NAME", None)
 S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", None)
 S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", None)
+
+GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", None)
+GOOGLE_APPLICATION_CREDENTIALS_JSON = os.environ.get(
+    "GOOGLE_APPLICATION_CREDENTIALS_JSON", None
+)
 
 ####################################
 # File Upload DIR
@@ -761,18 +1006,22 @@ DEFAULT_PROMPT_SUGGESTIONS = PersistentConfig(
         {
             "title": ["Help me study", "vocabulary for a college entrance exam"],
             "content": "Help me study vocabulary: write a sentence for me to fill in the blank, and I'll try to pick the correct option.",
+            "lang": "en-GB",
         },
         {
             "title": ["Give me ideas", "for what to do with my kids' art"],
             "content": "What are 5 creative things I could do with my kids' art? I don't want to throw them away, but it's also so much clutter.",
+            "lang": "en-GB",
         },
         {
             "title": ["Tell me a fun fact", "about the Roman Empire"],
             "content": "Tell me a random fun fact about the Roman Empire",
+            "lang": "en-GB",
         },
         {
             "title": ["Show me a code snippet", "of a website's sticky header"],
             "content": "Show me a code snippet of a website's sticky header in CSS and JavaScript.",
+            "lang": "en-GB",
         },
         {
             "title": [
@@ -780,10 +1029,62 @@ DEFAULT_PROMPT_SUGGESTIONS = PersistentConfig(
                 "if I'm familiar with buying and selling stocks",
             ],
             "content": "Explain options trading in simple terms if I'm familiar with buying and selling stocks.",
+            "lang": "en-GB",
         },
         {
             "title": ["Overcome procrastination", "give me tips"],
             "content": "Could you start by asking me about instances when I procrastinate the most and then give me some suggestions to overcome it?",
+            "lang": "en-GB",
+        },
+        {
+            "title": [
+                "Aidez-moi à étudier",
+                "le vocabulaire pour un examen d'entrée au CÉGEP",
+            ],
+            "content": "Aidez-moi à étudier le vocabulaire : écrivez une phrase avec un blanc à remplir, et je vais essayer de choisir la bonne option.",
+            "lang": "fr-CA",
+        },
+        {
+            "title": [
+                "Donnez-moi des idées",
+                "pour ce que je peux faire avec les dessins de mes enfants",
+            ],
+            "content": "Quelles sont 5 idées créatives pour utiliser les dessins de mes enfants ? Je ne veux pas les jeter, mais ils prennent beaucoup de place.",
+            "lang": "fr-CA",
+        },
+        {
+            "title": ["Dites-moi un fait intéressant", "sur l'Empire romain"],
+            "content": "Dites-moi un fait intéressant et aléatoire sur l'Empire romain.",
+            "lang": "fr-CA",
+        },
+        {
+            "title": [
+                "Montrez-moi un extrait de code",
+                "pour un en-tête fixe sur un site web",
+            ],
+            "content": "Montrez-moi un extrait de code pour un en-tête fixe sur un site web en CSS et JavaScript.",
+            "lang": "fr-CA",
+        },
+        {
+            "title": [
+                "Expliquez les options de trading",
+                "si je connais l'achat et la vente d'actions",
+            ],
+            "content": "Expliquez les options de trading en termes simples, sachant que je suis familier avec l'achat et la vente d'actions.",
+            "lang": "fr-CA",
+        },
+        {
+            "title": ["Surmonter la procrastination", "donnez-moi des conseils"],
+            "content": "Pourriez-vous commencer par me demander dans quelles situations je procrastine le plus, puis me donner des suggestions pour y remédier ?",
+            "lang": "fr-CA",
+        },
+        {
+            "title": [
+                "Vérification grammaticale",
+                "réécrivez pour une meilleure clarté",
+            ],
+            "content": 'Vérifiez la grammaire et la clarté de cette phrase : "[phrase]". Réécrivez-la pour une meilleure clarté tout en conservant son sens original.',
+            "lang": "fr-CA",
         },
     ],
 )
@@ -819,6 +1120,10 @@ USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS = (
     os.environ.get("USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS", "False").lower() == "true"
 )
 
+USER_PERMISSIONS_CHAT_CONTROLS = (
+    os.environ.get("USER_PERMISSIONS_CHAT_CONTROLS", "True").lower() == "true"
+)
+
 USER_PERMISSIONS_CHAT_FILE_UPLOAD = (
     os.environ.get("USER_PERMISSIONS_CHAT_FILE_UPLOAD", "True").lower() == "true"
 )
@@ -835,23 +1140,39 @@ USER_PERMISSIONS_CHAT_TEMPORARY = (
     os.environ.get("USER_PERMISSIONS_CHAT_TEMPORARY", "True").lower() == "true"
 )
 
+USER_PERMISSIONS_FEATURES_WEB_SEARCH = (
+    os.environ.get("USER_PERMISSIONS_FEATURES_WEB_SEARCH", "True").lower() == "true"
+)
+
+USER_PERMISSIONS_FEATURES_IMAGE_GENERATION = (
+    os.environ.get("USER_PERMISSIONS_FEATURES_IMAGE_GENERATION", "True").lower()
+    == "true"
+)
+
+DEFAULT_USER_PERMISSIONS = {
+    "workspace": {
+        "models": USER_PERMISSIONS_WORKSPACE_MODELS_ACCESS,
+        "knowledge": USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ACCESS,
+        "prompts": USER_PERMISSIONS_WORKSPACE_PROMPTS_ACCESS,
+        "tools": USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS,
+    },
+    "chat": {
+        "controls": USER_PERMISSIONS_CHAT_CONTROLS,
+        "file_upload": USER_PERMISSIONS_CHAT_FILE_UPLOAD,
+        "delete": USER_PERMISSIONS_CHAT_DELETE,
+        "edit": USER_PERMISSIONS_CHAT_EDIT,
+        "temporary": USER_PERMISSIONS_CHAT_TEMPORARY,
+    },
+    "features": {
+        "web_search": USER_PERMISSIONS_FEATURES_WEB_SEARCH,
+        "image_generation": USER_PERMISSIONS_FEATURES_IMAGE_GENERATION,
+    },
+}
+
 USER_PERMISSIONS = PersistentConfig(
     "USER_PERMISSIONS",
     "user.permissions",
-    {
-        "workspace": {
-            "models": USER_PERMISSIONS_WORKSPACE_MODELS_ACCESS,
-            "knowledge": USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ACCESS,
-            "prompts": USER_PERMISSIONS_WORKSPACE_PROMPTS_ACCESS,
-            "tools": USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS,
-        },
-        "chat": {
-            "file_upload": USER_PERMISSIONS_CHAT_FILE_UPLOAD,
-            "delete": USER_PERMISSIONS_CHAT_DELETE,
-            "edit": USER_PERMISSIONS_CHAT_EDIT,
-            "temporary": USER_PERMISSIONS_CHAT_TEMPORARY,
-        },
-    },
+    DEFAULT_USER_PERMISSIONS,
 )
 
 ENABLE_CHANNELS = PersistentConfig(
@@ -1034,6 +1355,32 @@ JSON format: { "tags": ["tag1", "tag2", "tag3"] }
 {{MESSAGES:END:6}}
 </chat_history>"""
 
+IMAGE_PROMPT_GENERATION_PROMPT_TEMPLATE = PersistentConfig(
+    "IMAGE_PROMPT_GENERATION_PROMPT_TEMPLATE",
+    "task.image.prompt_template",
+    os.environ.get("IMAGE_PROMPT_GENERATION_PROMPT_TEMPLATE", ""),
+)
+
+DEFAULT_IMAGE_PROMPT_GENERATION_PROMPT_TEMPLATE = """### Task:
+Generate a detailed prompt for am image generation task based on the given language and context. Describe the image as if you were explaining it to someone who cannot see it. Include relevant details, colors, shapes, and any other important elements.
+
+### Guidelines:
+- Be descriptive and detailed, focusing on the most important aspects of the image.
+- Avoid making assumptions or adding information not present in the image.
+- Use the chat's primary language; default to English if multilingual.
+- If the image is too complex, focus on the most prominent elements.
+
+### Output:
+Strictly return in JSON format:
+{
+    "prompt": "Your detailed description here."
+}
+
+### Chat History:
+<chat_history>
+{{MESSAGES:END:6}}
+</chat_history>"""
+
 ENABLE_TAGS_GENERATION = PersistentConfig(
     "ENABLE_TAGS_GENERATION",
     "task.tags.enable",
@@ -1191,12 +1538,27 @@ CHROMA_HTTP_SSL = os.environ.get("CHROMA_HTTP_SSL", "false").lower() == "true"
 # this uses the model defined in the Dockerfile ENV variable. If you dont use docker or docker based deployments such as k8s, the default embedding model will be used (sentence-transformers/all-MiniLM-L6-v2)
 
 # Milvus
-
 MILVUS_URI = os.environ.get("MILVUS_URI", f"{DATA_DIR}/vector_db/milvus.db")
+MILVUS_DB = os.environ.get("MILVUS_DB", "default")
 
 # Qdrant
-QDRANT_URI = os.environ.get("QDRANT_URI", None)
 QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", None)
+QDRANT_URL = os.environ.get("QDRANT_URL", "http://localhost:6333")
+QDRANT_TIMEOUT_SECONDS = os.environ.get("QDRANT_TIMEOUT_SECONDS", 5)
+
+# OpenSearch
+OPENSEARCH_URI = os.environ.get("OPENSEARCH_URI", "https://localhost:9200")
+OPENSEARCH_SSL = os.environ.get("OPENSEARCH_SSL", True)
+OPENSEARCH_CERT_VERIFY = os.environ.get("OPENSEARCH_CERT_VERIFY", False)
+OPENSEARCH_USERNAME = os.environ.get("OPENSEARCH_USERNAME", None)
+OPENSEARCH_PASSWORD = os.environ.get("OPENSEARCH_PASSWORD", None)
+
+# Pgvector
+PGVECTOR_DB_URL = os.environ.get("PGVECTOR_DB_URL", DATABASE_URL)
+if VECTOR_DB == "pgvector" and not PGVECTOR_DB_URL.startswith("postgres"):
+    raise ValueError(
+        "Pgvector requires setting PGVECTOR_DB_URL or using Postgres with vector extension as the primary database."
+    )
 
 # OpenSearch
 OPENSEARCH_URI = os.environ.get("OPENSEARCH_URI", "https://localhost:9200")
@@ -1602,6 +1964,13 @@ ENABLE_IMAGE_GENERATION = PersistentConfig(
     "image_generation.enable",
     os.environ.get("ENABLE_IMAGE_GENERATION", "").lower() == "true",
 )
+
+ENABLE_IMAGE_PROMPT_GENERATION = PersistentConfig(
+    "ENABLE_IMAGE_PROMPT_GENERATION",
+    "image_generation.prompt.enable",
+    os.environ.get("ENABLE_IMAGE_PROMPT_GENERATION", "true").lower() == "true",
+)
+
 AUTOMATIC1111_BASE_URL = PersistentConfig(
     "AUTOMATIC1111_BASE_URL",
     "image_generation.automatic1111.base_url",
@@ -1929,6 +2298,12 @@ LDAP_SERVER_PORT = PersistentConfig(
     "LDAP_SERVER_PORT",
     "ldap.server.port",
     int(os.environ.get("LDAP_SERVER_PORT", "389")),
+)
+
+LDAP_ATTRIBUTE_FOR_MAIL = PersistentConfig(
+    "LDAP_ATTRIBUTE_FOR_MAIL",
+    "ldap.server.attribute_for_mail",
+    os.environ.get("LDAP_ATTRIBUTE_FOR_MAIL", "mail"),
 )
 
 LDAP_ATTRIBUTE_FOR_USERNAME = PersistentConfig(

@@ -62,33 +62,81 @@ async def get_user_permissisions(user=Depends(get_verified_user)):
 # User Default Permissions
 ############################
 class WorkspacePermissions(BaseModel):
-    models: bool
-    knowledge: bool
-    prompts: bool
-    tools: bool
+    models: bool = False
+    knowledge: bool = False
+    prompts: bool = False
+    tools: bool = False
 
 
 class ChatPermissions(BaseModel):
-    file_upload: bool
-    delete: bool
-    edit: bool
-    temporary: bool
+    controls: bool = True
+    file_upload: bool = True
+    delete: bool = True
+    edit: bool = True
+    temporary: bool = True
+
+
+class FeaturesPermissions(BaseModel):
+    web_search: bool = True
+    image_generation: bool = True
 
 
 class UserPermissions(BaseModel):
     workspace: WorkspacePermissions
     chat: ChatPermissions
+    features: FeaturesPermissions
 
 
-@router.get("/default/permissions")
+@router.get("/default/permissions", response_model=UserPermissions)
 async def get_user_permissions(request: Request, user=Depends(get_admin_user)):
-    return request.app.state.config.USER_PERMISSIONS
+    """
+    Retrieve default user permissions from the application configuration.
+    
+    This asynchronous endpoint extracts the default permissions for workspace, chat, and features from the application's state configuration. Each permission category is instantiated using its corresponding Pydantic model—WorkspacePermissions, ChatPermissions, and FeaturesPermissions—by unpacking a configuration dictionary. If no specific configuration is provided for a permission category, an empty dictionary is used, allowing the model to apply its default values.
+    
+    Parameters:
+        request (Request): The FastAPI request object used to access the application state and configuration.
+        user: An admin user dependency (injected via get_admin_user) that ensures only authenticated admin users can access this endpoint.
+    
+    Returns:
+        dict: A dictionary with the keys "workspace", "chat", and "features", each mapped to their respective permission model instances containing the default settings.
+    
+    Usage:
+        This endpoint is typically accessed via a GET request to "/default/permissions" and requires admin authentication.
+    """
+    return {
+        "workspace": WorkspacePermissions(
+            **request.app.state.config.USER_PERMISSIONS.get("workspace", {})
+        ),
+        "chat": ChatPermissions(
+            **request.app.state.config.USER_PERMISSIONS.get("chat", {})
+        ),
+        "features": FeaturesPermissions(
+            **request.app.state.config.USER_PERMISSIONS.get("features", {})
+        ),
+    }
 
 
 @router.post("/default/permissions")
 async def update_user_permissions(
     request: Request, form_data: UserPermissions, user=Depends(get_admin_user)
 ):
+    """
+    Update default user permissions in the application configuration.
+    
+    This asynchronous endpoint updates the application's user permissions using data provided
+    in the form_data parameter. The new permissions are serialized via Pydantic's model_dump() method
+    and stored in the application's configuration. Access to this endpoint requires an authenticated
+    admin user.
+    
+    Parameters:
+        request (Request): The FastAPI request object, which contains the application state.
+        form_data (UserPermissions): A Pydantic model instance with the new permissions settings.
+        user: The authenticated admin user, injected via dependency to enforce admin-level access.
+    
+    Returns:
+        dict: A dictionary representing the updated user permissions stored in the application configuration.
+    """
     request.app.state.config.USER_PERMISSIONS = form_data.model_dump()
     return request.app.state.config.USER_PERMISSIONS
 

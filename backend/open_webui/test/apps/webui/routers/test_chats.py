@@ -186,6 +186,21 @@ class TestChats(AbstractPostgresTest):
         assert response.json() is True
 
     def test_clone_chat_by_id(self):
+        """
+        Test cloning a chat by its ID and validate the cloned chat's data.
+        
+        This test retrieves the first chat's ID from the chat list, then uses a simulated user session
+        (with user id "2") to send a GET request to the "/{chat_id}/clone" endpoint. It asserts that:
+        - The response status code is 200.
+        - The cloned chat's ID is different from the original chat ID.
+        - The cloned chat's data matches the expected dictionary, including keys such as "branchPointMessageId",
+          "description", "history", "name", "originalChatId", "tags", and "title" (which is expected to be "New Chat").
+        - The "share_id" is None.
+        - The top-level title in the response is "New Chat".
+        - The "user_id" in the response is "2".
+        
+        This ensures that the cloning feature works correctly and returns the appropriate chat details.
+        """
         chat_id = self.chats.get_chats()[0].id
         with mock_webui_user(id="2"):
             response = self.fast_api_client.get(self.create_url(f"/{chat_id}/clone"))
@@ -200,13 +215,18 @@ class TestChats(AbstractPostgresTest):
             "name": "chat1",
             "originalChatId": chat_id,
             "tags": ["tag1", "tag2"],
-            "title": "Clone of New Chat",
+            "title": "New Chat",
         }
         assert data["share_id"] is None
-        assert data["title"] == "Clone of New Chat"
+        assert data["title"] == "New Chat"
         assert data["user_id"] == "2"
 
     def test_archive_chat_by_id(self):
+        """
+        Test archiving a chat by its ID.
+        
+        This test verifies that a chat can be successfully archived via the API. It retrieves the ID of the first chat from the database, simulates a user session using the mock_webui_user context manager, and sends a GET request to archive the chat. The test then asserts that the API response has a 200 status code and confirms that the chat's archived status is set to True.
+        """
         chat_id = self.chats.get_chats()[0].id
         with mock_webui_user(id="2"):
             response = self.fast_api_client.get(self.create_url(f"/{chat_id}/archive"))

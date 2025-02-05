@@ -34,7 +34,7 @@ from open_webui.config import (
     JWT_EXPIRES_IN,
     AppConfig,
 )
-from open_webui.constants import ERROR_MESSAGES
+from open_webui.constants import ERROR_MESSAGES, WEBHOOK_MESSAGES
 from open_webui.env import WEBUI_SESSION_COOKIE_SAME_SITE, WEBUI_SESSION_COOKIE_SECURE
 from open_webui.utils.misc import parse_duration
 from open_webui.utils.auth import get_password_hash, create_token
@@ -62,20 +62,32 @@ auth_manager_config.JWT_EXPIRES_IN = JWT_EXPIRES_IN
 
 class OAuthManager:
     def __init__(self):
+        """
+        Initialize an OAuthManager instance by creating an OAuth client and registering all OAuth providers.
+        
+        This constructor initializes an OAuth client instance (self.oauth) and iterates over the global
+        OAUTH_PROVIDERS dictionary. For each provider configuration, it calls the associated 'register'
+        function to register the provider with the OAuth client. This setup ensures that all configured
+        OAuth providers are properly initialized and ready for authentication operations.
+        """
         self.oauth = OAuth()
-        for provider_name, provider_config in OAUTH_PROVIDERS.items():
-            self.oauth.register(
-                name=provider_name,
-                client_id=provider_config["client_id"],
-                client_secret=provider_config["client_secret"],
-                server_metadata_url=provider_config["server_metadata_url"],
-                client_kwargs={
-                    "scope": provider_config["scope"],
-                },
-                redirect_uri=provider_config["redirect_uri"],
-            )
+        for _, provider_config in OAUTH_PROVIDERS.items():
+            provider_config["register"](self.oauth)
 
     def get_client(self, provider_name):
+        """
+        Retrieve the OAuth client for the specified provider.
+        
+        This method creates and returns an OAuth client instance for the given provider by
+        delegating the creation to the underlying OAuth setup. The client is configured
+        according to the provider's settings defined in the application's OAuth configuration.
+        
+        Parameters:
+            provider_name (str): The name identifier for the OAuth provider.
+        
+        Returns:
+            OAuthClient: An instance of the OAuth client corresponding to the specified provider.
+        """
         return self.oauth.create_client(provider_name)
 
     def get_user_role(self, user, user_data):
@@ -192,6 +204,31 @@ class OAuthManager:
         return await client.authorize_redirect(request, redirect_uri)
 
     async def handle_callback(self, provider, request, response):
+        """
+        Handles the OAuth callback after the user authenticates with an OAuth provider.
+        
+        This asynchronous function processes the callback request from an OAuth provider by:
+        - Validating the provider and retrieving the access token.
+        - Extracting user information from the token or by querying the provider.
+        - Verifying required user attributes such as the unique subject (sub) claim and email.
+        - Ensuring the email is from an allowed domain.
+        - Looking up an existing user by the OAuth sub or merging accounts by email when enabled.
+        - Creating a new user when signups are enabled and no matching user exists, including downloading and encoding the user's profile image if available.
+        - Updating the user’s role and group memberships based on OAuth claims.
+        - Generating a JWT token (and optionally an OAuth id token) which is set as a secure, HTTP-only cookie.
+        - Redirecting the user back to the frontend with the JWT token embedded in the URL.
+        
+        Parameters:
+            provider (str): The name of the OAuth provider.
+            request (Request): The incoming HTTP request containing OAuth callback data and base URL.
+            response (Response): The HTTP response used to set cookies and headers.
+        
+        Returns:
+            RedirectResponse: A redirect response to the frontend authentication endpoint with the JWT token appended in the URL fragment.
+        
+        Raises:
+            HTTPException: If the provider is invalid (404), if access token authorization fails (400), if required user data (userinfo, sub, email) is missing or invalid (400), if the email’s domain is not allowed (400), if a new user cannot be created because the email is already taken (400), or if signups are disabled and the user does not already exist (403).
+        """
         if provider not in OAUTH_PROVIDERS:
             raise HTTPException(404)
         client = self.get_client(provider)
@@ -200,14 +237,14 @@ class OAuthManager:
         except Exception as e:
             log.warning(f"OAuth callback error: {e}")
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
-        user_data: UserInfo = token["userinfo"]
+        user_data: UserInfo = token.get("userinfo")
         if not user_data:
             user_data: UserInfo = await client.userinfo(token=token)
         if not user_data:
             log.warning(f"OAuth callback failed, user data is missing: {token}")
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
 
-        sub = user_data.get("sub")
+        sub = user_data.get(OAUTH_PROVIDERS[provider].get("sub_claim", "sub"))
         if not sub:
             log.warning(f"OAuth callback failed, sub is missing: {user_data}")
             raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
@@ -255,12 +292,20 @@ class OAuthManager:
                     raise HTTPException(400, detail=ERROR_MESSAGES.EMAIL_TAKEN)
 
                 picture_claim = auth_manager_config.OAUTH_PICTURE_CLAIM
-                picture_url = user_data.get(picture_claim, "")
+                picture_url = user_data.get(
+                    picture_claim, OAUTH_PROVIDERS[provider].get("picture_url", "")
+                )
                 if picture_url:
                     # Download the profile image into a base64 string
                     try:
+                        access_token = token.get("access_token")
+                        get_kwargs = {}
+                        if access_token:
+                            get_kwargs["headers"] = {
+                                "Authorization": f"Bearer {access_token}",
+                            }
                         async with aiohttp.ClientSession() as session:
-                            async with session.get(picture_url) as resp:
+                            async with session.get(picture_url, **get_kwargs) as resp:
                                 picture = await resp.read()
                                 base64_encoded_picture = base64.b64encode(
                                     picture
@@ -295,12 +340,10 @@ class OAuthManager:
                 if auth_manager_config.WEBHOOK_URL:
                     post_webhook(
                         auth_manager_config.WEBHOOK_URL,
-                        auth_manager_config.WEBHOOK_MESSAGES.USER_SIGNUP(user.name),
+                        WEBHOOK_MESSAGES.USER_SIGNUP(user.name),
                         {
                             "action": "signup",
-                            "message": auth_manager_config.WEBHOOK_MESSAGES.USER_SIGNUP(
-                                user.name
-                            ),
+                            "message": WEBHOOK_MESSAGES.USER_SIGNUP(user.name),
                             "user": user.model_dump_json(exclude_none=True),
                         },
                     )
@@ -314,7 +357,7 @@ class OAuthManager:
             expires_delta=parse_duration(auth_manager_config.JWT_EXPIRES_IN),
         )
 
-        if auth_manager_config.ENABLE_OAUTH_GROUP_MANAGEMENT:
+        if auth_manager_config.ENABLE_OAUTH_GROUP_MANAGEMENT and user.role != "admin":
             self.update_user_groups(
                 user=user,
                 user_data=user_data,

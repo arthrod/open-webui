@@ -1,7 +1,5 @@
 from open_webui.utils.task import prompt_template
-from open_webui.utils.misc import (
-    add_or_update_system_message,
-)
+from open_webui.utils.misc import add_or_update_system_message
 
 from typing import Callable, Optional
 
@@ -42,11 +40,37 @@ def apply_model_params_to_body(
 
 # inplace function: form_data is modified
 def apply_model_params_to_body_openai(params: dict, form_data: dict) -> dict:
+    """
+    Apply OpenAI-specific model parameters to the form data.
+    
+    This function prepares and applies a mapping of OpenAI model parameters to the provided
+    form_data dictionary. It defines a mapping where each parameter from the
+    params dictionary is cast or transformed to the expected type for OpenAI's API.
+    The mapping includes keys such as:
+        - "temperature": cast to float,
+        - "top_p": cast to float,
+        - "max_tokens": cast to int,
+        - "frequency_penalty": cast to float,
+        - "reasoning_effort": expected as string,
+        - "seed": passed unchanged,
+        - "stop": transformed by decoding unicode escape sequences from each string element.
+    
+    The function delegates the application of these parameters to the general
+    apply_model_params_to_body function.
+    
+    Parameters:
+        params (dict): A dictionary containing model parameter keys and their corresponding values.
+        form_data (dict): A dictionary representing the API request body that will be updated with the model parameters.
+    
+    Returns:
+        dict: The updated form_data dictionary with the OpenAI model parameters applied.
+    """
     mappings = {
         "temperature": float,
         "top_p": float,
         "max_tokens": int,
         "frequency_penalty": float,
+        "reasoning_effort": str,
         "seed": lambda x: x,
         "stop": lambda x: [bytes(s, "utf-8").decode("unicode_escape") for s in x],
     }

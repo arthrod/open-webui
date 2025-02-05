@@ -7,6 +7,7 @@ from open_webui.internal.wrappers import register_connection
 from open_webui.env import (
     OPEN_WEBUI_DIR,
     DATABASE_URL,
+    DATABASE_SCHEMA,
     SRC_LOG_LEVELS,
     DATABASE_POOL_MAX_OVERFLOW,
     DATABASE_POOL_RECYCLE,
@@ -14,7 +15,7 @@ from open_webui.env import (
     DATABASE_POOL_TIMEOUT,
 )
 from peewee_migrate import Router
-from sqlalchemy import Dialect, create_engine, types
+from sqlalchemy import Dialect, create_engine, MetaData, types
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.pool import QueuePool, NullPool
@@ -99,11 +100,27 @@ else:
 SessionLocal = sessionmaker(
     autocommit=False, autoflush=False, bind=engine, expire_on_commit=False
 )
-Base = declarative_base()
+metadata_obj = MetaData(schema=DATABASE_SCHEMA)
+Base = declarative_base(metadata=metadata_obj)
 Session = scoped_session(SessionLocal)
 
 
 def get_session():
+    """
+    Yield a SQLAlchemy database session and ensure it is closed after use.
+    
+    This generator function instantiates a new session using SessionLocal, yields it for performing database operations,
+    and guarantees that the session is closed afterward, even if an error occurs during execution.
+    
+    Yields:
+        Session: An active SQLAlchemy session instance.
+    
+    Usage Example:
+        >>> session_generator = get_session()
+        >>> session = next(session_generator)
+        >>> # perform database operations with session
+        >>> session_generator.close()  # Ensures the session is properly closed
+    """
     db = SessionLocal()
     try:
         yield db

@@ -11,6 +11,8 @@ from langchain.retrievers import ContextualCompressionRetriever, EnsembleRetriev
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
 
+
+from open_webui.config import VECTOR_DB
 from open_webui.retrieval.vector.connector import VECTOR_DB_CLIENT
 from open_webui.utils.misc import get_last_user_message
 
@@ -181,6 +183,26 @@ def query_collection(
     embedding_function,
     k: int,
 ) -> dict:
+    """
+    Query multiple collections using an embedding-based search and merge the results.
+    
+    For each query, an embedding is generated using the provided embedding_function. The function then iterates over the given collection_names to perform individual queries via query_doc. Successful query results are dumped to a dictionary and aggregated into a list, which is finally processed by merge_and_sort_query_results. The ordering of the merged results depends on the global VECTOR_DB configuration:
+    - If VECTOR_DB is "chroma", the results are not reversed.
+    - For other values, the results are reversed.
+    
+    Parameters:
+        collection_names (list[str]): List of collection names to be queried. Collections with empty names are skipped.
+        queries (list[str]): List of query strings to process.
+        embedding_function (Callable[[str], Any]): Function that converts a query string into its embedding vector.
+        k (int): Number of top documents to retrieve for each query.
+    
+    Returns:
+        dict: A dictionary containing the merged and sorted query results, limited to the top k documents based on the specified configuration.
+    
+    Notes:
+        - Exceptions encountered during querying individual collections are caught and logged.
+        - The sorting order is adjusted based on the vector database used (not reversed for "chroma").
+    """
     results = []
     for query in queries:
         query_embedding = embedding_function(query)
@@ -199,7 +221,12 @@ def query_collection(
             else:
                 pass
 
-    return merge_and_sort_query_results(results, k=k)
+    if VECTOR_DB == "chroma":
+        # Chroma uses unconventional cosine similarity, so we don't need to reverse the results
+        # https://docs.trychroma.com/docs/collections/configure#configuring-chroma-collections
+        return merge_and_sort_query_results(results, k=k, reverse=False)
+    else:
+        return merge_and_sort_query_results(results, k=k, reverse=True)
 
 
 def query_collection_with_hybrid_search(
@@ -210,6 +237,31 @@ def query_collection_with_hybrid_search(
     reranking_function,
     r: float,
 ) -> dict:
+    """
+    Perform hybrid search across multiple collections and queries, then merge and sort the results.
+    
+    This function iterates over the provided collection names and queries, invoking a hybrid search
+    that combines BM25 and vector search techniques using the specified embedding and reranking functions.
+    Each search result is collected into a results list, which is then merged and sorted. The sort order
+    depends on the global VECTOR_DB variable: if VECTOR_DB is "chroma", the results are returned in
+    their original order (non-reversed) due to Chroma's unconventional cosine similarity; otherwise, the
+    results are reversed.
+    
+    Parameters:
+        collection_names (list[str]): A list of collection names to search within.
+        queries (list[str]): A list of query strings to use for the search.
+        embedding_function (Callable): A function that converts queries into embeddings.
+        k (int): The number of top results to retrieve.
+        reranking_function (Callable): A function used to rerank the retrieved documents.
+        r (float): A threshold or scoring parameter used by the search process.
+    
+    Returns:
+        dict: A dictionary containing the merged and sorted search results.
+    
+    Raises:
+        Exception: If an error occurs during querying for any collection, indicating that the hybrid
+            search failed for all collections and a fallback is being used.
+    """
     results = []
     error = False
     for collection_name in collection_names:
@@ -235,7 +287,12 @@ def query_collection_with_hybrid_search(
             "Hybrid search failed for all collections. Using Non hybrid search as fallback."
         )
 
-    return merge_and_sort_query_results(results, k=k, reverse=True)
+    if VECTOR_DB == "chroma":
+        # Chroma uses unconventional cosine similarity, so we don't need to reverse the results
+        # https://docs.trychroma.com/docs/collections/configure#configuring-chroma-collections
+        return merge_and_sort_query_results(results, k=k, reverse=False)
+    else:
+        return merge_and_sort_query_results(results, k=k, reverse=True)
 
 
 def get_embedding_function(
@@ -246,6 +303,36 @@ def get_embedding_function(
     key,
     embedding_batch_size,
 ):
+    """
+    Returns a function that generates embeddings for input queries based on the specified embedding engine and configuration.
+    
+    If `embedding_engine` is an empty string, the returned function uses the provided `embedding_function`’s `encode` method to generate embeddings. For `"ollama"` or `"openai"` engines, the returned function wraps the `generate_embeddings` call and supports batch processing: if the input query is a list, it splits the input into batches of size `embedding_batch_size` and processes each batch separately.
+    
+    Parameters:
+        embedding_engine (str): The embedding engine to use. An empty string indicates that the built-in `embedding_function` should be used.
+        embedding_model (str): The name of the embedding model to use with the specified engine ("ollama" or "openai").
+        embedding_function (object): An object with an `encode` method for generating embeddings when no external engine is specified.
+        url (str): The endpoint URL for the embedding service, applicable when using "ollama" or "openai".
+        key (str): The API key or authentication token for the embedding service.
+        embedding_batch_size (int): The maximum number of queries to process in a single batch for the external engines.
+    
+    Returns:
+        function: A function that takes a query (either a single string or a list of strings) and returns the corresponding embedding(s) as a list.
+    
+    Example:
+        >>> embed_func = get_embedding_function(
+        ...     embedding_engine="openai",
+        ...     embedding_model="text-embedding-ada-002",
+        ...     embedding_function=my_embedding_function,
+        ...     url="https://api.openai.com/v1/embeddings",
+        ...     key="your_api_key",
+        ...     embedding_batch_size=10,
+        ... )
+        >>> # For a single query:
+        >>> embedding = embed_func("This is a sample query.")
+        >>> # For multiple queries:
+        >>> embeddings = embed_func(["Query one", "Query two"])
+    """
     if embedding_engine == "":
         return lambda query: embedding_function.encode(query).tolist()
     elif embedding_engine in ["ollama", "openai"]:

@@ -17,7 +17,7 @@ from open_webui.routers.retrieval import (
     process_files_batch,
     BatchProcessFilesForm,
 )
-
+from open_webui.storage.provider import Storage
 
 from open_webui.constants import ERROR_MESSAGES
 from open_webui.utils.auth import get_verified_user
@@ -25,6 +25,7 @@ from open_webui.utils.access_control import has_access, has_permission
 
 
 from open_webui.env import SRC_LOG_LEVELS
+from open_webui.models.models import Models, ModelForm
 
 
 log = logging.getLogger(__name__)
@@ -206,14 +207,41 @@ async def update_knowledge_by_id(
     form_data: KnowledgeForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Update an existing knowledge base entry.
+    
+    This asynchronous function retrieves a knowledge base entry using its unique identifier
+    and verifies that the current user has permission to update it. The function allows the update
+    if the user is the original creator, has write access as defined by the knowledge's access control,
+    or is an admin. Upon successful update, the function fetches and includes the associated file details
+    in the response. If the knowledge entry is not found, the user lacks permissions, or the updated
+    knowledge base conflicts with an existing identifier, an HTTPException is raised.
+    
+    Parameters:
+        id (str): Unique identifier of the knowledge base entry to update.
+        form_data (KnowledgeForm): Pydantic model containing the updated data for the knowledge base.
+        user: The verified user (injected via dependency) performing the update operation.
+    
+    Returns:
+        KnowledgeFilesResponse: A response model with the updated knowledge base details and its associated files.
+    
+    Raises:
+        HTTPException: If the knowledge base entry is not found (ERROR_MESSAGES.NOT_FOUND),
+                       if the user lacks sufficient access rights (ERROR_MESSAGES.ACCESS_PROHIBITED),
+                       or if the update fails due to identifier conflicts (ERROR_MESSAGES.ID_TAKEN).
+    """
     knowledge = Knowledges.get_knowledge_by_id(id=id)
     if not knowledge:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ERROR_MESSAGES.NOT_FOUND,
         )
-
-    if knowledge.user_id != user.id and user.role != "admin":
+    # Is the user the original creator, in a group with write access, or an admin
+    if (
+        knowledge.user_id != user.id
+        and not has_access(user.id, "write", knowledge.access_control)
+        and user.role != "admin"
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
@@ -394,6 +422,34 @@ def remove_file_from_knowledge_by_id(
     form_data: KnowledgeFileIdForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Remove a file from a knowledge base and update associated records.
+    
+    This endpoint removes the specified file from a knowledge base by performing several operations:
+    1. Verifies that the knowledge base exists and that the requesting user is authorized (either the owner or an admin).
+    2. Retrieves the file using the provided file ID from the form data and ensures it exists.
+    3. Deletes the file content from the vector database using the knowledge base ID.
+    4. Checks and removes the file's dedicated collection from the vector database if it exists.
+    5. Deletes the physical file from storage if a valid file path is provided.
+    6. Removes the file record from the database.
+    7. Updates the knowledge base's data to remove the file ID from its list of associated files.
+    8. Returns the updated knowledge base along with the current list of associated files.
+    
+    Parameters:
+        id (str): The unique identifier of the knowledge base.
+        form_data (KnowledgeFileIdForm): An object containing the file ID to be removed.
+        user (User, optional): The verified user performing the operation (automatically injected via dependency).
+    
+    Returns:
+        KnowledgeFilesResponse: An object containing the updated knowledge base data and list of remaining files.
+    
+    Raises:
+        HTTPException: With status code 400 if:
+            - The knowledge base or file is not found.
+            - The user is not authorized to remove the file.
+            - The file ID is not associated with the knowledge base.
+            - An error occurs while updating the knowledge base data.
+    """
     knowledge = Knowledges.get_knowledge_by_id(id=id)
     if not knowledge:
         raise HTTPException(
@@ -418,6 +474,18 @@ def remove_file_from_knowledge_by_id(
     VECTOR_DB_CLIENT.delete(
         collection_name=knowledge.id, filter={"file_id": form_data.file_id}
     )
+
+    # Remove the file's collection from vector database
+    file_collection = f"file-{form_data.file_id}"
+    if VECTOR_DB_CLIENT.has_collection(collection_name=file_collection):
+        VECTOR_DB_CLIENT.delete_collection(collection_name=file_collection)
+
+    # Delete physical file
+    if file.path:
+        Storage.delete_file(file.path)
+
+    # Delete file from database
+    Files.delete_file_by_id(form_data.file_id)
 
     if knowledge:
         data = knowledge.data or {}
@@ -460,6 +528,28 @@ def remove_file_from_knowledge_by_id(
 
 @router.delete("/{id}/delete", response_model=bool)
 async def delete_knowledge_by_id(id: str, user=Depends(get_verified_user)):
+    """
+    Delete a knowledge base by its unique identifier, update associated models, and remove its vector data.
+    
+    This asynchronous endpoint allows a verified user to delete a knowledge base. The operation
+    checks that the knowledge base exists and that the user either owns the knowledge base or has
+    admin privileges. It then logs the deletion, updates each model referencing the knowledge base by
+    removing it from the model's metadata, and attempts to delete the corresponding collection from the
+    vector database (logging any errors during this process without halting deletion).
+    
+    Parameters:
+        id (str): The unique identifier of the knowledge base to be deleted.
+        user (Any, optional): The verified user performing the deletion, automatically injected via
+            dependency from `get_verified_user`.
+    
+    Returns:
+        Any: The result of the deletion operation, typically indicating successful removal of the
+             knowledge base.
+    
+    Raises:
+        HTTPException: If the knowledge base does not exist or if the user does not have permission
+                       to delete it (both with HTTP 400 Bad Request status).
+    """
     knowledge = Knowledges.get_knowledge_by_id(id=id)
     if not knowledge:
         raise HTTPException(
@@ -473,6 +563,36 @@ async def delete_knowledge_by_id(id: str, user=Depends(get_verified_user)):
             detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
         )
 
+    log.info(f"Deleting knowledge base: {id} (name: {knowledge.name})")
+
+    # Get all models
+    models = Models.get_all_models()
+    log.info(f"Found {len(models)} models to check for knowledge base {id}")
+
+    # Update models that reference this knowledge base
+    for model in models:
+        if model.meta and hasattr(model.meta, "knowledge"):
+            knowledge_list = model.meta.knowledge or []
+            # Filter out the deleted knowledge base
+            updated_knowledge = [k for k in knowledge_list if k.get("id") != id]
+
+            # If the knowledge list changed, update the model
+            if len(updated_knowledge) != len(knowledge_list):
+                log.info(f"Updating model {model.id} to remove knowledge base {id}")
+                model.meta.knowledge = updated_knowledge
+                # Create a ModelForm for the update
+                model_form = ModelForm(
+                    id=model.id,
+                    name=model.name,
+                    base_model_id=model.base_model_id,
+                    meta=model.meta,
+                    params=model.params,
+                    access_control=model.access_control,
+                    is_active=model.is_active,
+                )
+                Models.update_model_by_id(model.id, model_form)
+
+    # Clean up vector DB
     try:
         VECTOR_DB_CLIENT.delete_collection(collection_name=id)
     except Exception as e:

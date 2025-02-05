@@ -392,8 +392,22 @@ class ChatTable:
         skip: int = 0,
         limit: int = 50,
     ) -> list[ChatModel]:
+        """
+        Retrieve a list of chats for a given user.
+        
+        This method queries the database for all chats associated with the specified user ID. By default, it excludes archived chats unless explicitly requested via the `include_archived` flag. The results are sorted by the chat's last update time in descending order and support pagination through the `skip` and `limit` parameters. Each chat is converted into a `ChatModel` instance for further processing.
+        
+        Parameters:
+            user_id (str): The unique identifier of the user.
+            include_archived (bool, optional): If True, archived chats are included in the result. Defaults to False.
+            skip (int, optional): The number of records to skip for pagination. Defaults to 0.
+            limit (int, optional): The maximum number of chats to retrieve. Defaults to 50.
+        
+        Returns:
+            list[ChatModel]: A list of chat instances for the specified user.
+        """
         with get_db() as db:
-            query = db.query(Chat).filter_by(user_id=user_id).filter_by(folder_id=None)
+            query = db.query(Chat).filter_by(user_id=user_id)
             if not include_archived:
                 query = query.filter_by(archived=False)
 

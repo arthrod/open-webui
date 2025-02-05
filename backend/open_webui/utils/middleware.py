@@ -28,9 +28,13 @@ from open_webui.socket.main import (
 from open_webui.routers.tasks import (
     generate_queries,
     generate_title,
+    generate_image_prompt,
     generate_chat_tags,
 )
 from open_webui.routers.retrieval import process_web_search, SearchForm
+from open_webui.routers.images import image_generations, GenerateImageForm
+
+
 from open_webui.utils.webhook import post_webhook
 
 
@@ -486,9 +490,143 @@ async def chat_web_search_handler(
     return form_data
 
 
+async def chat_image_generation_handler(
+    request: Request, form_data: dict, extra_params: dict, user
+):
+    """
+    Asynchronously handles an image generation request as part of the chat workflow.
+    
+    This function processes chat messages to generate an image. It first emits a status event indicating that image generation has started. It then extracts the last user message from the chat and, if enabled in the configuration, attempts to generate a refined image prompt using an external prompt generation service. If prompt generation fails, it falls back to using the original user message. The function next calls the image generation service to create one or more images based on the prompt and emits corresponding status events and image messages. In case of errors during image generation, an error status is emitted and an appropriate system message is attached to the chat. The updated form data containing the modified message list is returned.
+    
+    Parameters:
+        request (Request): The FastAPI request instance containing the application state and configuration.
+        form_data (dict): A dictionary containing chat session details. It must include a "messages" key with the chat history and a "model" key for image generation parameters.
+        extra_params (dict): A dictionary for extra parameters; must include a '__event_emitter__' callable for emitting status and message events.
+        user: The current user context or authentication object.
+    
+    Returns:
+        dict: The updated form_data dictionary with new or modified system message(s) reflecting the outcome of the image generation process.
+    
+    Notes:
+        - Exceptions during prompt generation or image creation are caught and logged, and the function continues by falling back to default behaviors.
+        - Event emissions are used throughout to update the client on the generation status.
+    """
+    __event_emitter__ = extra_params["__event_emitter__"]
+    await __event_emitter__(
+        {
+            "type": "status",
+            "data": {"description": "Generating an image", "done": False},
+        }
+    )
+
+    messages = form_data["messages"]
+    user_message = get_last_user_message(messages)
+
+    prompt = user_message
+    negative_prompt = ""
+
+    if request.app.state.config.ENABLE_IMAGE_PROMPT_GENERATION:
+        try:
+            res = await generate_image_prompt(
+                request,
+                {
+                    "model": form_data["model"],
+                    "messages": messages,
+                },
+                user,
+            )
+
+            response = res["choices"][0]["message"]["content"]
+
+            try:
+                bracket_start = response.find("{")
+                bracket_end = response.rfind("}") + 1
+
+                if bracket_start == -1 or bracket_end == -1:
+                    raise Exception("No JSON object found in the response")
+
+                response = response[bracket_start:bracket_end]
+                response = json.loads(response)
+                prompt = response.get("prompt", [])
+            except Exception as e:
+                prompt = user_message
+
+        except Exception as e:
+            log.exception(e)
+            prompt = user_message
+
+    system_message_content = ""
+
+    try:
+        images = await image_generations(
+            request=request,
+            form_data=GenerateImageForm(**{"prompt": prompt}),
+            user=user,
+        )
+
+        await __event_emitter__(
+            {
+                "type": "status",
+                "data": {"description": "Generated an image", "done": True},
+            }
+        )
+
+        for image in images:
+            await __event_emitter__(
+                {
+                    "type": "message",
+                    "data": {"content": f"![Generated Image]({image['url']})\n"},
+                }
+            )
+
+        system_message_content = "<context>User is shown the generated image, tell the user that the image has been generated</context>"
+    except Exception as e:
+        log.exception(e)
+        await __event_emitter__(
+            {
+                "type": "status",
+                "data": {
+                    "description": f"An error occured while generating an image",
+                    "done": True,
+                },
+            }
+        )
+
+        system_message_content = "<context>Unable to generate an image, tell the user that an error occured</context>"
+
+    if system_message_content:
+        form_data["messages"] = add_or_update_system_message(
+            system_message_content, form_data["messages"]
+        )
+
+    return form_data
+
+
 async def chat_completion_files_handler(
     request: Request, body: dict, user: UserModel
 ) -> tuple[dict, dict[str, list]]:
+    """
+    Process files from the chat payload by generating retrieval queries and obtaining corresponding file sources.
+    
+    This asynchronous function checks the request body for file metadata and, if present, performs the following steps:
+    1. Invokes an asynchronous query generation function to generate retrieval queries based on the model and messages provided in the body.
+    2. Attempts to extract a JSON object from the query generation response. If extraction fails, it falls back to using the last user message as the query.
+    3. Offloads the retrieval of file sources to a separate thread using a ThreadPoolExecutor to avoid blocking the event loop.
+    4. Logs debug information about the extracted sources.
+    
+    Parameters:
+        request (Request): The FastAPI request object containing application state and context variables used for embedding, ranking, and configuration.
+        body (dict): The payload of the chat completion request. Expected to include keys such as "model", "messages", and optionally "metadata" with a "files" field.
+        user (UserModel): The user associated with the request.
+    
+    Returns:
+        tuple: A tuple containing:
+            - dict: The original request body.
+            - dict[str, list]: A dictionary with a "sources" key, mapping to a list of file sources retrieved based on the generated queries.
+    
+    Exceptions:
+        Internal exceptions during query generation or file source retrieval are caught and logged. The function uses fallback mechanisms (e.g., defaulting queries to the last user message) to minimize failure.
+    """
     sources = []
 
     if files := body.get("metadata", {}).get("files", None):
@@ -523,21 +661,48 @@ async def chat_completion_files_handler(
         if len(queries) == 0:
             queries = [get_last_user_message(body["messages"])]
 
-        sources = get_sources_from_files(
-            files=files,
-            queries=queries,
-            embedding_function=request.app.state.EMBEDDING_FUNCTION,
-            k=request.app.state.config.TOP_K,
-            reranking_function=request.app.state.rf,
-            r=request.app.state.config.RELEVANCE_THRESHOLD,
-            hybrid_search=request.app.state.config.ENABLE_RAG_HYBRID_SEARCH,
-        )
+        try:
+            # Offload get_sources_from_files to a separate thread
+            loop = asyncio.get_running_loop()
+            with ThreadPoolExecutor() as executor:
+                sources = await loop.run_in_executor(
+                    executor,
+                    lambda: get_sources_from_files(
+                        files=files,
+                        queries=queries,
+                        embedding_function=request.app.state.EMBEDDING_FUNCTION,
+                        k=request.app.state.config.TOP_K,
+                        reranking_function=request.app.state.rf,
+                        r=request.app.state.config.RELEVANCE_THRESHOLD,
+                        hybrid_search=request.app.state.config.ENABLE_RAG_HYBRID_SEARCH,
+                    ),
+                )
+
+        except Exception as e:
+            log.exception(e)
 
         log.debug(f"rag_contexts:sources: {sources}")
+
     return body, {"sources": sources}
 
 
 def apply_params_to_form_data(form_data, model):
+    """
+    Apply parameters from the form data to the main payload based on the model type.
+    
+    This function extracts a dictionary of parameters from the 'params' key in the provided form_data,
+    then integrates these parameters into form_data differently depending on the model configuration. If the model
+    contains an 'ollama' key with a truthy value, the entire parameters dictionary is assigned to 'options' and
+    specific keys like 'format' and 'keep_alive' are applied. Otherwise, individual parameters such as 'seed',
+    'stop', 'temperature', 'top_p', 'frequency_penalty', and 'reasoning_effort' are set if present.
+    
+    Parameters:
+        form_data (dict): A dictionary containing the request data, including a possible 'params' key with additional options.
+        model (dict): A dictionary representing the model configuration; if it includes the 'ollama' key, alternate option handling is used.
+    
+    Returns:
+        dict: The updated form_data dictionary with parameters applied and the original 'params' key removed.
+    """
     params = form_data.pop("params", {})
     if model.get("ollama"):
         form_data["options"] = params
@@ -562,10 +727,50 @@ def apply_params_to_form_data(form_data, model):
 
         if "frequency_penalty" in params:
             form_data["frequency_penalty"] = params["frequency_penalty"]
+
+        if "reasoning_effort" in params:
+            form_data["reasoning_effort"] = params["reasoning_effort"]
+
     return form_data
 
 
 async def process_chat_payload(request, form_data, metadata, user, model):
+    """
+    Process and augment a chat payload by applying model parameters, triggering additional features,
+    and integrating external context and sources.
+    
+    This asynchronous function updates the incoming form data based on parameters extracted
+    from the given model and user input. It performs several operations:
+      - Applies modification of form data using model-specific parameters via `apply_params_to_form_data`.
+      - Emits status events for knowledge search when the model contains external knowledge.
+      - Extends the file list with knowledge files if provided in the model.
+      - Invokes optional features such as web search and image generation based on flags in the form data.
+      - Processes filter functions, tool calls, and file retrieval to further adjust the chat payload.
+      - Integrates retrieved source/context data into the message history by updating or 
+        prepending system messages using a RAG (retrieval-augmented generation) template.
+      - Constructs and returns a tuple with the updated form data and a list of events to be emitted.
+    
+    Parameters:
+        request (Request): The incoming HTTP request object containing state and configuration.
+        form_data (dict): The dictionary containing chat payload details, including messages,
+                          files, features, and other parameters.
+        metadata (dict): A dictionary of metadata for the request, used to initialize event emitters.
+        user (object): A user object with attributes such as id, email, name, and role representing the current user.
+        model (dict): A dictionary representing the chat model, which may include external knowledge
+                      references under "info" -> "meta" -> "knowledge" and ownership info (e.g., "ollama").
+    
+    Returns:
+        tuple: A tuple containing:
+            - form_data (dict): The updated chat payload enriched with metadata, context, and source information.
+            - events (list): A list of event dictionaries to be emitted to the client (e.g., status updates or sources).
+    
+    Raises:
+        Exception: If an error occurs during filter function processing or if no user message is found.
+                   Other exceptions during tool or file handling are logged without interrupting the flow.
+    
+    Example:
+        updated_payload, events = await process_chat_payload(request, form_data, metadata, user, model)
+    """
     form_data = apply_params_to_form_data(form_data, model)
     log.debug(f"form_data: {form_data}")
 
@@ -637,6 +842,11 @@ async def process_chat_payload(request, form_data, metadata, user, model):
     if features:
         if "web_search" in features and features["web_search"]:
             form_data = await chat_web_search_handler(
+                request, form_data, extra_params, user
+            )
+
+        if "image_generation" in features and features["image_generation"]:
+            form_data = await chat_image_generation_handler(
                 request, form_data, extra_params, user
             )
 
@@ -749,6 +959,48 @@ async def process_chat_payload(request, form_data, metadata, user, model):
 async def process_chat_response(
     request, response, form_data, user, events, metadata, tasks
 ):
+    """
+    Process the chat response from a chat completion operation and manage associated background tasks.
+    
+    This asynchronous function processes both immediate and streaming chat completion responses.
+    Depending on the response type, it updates the corresponding chat message, emits events,
+    triggers background tasks (such as generating titles and tags), and sends webhook notifications
+    if the user is inactive.
+    
+    The function performs the following actions:
+      - Retrieves the chat message and its context using the provided metadata.
+      - Emits events for chat completion updates and, if applicable, for title and tag generation.
+      - Updates the chat title and tags in the database by invoking external asynchronous functions.
+      - Processes streaming responses by accumulating content, handling reasoning sections,
+        and periodically emitting partial updates.
+      - Wraps non-streaming responses with additional event emissions and database updates.
+      - Handles exceptions internally during background task execution and event emission.
+    
+    Parameters:
+        request (Request): The incoming HTTP request containing application context.
+        response (Union[StreamingResponse, dict]): The response from the chat completion operation.
+            It can be a streaming response for real-time updates or a dictionary for immediate responses.
+        form_data (dict): The form data associated with the chat request.
+        user (object): The user object representing the current client.
+        events (iterable): An iterable of event data objects to be emitted during response processing.
+        metadata (dict): A dictionary containing metadata for the chat, which must include keys such as
+            'chat_id', 'message_id', and optionally 'session_id'.
+        tasks (dict): A dictionary specifying additional background tasks to run, for example:
+            TASKS.TITLE_GENERATION and TASKS.TAGS_GENERATION, which control whether to generate a title
+            and tags for the chat respectively.
+    
+    Returns:
+        Union[StreamingResponse, dict]: For streaming responses, returns a new StreamingResponse
+            that wraps the original stream and includes additional event emissions. For non-streaming
+            responses, returns the original response or a dictionary with status and task details if a
+            background task was initiated.
+    
+    Side Effects:
+        - Updates chat messages, titles, and tags in the database.
+        - Emits events to notify clients of chat completion progress and updates.
+        - May send webhook notifications if the user is inactive.
+        - Processes and manipulates streaming data, including handling reasoning segments.
+    """
     async def background_tasks_handler():
         message_map = Chats.get_messages_by_chat_id(metadata["chat_id"])
         message = message_map.get(metadata["message_id"]) if message_map else None
@@ -770,14 +1022,17 @@ async def process_chat_response(
                         )
 
                         if res and isinstance(res, dict):
-                            title = (
-                                res.get("choices", [])[0]
-                                .get("message", {})
-                                .get(
-                                    "content",
-                                    message.get("content", "New Chat"),
-                                )
-                            ).strip()
+                            if len(res.get("choices", [])) == 1:
+                                title = (
+                                    res.get("choices", [])[0]
+                                    .get("message", {})
+                                    .get(
+                                        "content",
+                                        message.get("content", "New Chat"),
+                                    )
+                                ).strip()
+                            else:
+                                title = None
 
                             if not title:
                                 title = messages[0].get("content", "New Chat")
@@ -814,11 +1069,14 @@ async def process_chat_response(
                     )
 
                     if res and isinstance(res, dict):
-                        tags_string = (
-                            res.get("choices", [])[0]
-                            .get("message", {})
-                            .get("content", "")
-                        )
+                        if len(res.get("choices", [])) == 1:
+                            tags_string = (
+                                res.get("choices", [])[0]
+                                .get("message", {})
+                                .get("content", "")
+                            )
+                        else:
+                            tags_string = ""
 
                         tags_string = tags_string[
                             tags_string.find("{") : tags_string.rfind("}") + 1
@@ -837,7 +1095,7 @@ async def process_chat_response(
                                 }
                             )
                         except Exception as e:
-                            print(f"Error: {e}")
+                            pass
 
     event_emitter = None
     if (
@@ -929,6 +1187,36 @@ async def process_chat_response(
 
         # Handle as a background task
         async def post_response_handler(response, events):
+            """
+            Process and handle streaming chat completion response events.
+            
+            This asynchronous function processes a streaming response from a chat completion service and emits
+            intermediate events while updating the corresponding chat message in the database. It first sends a
+            series of provided events and saves them. It then iterates over the response's body, decoding and
+            filtering each line to extract JSON data. When new content is received, the function updates the chat
+            message and, if enabled, processes "reasoning" segments delimited by specific tags (e.g., <think>,
+            <reason>) to format intermediate thought processes with HTML <details> tags. Finally, it performs
+            a final update of the message, sends a webhook notification for inactive users, and handles any
+            background tasks.
+            
+            Parameters:
+                response (Response): An HTTP response object that includes a streaming body iterator (response.body_iterator)
+                    for receiving chunked response data and may provide a background callable (response.background) for
+                    post-response processing.
+                events (Iterable[dict]): An iterable of event dictionaries to be emitted initially and saved to update
+                    the chat message.
+            
+            Side Effects:
+                - Emits chat completion events via an event emitter.
+                - Updates chat messages in the database using Chats.upsert_message_to_chat_by_id_and_message_id.
+                - Processes and formats reasoning segments embedded in the chat response.
+                - Sends webhook notifications if the associated user is inactive.
+                - Invokes background tasks through background_tasks_handler.
+                - Utilizes several global variables and modules (e.g., metadata, Chats, event_emitter, ENABLE_REALTIME_CHAT_SAVE).
+            
+            Raises:
+                asyncio.CancelledError: If the asynchronous processing task is cancelled.
+            """
             message = Chats.get_message_by_id_and_message_id(
                 metadata["chat_id"], metadata["message_id"]
             )
@@ -952,6 +1240,16 @@ async def process_chat_response(
                         },
                     )
 
+                # We might want to disable this by default
+                detect_reasoning = True
+                reasoning_tags = ["think", "reason", "reasoning", "thought", "Thought"]
+                current_tag = None
+
+                reasoning_start_time = None
+
+                reasoning_content = ""
+                ongoing_content = ""
+
                 async for line in response.body_iterator:
                     line = line.decode("utf-8") if isinstance(line, bytes) else line
                     data = line
@@ -960,12 +1258,12 @@ async def process_chat_response(
                     if not data.strip():
                         continue
 
-                    # "data: " is the prefix for each event
-                    if not data.startswith("data: "):
+                    # "data:" is the prefix for each event
+                    if not data.startswith("data:"):
                         continue
 
                     # Remove the prefix
-                    data = data[len("data: ") :]
+                    data = data[len("data:") :].strip()
 
                     try:
                         data = json.loads(data)
@@ -978,7 +1276,6 @@ async def process_chat_response(
                                     "selectedModelId": data["selected_model_id"],
                                 },
                             )
-
                         else:
                             value = (
                                 data.get("choices", [])[0]
@@ -988,6 +1285,73 @@ async def process_chat_response(
 
                             if value:
                                 content = f"{content}{value}"
+
+                                if detect_reasoning:
+                                    for tag in reasoning_tags:
+                                        start_tag = f"<{tag}>\n"
+                                        end_tag = f"</{tag}>\n"
+
+                                        if start_tag in content:
+                                            # Remove the start tag
+                                            content = content.replace(start_tag, "")
+                                            ongoing_content = content
+
+                                            reasoning_start_time = time.time()
+                                            reasoning_content = ""
+
+                                            current_tag = tag
+                                            break
+
+                                    if reasoning_start_time is not None:
+                                        # Remove the last value from the content
+                                        content = content[: -len(value)]
+
+                                        reasoning_content += value
+
+                                        end_tag = f"</{current_tag}>\n"
+                                        if end_tag in reasoning_content:
+                                            reasoning_end_time = time.time()
+                                            reasoning_duration = int(
+                                                reasoning_end_time
+                                                - reasoning_start_time
+                                            )
+                                            reasoning_content = (
+                                                reasoning_content.strip(
+                                                    f"<{current_tag}>\n"
+                                                )
+                                                .strip(end_tag)
+                                                .strip()
+                                            )
+
+                                            if reasoning_content:
+                                                reasoning_display_content = "\n".join(
+                                                    (
+                                                        f"> {line}"
+                                                        if not line.startswith(">")
+                                                        else line
+                                                    )
+                                                    for line in reasoning_content.splitlines()
+                                                )
+
+                                                # Format reasoning with <details> tag
+                                                content = f'{ongoing_content}<details type="reasoning" done="true" duration="{reasoning_duration}">\n<summary>Thought for {reasoning_duration} seconds</summary>\n{reasoning_display_content}\n</details>\n'
+                                            else:
+                                                content = ""
+
+                                            reasoning_start_time = None
+                                        else:
+
+                                            reasoning_display_content = "\n".join(
+                                                (
+                                                    f"> {line}"
+                                                    if not line.startswith(">")
+                                                    else line
+                                                )
+                                                for line in reasoning_content.splitlines()
+                                            )
+
+                                            # Show ongoing thought process
+                                            content = f'{ongoing_content}<details type="reasoning" done="false">\n<summary>Thinking…</summary>\n{reasoning_display_content}\n</details>\n'
 
                                 if ENABLE_REALTIME_CHAT_SAVE:
                                     # Save message in the database
@@ -1009,10 +1373,8 @@ async def process_chat_response(
                                 "data": data,
                             }
                         )
-
                     except Exception as e:
                         done = "data: [DONE]" in line
-
                         if done:
                             pass
                         else:

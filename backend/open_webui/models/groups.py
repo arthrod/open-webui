@@ -80,22 +80,41 @@ class GroupResponse(BaseModel):
 class GroupForm(BaseModel):
     name: str
     description: str
+    permissions: Optional[dict] = None
 
 
 class GroupUpdateForm(GroupForm):
-    permissions: Optional[dict] = None
     user_ids: Optional[list[str]] = None
-    admin_ids: Optional[list[str]] = None
 
 
 class GroupTable:
     def insert_new_group(
         self, user_id: str, form_data: GroupForm
     ) -> Optional[GroupModel]:
+        """
+        Inserts a new group into the database using the provided user ID and form data.
+        
+        This method creates a new GroupModel instance by combining the data from the given
+        GroupForm (excluding any None values) with additional fields such as a unique group ID,
+        the creator's user ID, and timestamps for creation and update. The generated group data
+        is then used to instantiate a Group database object, which is added to the current 
+        database session. After committing the transaction and refreshing the object state,
+        the method returns a validated GroupModel instance. If any error occurs during the 
+        database operation, the method returns None.
+        
+        Parameters:
+            user_id (str): The unique identifier of the user creating the group.
+            form_data (GroupForm): An instance of GroupForm containing the group's data. Non-null 
+                                   fields from this form are included in the new group record.
+        
+        Returns:
+            Optional[GroupModel]: A validated GroupModel instance representing the newly created 
+                                  group if the operation is successful; otherwise, None.
+        """
         with get_db() as db:
             group = GroupModel(
                 **{
-                    **form_data.model_dump(),
+                    **form_data.model_dump(exclude_none=True),
                     "id": str(uuid.uuid4()),
                     "user_id": user_id,
                     "created_at": int(time.time()),
@@ -180,10 +199,52 @@ class GroupTable:
             return False
 
     def delete_all_groups(self) -> bool:
+        """
+        Delete all group entries from the database.
+        
+        This method obtains a database session and deletes all records in the Group table. The deletion operation is committed immediately. If the operation completes successfully, the function returns True; otherwise, it catches any exception and returns False.
+            
+        Returns:
+            bool: True if all groups were successfully deleted and committed, False if an exception occurred.
+        """
         with get_db() as db:
             try:
                 db.query(Group).delete()
                 db.commit()
+
+                return True
+            except Exception:
+                return False
+
+    def remove_user_from_all_groups(self, user_id: str) -> bool:
+        """
+        Removes the specified user from all groups in which they are a member.
+        
+        This method retrieves all groups that include the provided user ID by calling
+        `get_groups_by_member_id()`. It then iterates over each group, removes the user
+        ID from the group's list of user IDs, updates the `updated_at` timestamp, and commits
+        the changes to the database. If any error occurs during the operation, the exception
+        is caught and the method returns False.
+        
+        Parameters:
+            user_id (str): The unique identifier of the user to be removed from all groups.
+        
+        Returns:
+            bool: True if the user was successfully removed from all groups; False if an error occurred.
+        """
+        with get_db() as db:
+            try:
+                groups = self.get_groups_by_member_id(user_id)
+
+                for group in groups:
+                    group.user_ids.remove(user_id)
+                    db.query(Group).filter_by(id=group.id).update(
+                        {
+                            "user_ids": group.user_ids,
+                            "updated_at": int(time.time()),
+                        }
+                    )
+                    db.commit()
 
                 return True
             except Exception:

@@ -344,6 +344,72 @@ async def update_reranking_config(
 
 @router.get("/config")
 async def get_rag_config(request: Request, user=Depends(get_admin_user)):
+    """
+        Retrieve the RAG (Retrieval-Augmented Generation) configuration settings.
+    
+        This asynchronous function gathers various configuration parameters from the application's state,
+        including settings for PDF processing, Google Drive integration, content extraction, file and text chunking,
+        YouTube processing, and web search. It returns a nested dictionary containing these configuration options,
+        ensuring that the endpoint is accessible only to admin users.
+    
+        Parameters:
+            request (Request): The FastAPI request object, containing the application state with configuration settings.
+            user: An admin user dependency, ensuring that only authorized admin users can access this configuration.
+    
+        Returns:
+            dict: A dictionary with the following keys:
+                - "pdf_extract_images": Boolean flag indicating if PDF image extraction is enabled.
+                - "enable_google_drive_integration": Boolean flag for Google Drive integration.
+                - "content_extraction": dict with:
+                    - "engine": The content extraction engine in use.
+                    - "tika_server_url": The URL for the Tika server.
+                - "chunk": dict with:
+                    - "text_splitter": The method used for splitting text.
+                    - "chunk_size": The maximum size of text chunks.
+                    - "chunk_overlap": The allowed overlap between consecutive chunks.
+                - "file": dict with:
+                    - "max_size": Maximum allowed file size.
+                    - "max_count": Maximum number of files allowed.
+                - "youtube": dict with:
+                    - "language": The language setting for the YouTube loader.
+                    - "translation": The translation option applied by the YouTube loader.
+                    - "proxy_url": Proxy URL configured for the YouTube loader.
+                - "web": dict with:
+                    - "web_loader_ssl_verification": Boolean flag for SSL verification during web content loading.
+                    - "search": dict with:
+                        - "enabled": Boolean flag indicating if web search is enabled.
+                        - "drive": Boolean flag for Google Drive integration in web search.
+                        - "engine": The search engine used for web search.
+                        - "searxng_query_url": URL for the SearxNG query.
+                        - "google_pse_api_key": API key for Google PSE.
+                        - "google_pse_engine_id": Engine identifier for Google PSE.
+                        - "brave_search_api_key": API key for Brave search.
+                        - "kagi_search_api_key": API key for Kagi search.
+                        - "mojeek_search_api_key": API key for Mojeek search.
+                        - "serpstack_api_key": API key for Serpstack.
+                        - "serpstack_https": HTTPS flag for Serpstack.
+                        - "serper_api_key": API key for Serper.
+                        - "serply_api_key": API key for Serply.
+                        - "tavily_api_key": API key for Tavily.
+                        - "searchapi_api_key": API key for SearchAPI.
+                        - "searchapi_engine": The engine setting for SearchAPI.
+                        - "jina_api_key": API key for Jina.
+                        - "bing_search_v7_endpoint": The endpoint URL for Bing Search V7.
+                        - "bing_search_v7_subscription_key": Subscription key for Bing Search V7.
+                        - "result_count": Number of search results to return.
+                        - "concurrent_requests": Maximum number of concurrent requests for web search.
+    
+        Example:
+            >>> from fastapi import Request
+            >>> from fastapi.testclient import TestClient
+            >>> client = TestClient(app)
+            >>> response = client.get("/rag_config", headers={"Authorization": "Bearer <token>"})
+            >>> response.status_code
+            200
+            >>> data = response.json()
+            >>> data.get("pdf_extract_images") is not None
+            True
+        """
     return {
         "status": True,
         "pdf_extract_images": request.app.state.config.PDF_EXTRACT_IMAGES,
@@ -384,7 +450,7 @@ async def get_rag_config(request: Request, user=Depends(get_admin_user)):
                 "serply_api_key": request.app.state.config.SERPLY_API_KEY,
                 "tavily_api_key": request.app.state.config.TAVILY_API_KEY,
                 "searchapi_api_key": request.app.state.config.SEARCHAPI_API_KEY,
-                "seaarchapi_engine": request.app.state.config.SEARCHAPI_ENGINE,
+                "searchapi_engine": request.app.state.config.SEARCHAPI_ENGINE,
                 "jina_api_key": request.app.state.config.JINA_API_KEY,
                 "bing_search_v7_endpoint": request.app.state.config.BING_SEARCH_V7_ENDPOINT,
                 "bing_search_v7_subscription_key": request.app.state.config.BING_SEARCH_V7_SUBSCRIPTION_KEY,

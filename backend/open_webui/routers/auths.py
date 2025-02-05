@@ -51,7 +51,7 @@ from open_webui.utils.access_control import get_permissions
 from typing import Optional, List
 
 from ssl import CERT_REQUIRED, PROTOCOL_TLS
-from ldap3 import Server, Connection, ALL, Tls
+from ldap3 import Server, Connection, NONE, Tls
 from ldap3.utils.conv import escape_filter_chars
 
 router = APIRouter()
@@ -166,10 +166,44 @@ async def update_password(
 ############################
 @router.post("/ldap", response_model=SigninResponse)
 async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
+    """
+    Authenticate a user via LDAP and return a JWT token with associated user details.
+    
+    This asynchronous function uses LDAP to verify user credentials. It retrieves LDAP configuration from the FastAPI application's state and performs the following steps:
+    1. Verifies that LDAP authentication is enabled.
+    2. Creates a TLS context using the provided certificate, ciphers, and protocol settings.
+    3. Connects to the LDAP server using an application account and binds with simple authentication.
+    4. Searches the LDAP directory for the user using a filter built from the provided username and additional search filters. The search requests the username, configurable email attribute, and common name.
+    5. Validates that the user entry contains a non-empty email attribute.
+    6. Binds as the user using the provided password. If binding fails, an authentication error is raised.
+    7. Retrieves the user from the local database. If the user does not exist, a new one is inserted with a default role.
+    8. Generates a JWT token for the authenticated user, sets it as an HTTP-only cookie, and returns a dictionary of user details.
+    
+    Parameters:
+        request (Request): The incoming FastAPI request containing the application state with LDAP configuration.
+        response (Response): The outgoing FastAPI response used to set the authentication cookie.
+        form_data (LdapForm): An object containing LDAP authentication credentials (e.g., user and password).
+    
+    Returns:
+        dict: A dictionary containing the following keys:
+            - token (str): The generated JWT token.
+            - token_type (str): Typically "Bearer".
+            - id (Any): The unique identifier of the authenticated user.
+            - email (str): The user's email address as retrieved from LDAP.
+            - name (str): The common name (cn) from the LDAP entry.
+            - role (str): The user’s role (e.g., "admin" or a default role).
+            - profile_image_url (str): The URL of the user's profile image.
+    
+    Raises:
+        HTTPException: If LDAP is disabled, TLS setup fails, the application or user bind fails,
+                       the user is not found in LDAP, the user's email attribute is missing or empty,
+                       or if an unexpected error occurs during the LDAP authentication process.
+    """
     ENABLE_LDAP = request.app.state.config.ENABLE_LDAP
     LDAP_SERVER_LABEL = request.app.state.config.LDAP_SERVER_LABEL
     LDAP_SERVER_HOST = request.app.state.config.LDAP_SERVER_HOST
     LDAP_SERVER_PORT = request.app.state.config.LDAP_SERVER_PORT
+    LDAP_ATTRIBUTE_FOR_MAIL = request.app.state.config.LDAP_ATTRIBUTE_FOR_MAIL
     LDAP_ATTRIBUTE_FOR_USERNAME = request.app.state.config.LDAP_ATTRIBUTE_FOR_USERNAME
     LDAP_SEARCH_BASE = request.app.state.config.LDAP_SEARCH_BASE
     LDAP_SEARCH_FILTERS = request.app.state.config.LDAP_SEARCH_FILTERS
@@ -201,7 +235,7 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
         server = Server(
             host=LDAP_SERVER_HOST,
             port=LDAP_SERVER_PORT,
-            get_info=ALL,
+            get_info=NONE,
             use_ssl=LDAP_USE_TLS,
             tls=tls,
         )
@@ -218,7 +252,11 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
         search_success = connection_app.search(
             search_base=LDAP_SEARCH_BASE,
             search_filter=f"(&({LDAP_ATTRIBUTE_FOR_USERNAME}={escape_filter_chars(form_data.user.lower())}){LDAP_SEARCH_FILTERS})",
-            attributes=[f"{LDAP_ATTRIBUTE_FOR_USERNAME}", "mail", "cn"],
+            attributes=[
+                f"{LDAP_ATTRIBUTE_FOR_USERNAME}",
+                f"{LDAP_ATTRIBUTE_FOR_MAIL}",
+                "cn",
+            ],
         )
 
         if not search_success:
@@ -226,7 +264,9 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
 
         entry = connection_app.entries[0]
         username = str(entry[f"{LDAP_ATTRIBUTE_FOR_USERNAME}"]).lower()
-        mail = str(entry["mail"])
+        mail = str(entry[f"{LDAP_ATTRIBUTE_FOR_MAIL}"])
+        if not mail or mail == "" or mail == "[]":
+            raise HTTPException(400, f"User {form_data.user} does not have mail.")
         cn = str(entry["cn"])
         user_dn = entry.entry_dn
 
@@ -691,6 +731,7 @@ class LdapServerConfig(BaseModel):
     label: str
     host: str
     port: Optional[int] = None
+    attribute_for_mail: str = "mail"
     attribute_for_username: str = "uid"
     app_dn: str
     app_dn_password: str
@@ -703,10 +744,38 @@ class LdapServerConfig(BaseModel):
 
 @router.get("/admin/config/ldap/server", response_model=LdapServerConfig)
 async def get_ldap_server(request: Request, user=Depends(get_admin_user)):
+    """
+    Retrieve the LDAP server configuration settings.
+    
+    This asynchronous endpoint returns a dictionary containing the LDAP server configuration
+    parameters from the application's state. The configuration includes details such as the server
+    label, host, port, attributes for mail and username, application DN credentials, LDAP search base
+    and filters, TLS settings, certificate path, and cipher list.
+    
+    Parameters:
+        request (Request): The incoming HTTP request containing the application state.
+        user: The administrator user dependency ensuring the requester has admin privileges.
+    
+    Returns:
+        dict: A dictionary with the following keys:
+            - "label": LDAP server label.
+            - "host": LDAP server host address.
+            - "port": LDAP server port number.
+            - "attribute_for_mail": LDAP attribute used for email.
+            - "attribute_for_username": LDAP attribute used for the username.
+            - "app_dn": Distinguished Name used for LDAP application binding.
+            - "app_dn_password": Password for the LDAP application DN.
+            - "search_base": Base DN for LDAP searches.
+            - "search_filters": LDAP search filters.
+            - "use_tls": Boolean indicating if TLS is used for the LDAP connection.
+            - "certificate_path": File path to the LDAP CA certificate.
+            - "ciphers": TLS ciphers used for the LDAP connection.
+    """
     return {
         "label": request.app.state.config.LDAP_SERVER_LABEL,
         "host": request.app.state.config.LDAP_SERVER_HOST,
         "port": request.app.state.config.LDAP_SERVER_PORT,
+        "attribute_for_mail": request.app.state.config.LDAP_ATTRIBUTE_FOR_MAIL,
         "attribute_for_username": request.app.state.config.LDAP_ATTRIBUTE_FOR_USERNAME,
         "app_dn": request.app.state.config.LDAP_APP_DN,
         "app_dn_password": request.app.state.config.LDAP_APP_PASSWORD,
@@ -722,9 +791,47 @@ async def get_ldap_server(request: Request, user=Depends(get_admin_user)):
 async def update_ldap_server(
     request: Request, form_data: LdapServerConfig, user=Depends(get_admin_user)
 ):
+    """
+    Update the LDAP server configuration.
+    
+    This asynchronous function validates and updates the application's LDAP server configuration
+    using the data provided in the form_data. It checks that all required fields (label, host,
+    attribute_for_mail, attribute_for_username, app_dn, app_dn_password, and search_base) are provided.
+    If TLS is enabled, it also ensures that a certificate path is specified. After validation,
+    the corresponding configuration parameters in the application's state are updated, and a
+    dictionary containing the new values is returned.
+    
+    Parameters:
+        request (Request): The FastAPI request object which holds application state.
+        form_data (LdapServerConfig): An instance containing the LDAP server configuration, including:
+            - label (str): Descriptive label for the LDAP server.
+            - host (str): LDAP server address.
+            - port (int): Port for connecting to the LDAP server.
+            - attribute_for_mail (str): Attribute used to retrieve the user’s email.
+            - attribute_for_username (str): Attribute used to retrieve the username.
+            - app_dn (str): Application distinguished name for LDAP binding.
+            - app_dn_password (str): Password for the application distinguished name.
+            - search_base (str): Base distinguished name for LDAP searches.
+            - search_filters (Optional[str]): Filters for LDAP search queries.
+            - use_tls (bool): Flag indicating if TLS should be used.
+            - certificate_path (str): Path to the TLS certificate file (required if TLS is enabled).
+            - ciphers (Optional[str]): TLS cipher suites.
+        user: The current user, injected via dependency, who must have administrative privileges.
+    
+    Returns:
+        dict: A dictionary containing the updated LDAP configuration with keys:
+              "label", "host", "port", "attribute_for_mail", "attribute_for_username",
+              "app_dn", "app_dn_password", "search_base", "search_filters", "use_tls",
+              "certificate_path", and "ciphers".
+    
+    Raises:
+        HTTPException: If any required field is missing or empty.
+        HTTPException: If TLS is enabled but the certificate_path is not provided.
+    """
     required_fields = [
         "label",
         "host",
+        "attribute_for_mail",
         "attribute_for_username",
         "app_dn",
         "app_dn_password",
@@ -743,6 +850,7 @@ async def update_ldap_server(
     request.app.state.config.LDAP_SERVER_LABEL = form_data.label
     request.app.state.config.LDAP_SERVER_HOST = form_data.host
     request.app.state.config.LDAP_SERVER_PORT = form_data.port
+    request.app.state.config.LDAP_ATTRIBUTE_FOR_MAIL = form_data.attribute_for_mail
     request.app.state.config.LDAP_ATTRIBUTE_FOR_USERNAME = (
         form_data.attribute_for_username
     )
@@ -758,6 +866,7 @@ async def update_ldap_server(
         "label": request.app.state.config.LDAP_SERVER_LABEL,
         "host": request.app.state.config.LDAP_SERVER_HOST,
         "port": request.app.state.config.LDAP_SERVER_PORT,
+        "attribute_for_mail": request.app.state.config.LDAP_ATTRIBUTE_FOR_MAIL,
         "attribute_for_username": request.app.state.config.LDAP_ATTRIBUTE_FOR_USERNAME,
         "app_dn": request.app.state.config.LDAP_APP_DN,
         "app_dn_password": request.app.state.config.LDAP_APP_PASSWORD,

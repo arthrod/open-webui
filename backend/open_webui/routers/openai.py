@@ -121,6 +121,36 @@ class OpenAIConfigForm(BaseModel):
 async def update_config(
     request: Request, form_data: OpenAIConfigForm, user=Depends(get_admin_user)
 ):
+    """
+    Update the application's OpenAI API configuration settings.
+    
+    This asynchronous function updates the application's configuration stored in the request's state using the
+    values provided in the OpenAIConfigForm. It updates the following configuration parameters:
+    - ENABLE_OPENAI_API: A flag to enable or disable the OpenAI API.
+    - OPENAI_API_BASE_URLS: A list of base URLs for the OpenAI API.
+    - OPENAI_API_KEYS: A list of API keys corresponding to the base URLs.
+    - OPENAI_API_CONFIGS: A dictionary of additional configuration settings indexed by API URL positions.
+    
+    The function ensures that the number of API keys matches the number of API base URLs by truncating excess
+    keys or padding the list with empty strings when necessary. It also filters the OPENAI_API_CONFIGS to retain
+    only those entries whose keys correspond to valid indices of the API URL list.
+    
+    Parameters:
+        request (Request): The incoming HTTP request object, which provides access to the application's state.
+        form_data (OpenAIConfigForm): A Pydantic model containing updated configuration values including:
+            - ENABLE_OPENAI_API (bool): Flag indicating whether the OpenAI API is enabled.
+            - OPENAI_API_BASE_URLS (List[str]): List of base URLs for the OpenAI API.
+            - OPENAI_API_KEYS (List[str]): List of API keys corresponding to the base URLs.
+            - OPENAI_API_CONFIGS (Dict[str, Any]): Additional configuration settings keyed by API URL indices.
+        user: Dependency (provided via get_admin_user) ensuring that only an authenticated administrator can perform this update.
+    
+    Returns:
+        dict: A dictionary containing the updated configuration with the following keys:
+            - ENABLE_OPENAI_API (bool)
+            - OPENAI_API_BASE_URLS (List[str])
+            - OPENAI_API_KEYS (List[str])
+            - OPENAI_API_CONFIGS (Dict[str, Any])
+    """
     request.app.state.config.ENABLE_OPENAI_API = form_data.ENABLE_OPENAI_API
     request.app.state.config.OPENAI_API_BASE_URLS = form_data.OPENAI_API_BASE_URLS
     request.app.state.config.OPENAI_API_KEYS = form_data.OPENAI_API_KEYS
@@ -145,11 +175,13 @@ async def update_config(
 
     request.app.state.config.OPENAI_API_CONFIGS = form_data.OPENAI_API_CONFIGS
 
-    # Remove any extra configs
-    config_urls = request.app.state.config.OPENAI_API_CONFIGS.keys()
-    for idx, url in enumerate(request.app.state.config.OPENAI_API_BASE_URLS):
-        if url not in config_urls:
-            request.app.state.config.OPENAI_API_CONFIGS.pop(url, None)
+    # Remove the API configs that are not in the API URLS
+    keys = list(map(str, range(len(request.app.state.config.OPENAI_API_BASE_URLS))))
+    request.app.state.config.OPENAI_API_CONFIGS = {
+        key: value
+        for key, value in request.app.state.config.OPENAI_API_CONFIGS.items()
+        if key in keys
+    }
 
     return {
         "ENABLE_OPENAI_API": request.app.state.config.ENABLE_OPENAI_API,
@@ -246,6 +278,28 @@ async def speech(request: Request, user=Depends(get_verified_user)):
 
 
 async def get_all_models_responses(request: Request) -> list:
+    """
+    Asynchronously retrieves model responses from all configured OpenAI API endpoints.
+    
+    This function first checks whether the OpenAI API is enabled via the application configuration. If disabled, it immediately returns an empty list. It then ensures that the number of API keys matches the number of API URLs by either truncating extra keys or appending empty strings when necessary.
+    
+    For each API URL in the configuration, the function:
+    - Uses legacy support to check for specific endpoint configurations (either by string index or URL).
+    - Sends an asynchronous GET request to fetch models if no custom configuration exists or if the model_ids list is empty.
+    - Constructs a predefined list of models based on provided model_ids if available and if the endpoint is enabled.
+    - Returns a placeholder (None) for disabled endpoints.
+    
+    After gathering all responses concurrently, if an API configuration specifies a prefix_id, the function prefixes the id of each model in the response accordingly. Finally, it logs the aggregated responses.
+    
+    Parameters:
+        request (Request): A FastAPI Request object containing the application state with configuration details.
+    
+    Returns:
+        list: A list of responses from each configured OpenAI API endpoint. Each element is either the result of an API call, a predefined model list, or None if the endpoint is disabled.
+    
+    Example:
+        response = await get_all_models_responses(request)
+    """
     if not request.app.state.config.ENABLE_OPENAI_API:
         return []
 
@@ -264,14 +318,21 @@ async def get_all_models_responses(request: Request) -> list:
 
     request_tasks = []
     for idx, url in enumerate(request.app.state.config.OPENAI_API_BASE_URLS):
-        if url not in request.app.state.config.OPENAI_API_CONFIGS:
+        if (str(idx) not in request.app.state.config.OPENAI_API_CONFIGS) and (
+            url not in request.app.state.config.OPENAI_API_CONFIGS  # Legacy support
+        ):
             request_tasks.append(
                 send_get_request(
                     f"{url}/models", request.app.state.config.OPENAI_API_KEYS[idx]
                 )
             )
         else:
-            api_config = request.app.state.config.OPENAI_API_CONFIGS.get(url, {})
+            api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
+                str(idx),
+                request.app.state.config.OPENAI_API_CONFIGS.get(
+                    url, {}
+                ),  # Legacy support
+            )
 
             enable = api_config.get("enable", True)
             model_ids = api_config.get("model_ids", [])
@@ -310,7 +371,12 @@ async def get_all_models_responses(request: Request) -> list:
     for idx, response in enumerate(responses):
         if response:
             url = request.app.state.config.OPENAI_API_BASE_URLS[idx]
-            api_config = request.app.state.config.OPENAI_API_CONFIGS.get(url, {})
+            api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
+                str(idx),
+                request.app.state.config.OPENAI_API_CONFIGS.get(
+                    url, {}
+                ),  # Legacy support
+            )
 
             prefix_id = api_config.get("prefix_id", None)
 
@@ -533,6 +599,32 @@ async def generate_chat_completion(
     user=Depends(get_verified_user),
     bypass_filter: Optional[bool] = False,
 ):
+    """
+    Generate a chat completion from the OpenAI API based on the provided request data and user context.
+    
+    This asynchronous function builds and sends a payload for generating chat completions. It performs several operations:
+    - Cleans the payload by removing any extraneous metadata.
+    - Retrieves and applies model parameters and system prompts if model information is available.
+    - Verifies that the requesting user has permission to access the model (unless bypassed by a flag or global setting).
+    - Retrieves the appropriate API configuration (supporting both current and legacy formats) and adjusts the payload, including handling special cases such as models that use the OpenAI O1 variant.
+    - For models configured as pipelines, it includes user details in the payload.
+    - Sends a POST request to the chat completions endpoint and returns either a streaming response (if the API uses server-sent events) or a JSON/text response.
+    - Raises HTTPException with appropriate status codes (403 for unauthorized access, 404 for model not found, 500 for connection errors) if any error occurs during processing.
+    
+    Parameters:
+        request (Request): FastAPI Request object containing application state and configuration.
+        form_data (dict): Dictionary with the chat completion request parameters (must include a "model" key).
+        user: A verified user object (injected dependency) with attributes such as id, name, email, and role.
+        bypass_filter (Optional[bool]): Flag to bypass model access control checks. Defaults to False but may be overridden by global settings.
+    
+    Returns:
+        StreamingResponse or dict or str: If the API returns a server-sent events stream, a StreamingResponse is provided;
+        otherwise, the function returns the JSON-decoded response as a dict or raw text as a str.
+    
+    Raises:
+        HTTPException: When the user lacks access to the model (status code 403), the model is not found (status code 404),
+        or other errors occur during the API request (status code 500 or as provided by the API response).
+    """
     if BYPASS_MODEL_ACCESS_CONTROL:
         bypass_filter = True
 
@@ -573,6 +665,7 @@ async def generate_chat_completion(
                 detail="Model not found",
             )
 
+    await get_all_models(request)
     model = request.app.state.OPENAI_MODELS.get(model_id)
     if model:
         idx = model["urlIdx"]
@@ -584,7 +677,10 @@ async def generate_chat_completion(
 
     # Get the API config for the model
     api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
-        request.app.state.config.OPENAI_API_BASE_URLS[idx], {}
+        str(idx),
+        request.app.state.config.OPENAI_API_CONFIGS.get(
+            request.app.state.config.OPENAI_API_BASE_URLS[idx], {}
+        ),  # Legacy support
     )
 
     prefix_id = api_config.get("prefix_id", None)

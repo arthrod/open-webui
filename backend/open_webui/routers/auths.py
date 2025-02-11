@@ -32,7 +32,11 @@ from open_webui.env import (
 )
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse, Response
-from open_webui.config import OPENID_PROVIDER_URL, ENABLE_OAUTH_SIGNUP, ENABLE_LDAP
+from open_webui.config import (
+    OPENID_PROVIDER_URL,
+    ENABLE_OAUTH_SIGNUP,
+    WEBUI_URL,
+)
 from pydantic import BaseModel
 from open_webui.utils.misc import parse_duration, validate_email_format
 from open_webui.utils.auth import (
@@ -381,7 +385,7 @@ async def signin(request: Request, response: Response, ticket: str):
             #     "profile_image_url": user.profile_image_url,
             #     "permissions": user_permissions,
             # }
-            return RedirectResponse(url=f"http://localhost:5173/auth?token={token}")
+            return RedirectResponse(url=f"{WEBUI_URL}/auth?token={token}")
         else:
             raise HTTPException(400, detail="Invalid credentials")
     else:

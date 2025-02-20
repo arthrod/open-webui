@@ -69,7 +69,7 @@
 		await goto('/');
 	});
 </script>
-
+  
 <svelte:head>
 	<title>
 		{`${$WEBUI_NAME}`}

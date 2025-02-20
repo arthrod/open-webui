@@ -227,7 +227,7 @@
 				if (done) {
 					if ($isLastActiveTab) {
 						if ($settings?.notificationEnabled ?? false) {
-							new Notification(`${title} | Open WebUI`, {
+							new Notification(`${title} | Arizona AI Hub`, {
 								body: content,
 								icon: `${WEBUI_BASE_URL}/static/favicon.png`
 							});
@@ -373,7 +373,7 @@
 			if (type === 'message') {
 				if ($isLastActiveTab) {
 					if ($settings?.notificationEnabled ?? false) {
-						new Notification(`${data?.user?.name} (#${event?.channel?.name}) | Open WebUI`, {
+						new Notification(`${data?.user?.name} (#${event?.channel?.name}) | Arizona AI Hub`, {
 							body: data?.content,
 							icon: data?.user?.profile_image_url ?? `${WEBUI_BASE_URL}/static/favicon.png`
 						});
@@ -502,13 +502,13 @@
 					} else {
 						// Redirect Invalid Session User to /auth Page
 						localStorage.removeItem('token');
-            redirectWebAuth()
+						redirectWebAuth();
 					}
 				} else {
 					// Don't redirect if we're already on the auth page
 					// Needed because we pass in tokens from OAuth logins via URL fragments
 					if ($page.url.pathname !== '/auth') {
-            redirectWebAuth()
+						redirectWebAuth();
 					}
 				}
 			}

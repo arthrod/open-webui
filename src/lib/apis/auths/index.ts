@@ -1,7 +1,7 @@
-import { WEBUI_API_BASE_URL } from '$lib/constants';
+import { WEBUI_API_BASE_URL, WEBUI_WEBAUTH_HOSTNAME } from '$lib/constants';
 
 export const redirectWebAuth = () => {
-	window.location = `https://webauth.arizona.edu/webauth/login?service=${WEBUI_API_BASE_URL}/auths/signin`;
+	window.location = `https://webauth.arizona.edu/webauth/login?service=http://${WEBUI_WEBAUTH_HOSTNAME}/api/v1/auths/signin`;
 };
 
 export const getAdminDetails = async (token: string) => {

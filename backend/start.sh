@@ -18,6 +18,12 @@ KEY_FILE=.webui_secret_key
 
 PORT="${PORT:-8080}"
 HOST="${HOST:-0.0.0.0}"
+
+if [ -z "${WEBUI_URL}" ]; then
+  echo "Please set WEBUI_URL, which is required for UArizona's WebAuth Redirect Callback. This must be set to the backend origin of your application (e.g. http://localhost:8080)"
+  exit 1
+fi
+
 if test "$WEBUI_SECRET_KEY $WEBUI_JWT_SECRET_KEY" = " "; then
   echo "Loading WEBUI_SECRET_KEY from file, not provided as an environment variable."
 

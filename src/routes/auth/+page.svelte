@@ -42,6 +42,7 @@
 
 	let loaded = false;
 
+	let showNotice = true;
 	let showContactUs = false;
 	let queueDisabled = false;
 
@@ -61,6 +62,22 @@
 	let password = 'password';
 
 	let ldapUsername = '';
+
+	const closeNotice = () => {
+		showNotice = false;
+	};
+
+	const handleOverlayClick = (event: MouseEvent) => {
+		if (event.target === event.currentTarget) {
+			closeNotice();
+		}
+	};
+
+	const handleKeyDown = (event: KeyboardEvent) => {
+		if (event.key === 'Escape') {
+			closeNotice();
+		}
+	};
 
 	const setSessionUser = async (sessionUser) => {
 		if (sessionUser) {
@@ -229,6 +246,78 @@
 		{`${$WEBUI_NAME}`}
 	</title>
 </svelte:head>
+
+<!-- Notice -->
+{#if showNotice}
+	<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<div
+		class="absolute h-full w-full flex items-center justify-center backdrop-brightness-75 backdrop-blur-sm z-50"
+		on:click={handleOverlayClick}
+		on:keydown={handleKeyDown}
+	>
+		<!-- WIP : Replace with an icon -->
+		<button
+			class="absolute top-4 right-6 text-red-800 font-medium text-2xl cursor-pointer"
+			on:click={handleOverlayClick}
+		>
+			X
+		</button>
+		<div
+			class="w-2/3 p-10 text-justify flex flex-col space-y-6 shadow-md rounded bg-white/90 backdrop-blur-md text-gray-700"
+		>
+			<span class="text-2xl font-medium">Notice</span>
+			<div>
+				Lucie est un grand modèle de langage génératif (LLM ou "large language model" en anglais),
+				ce qui signifie qu'à partir d'un texte d'entrée ou d'un
+				<span class=" whitespace-nowrap">« prompt »</span>, il génère une réponse en rapport avec
+				cette entrée. Les LLM doivent passer par de nombreuses phases d'entraînement avant de
+				pouvoir répondre de manière appropriée et précise à divers prompts, et Lucie se trouve à un
+				stade très précoce de son entraînement, n'ayant reçu qu'une seule série de ce que l'on
+				appelle l'affinage par instruction. Cet entraînement, bien que léger, permet à Lucie de
+				suivre des instructions de base, telles que répondre à une question ou résumer un texte. Ses
+				réponses ne sont peut-être pas encore fiables, mais sans cet entraînement supplémentaire,
+				Lucie, soumise à une instruction, ne pourrait générer que des chaînes de mots sémantiquement
+				liées à cette requête. Ses réponses n'auraient pas la forme correcte.
+			</div>
+			<div>
+				Pour passer aux étapes suivantes de l'entraînement, nous devons collecter de grandes
+				quantités de données provenant d'interactions avec les utilisateurs humains. En particulier,
+				nous avons besoin de savoir si une réponse fournie par Lucie est bonne, mauvaise ou
+				préférable à une autre. Si nous obtenons suffisamment de données de haute qualité de ce
+				type, nous pourrons les utiliser pour apprendre à Lucie à aligner ses réponses sur les
+				préférences des utilisateurs humains.
+			</div>
+			<div>
+				C'est la raison pour laquelle nous avons créé cette plateforme : pour que les utilisateurs
+				puissent nous donner leur avis et nous aider à améliorer les performances de Lucie. Comme
+				Lucie est entraînée sur des quantités égales de français et d'anglais (environ 33% pour
+				chaque langue), nous acceptons les interactions dans les deux langues, mais nous portons un
+				intérêt particulier à la collecte de données en français, car elles sont beaucoup plus
+				difficiles à obtenir que les données en anglais.
+			</div>
+			<div>
+				Gardez à l'esprit, lorsque vous interagissez avec le modèle, qu'il ne s'agit pas, et qu'il
+				ne s'agira jamais, d'un ChatGPT français. Le modèle Lucie est des centaines de fois plus
+				petit que les modèles à l'origine de la plateforme ChatGPT ; le convertir en un assistant
+				général d'IA de ce type est tout simplement impossible. Notre intérêt est de créer un modèle
+				pour aider à la génération de textes en français et en anglais et pour effectuer des tâches
+				pour lesquelles les modèles de langage de base sont performants : résumer des documents,
+				répondre à des questions de culture générale (en gardant à l'esprit qu'il n'a vu que des
+				données jusqu'en 2023), répondre à des questions sur la base d'un texte d'entrée, écrire des
+				histoires, et ainsi de suite. Il n'est pas conçu comme un assistant pour les mathématiques
+				ou le codage et il n'est pas capable de fournir des conseils éthiques.
+			</div>
+			<div class="flex justify-end">
+				<button
+					class="mt-2 px-6 py-3 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+					on:click={handleOverlayClick}
+				>
+					Je comprends
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
 
 {#if showContactUs}
 	<ContactUs bind:show={showContactUs} isLightMode={true} />

@@ -284,7 +284,8 @@
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
 	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<div
-		class="absolute h-full w-full flex items-center justify-center backdrop-brightness-75 backdrop-blur-sm z-50"
+		class="absolute h-full w-full flex items-center justify-center backdrop-brightness-75 backdrop-blur-sm z-50 
+		selection:bg-blue-500/50"
 		on:click={handleOverlayClick}
 	>
 		<button
@@ -299,6 +300,7 @@
 				viewBox="0 0 20 20"
 				fill="currentColor"
 				class="w-6 h-6"
+				on:click={handleOverlayClick}
 			>
 				<path
 					d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
@@ -387,9 +389,10 @@
 		<LanguageSelector isLightMode={true} isInHorizontalNavbar={true} />
 	</div>
 	<button
-		class="h-8 px-3 rounded-full border border-black bg-white hover:bg-gray-50 text-sm transition-all
-			md:h-12 md:px-8
-			xl:h-14 xl:px-12 xl:text-base"
+		class="h-8 px-3 rounded-full border border-slate-300 text-slate-500 bg-transparent text-sm transition-all
+		hover:bg-white hover:text-slate-600
+		md:h-12 md:px-8
+		xl:h-14 xl:px-12 xl:text-base"
 		on:click={() => (showContactUs = !showContactUs)}
 	>
 		{$i18n.t('Contact us')}

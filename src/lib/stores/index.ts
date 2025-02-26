@@ -1,7 +1,8 @@
 import { APP_NAME } from '$lib/constants';
 import { type Writable, writable } from 'svelte/store';
-import { persisted } from 'svelte-persisted-store'
-import type { GlobalModelConfig, ModelConfig } from '$lib/apis'; import type { Banner } from '$lib/types';
+import { persisted } from 'svelte-persisted-store';
+import type { GlobalModelConfig, ModelConfig } from '$lib/apis';
+import type { Banner } from '$lib/types';
 import type { Socket } from 'socket.io-client';
 import type { SubscriptionInfo } from './types';
 
@@ -23,7 +24,7 @@ export const activeUserIds: Writable<null | string[]> = writable(null);
 export const USAGE_POOL: Writable<null | string[]> = writable(null);
 
 export const theme = writable('system');
-export const locale = persisted("locale", "fr-FR");
+export const locale = persisted('locale', 'fr-FR');
 
 export const shortCodesToEmojis = writable(
 	Object.entries(emojiShortCodes).reduce((acc, [key, value]) => {
@@ -75,20 +76,25 @@ export const currentChatPage = writable(1);
 export const isLastActiveTab = writable(true);
 export const playingNotificationSound = writable(false);
 
+// Should the notice be displayed
+export const showNotice = writable<boolean>(true);
+
 // Store on the user computer whether he accepted the terms of use or not
 // TODO : Load previous data when user connects again
-export const termsOfUse = persisted("terms", { show: false, accepted: false });
+export const termsOfUse = persisted('terms', { show: false, accepted: false });
+
 // Tokens spent and left
 export const subscriptionInfo: Writable<SubscriptionInfo> = writable({
 	spend: 0,
 	max_budget: 10,
-	budget_duration: "1h"
+	budget_duration: '1h'
 });
+
 // Time at which the user should be kicked from using Lucie
-export const endTimestamp = persisted("endTimestamp", -1);
+export const endTimestamp = persisted('endTimestamp', -1);
 
 // User queue ID
-export const queueID = writable("")
+export const queueID = writable('');
 
 export type Model = OpenAIModel | OllamaModel;
 
@@ -222,7 +228,7 @@ type Config = {
 		queue: {
 			session_duration: number;
 			max_waiting_users: number;
-		}
+		};
 	};
 	oauth: {
 		providers: {

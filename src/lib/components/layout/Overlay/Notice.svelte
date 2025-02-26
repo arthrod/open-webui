@@ -1,7 +1,10 @@
 <script lang="ts">
 	// Imports
 	import { showNotice } from '$lib/stores';
-	import { onMount } from 'svelte';
+	import { getContext, onMount } from 'svelte';
+	import type { Writable } from 'svelte/store';
+
+	const i18n: Writable<any> = getContext('i18n');
 
 	let noticePopupRef: HTMLDivElement | null = null; // Represents the notice popup element
 
@@ -13,7 +16,7 @@
 	};
 
 	/**
-	 * Close the notice popup if a click is performed outside the popup, or on the 'I Understand' and close buttons.
+	 * Close the notice popup if a click is performed outside the popup, or on the 'I understand' and close buttons.
 	 * @param event represents the mouseEvent
 	 */
 	const handleOverlayClick = (event: MouseEvent) => {
@@ -101,62 +104,41 @@
 		class="w-11/12 h-[95vh] p-6 flex flex-col space-y-4 overflow-y-scroll rounded
 			bg-white/90 backdrop-blur-md shadow-md text-gray-700 text-sm text-justify
 			md:h-[80vh] md:w-4/5 md:p-10 md:space-y-6 md:text-base
-			xl:h- xl:w-2/3"
+			2xl:h-fit 2xl:w-2/3"
 		bind:this={noticePopupRef}
 	>
 		<!-- Notice text -->
-		<span class="text-xl font-medium md:text-2xl">Notice</span>
+		<span class="text-xl font-medium md:text-2xl"> {$i18n.t('Notice')} </span>
 		<div class="overflow-y-scroll space-y-4">
 			<div>
-				Lucie est un grand modèle de langage génératif (LLM ou "large language model" en anglais),
-				ce qui signifie qu'à partir d'un texte d'entrée ou d'un
-				<span class="whitespace-nowrap">« prompt »</span>, il génère une réponse en rapport avec
-				cette entrée. Les LLM doivent passer par de nombreuses phases d'entraînement avant de
-				pouvoir répondre de manière appropriée et précise à divers prompts, et Lucie se trouve à un
-				stade très précoce de son entraînement, n'ayant reçu qu'une seule série de ce que l'on
-				appelle l'affinage par instruction. Cet entraînement, bien que léger, permet à Lucie de
-				suivre des instructions de base, telles que répondre à une question ou résumer un texte. Ses
-				réponses ne sont peut-être pas encore fiables, mais sans cet entraînement supplémentaire,
-				Lucie, soumise à une instruction, ne pourrait générer que des chaînes de mots sémantiquement
-				liées à cette requête. Ses réponses n'auraient pas la forme correcte.
+				{$i18n.t(
+					'Lucie is a large generative language model (LLM), which means that from an input text or “prompt”, it generates a response related to that input. LLMs have to go through many training phases before they can respond appropriately and accurately to various prompts, and Lucie is at a very early stage in her training, having received just one round of what is known as instructional refinement. This training, although light, enables Lucie to follow basic instructions, such as answering a question or summarizing a text. Her answers may not yet be reliable, but without this additional training, Lucie, given an instruction, would only be able to generate strings of words semantically related to that query. Her answers would not have the correct form.'
+				)}
 			</div>
 			<div>
-				Pour passer aux étapes suivantes de l'entraînement, nous devons collecter de grandes
-				quantités de données provenant d'interactions avec les utilisateurs humains. En particulier,
-				nous avons besoin de savoir si une réponse fournie par Lucie est bonne, mauvaise ou
-				préférable à une autre. Si nous obtenons suffisamment de données de haute qualité de ce
-				type, nous pourrons les utiliser pour apprendre à Lucie à aligner ses réponses sur les
-				préférences des utilisateurs humains.
+				{$i18n.t(
+					'To move on to the next stages of training, we need to collect large amounts of data from interactions with human users. In particular, we need to know whether an answer provided by Lucie is right, wrong or preferable to another. If we get enough high-quality data of this kind, we can use it to train Lucie to align her responses with the preferences of human users.'
+				)}
 			</div>
 			<div>
-				C'est la raison pour laquelle nous avons créé cette plateforme : pour que les utilisateurs
-				puissent nous donner leur avis et nous aider à améliorer les performances de Lucie. Comme
-				Lucie est entraînée sur des quantités égales de français et d'anglais (environ 33% pour
-				chaque langue), nous acceptons les interactions dans les deux langues, mais nous portons un
-				intérêt particulier à la collecte de données en français, car elles sont beaucoup plus
-				difficiles à obtenir que les données en anglais.
+				{$i18n.t(
+					"That's why we've created this platform: so that users can give us their feedback and help us improve Lucie's performance. As Lucie is trained on equal amounts of French and English (around 33% for each language), we welcome interactions in both languages, but are particularly interested in collecting data in French, as it is much more difficult to obtain than in English ."
+				)}
 			</div>
 			<div>
-				Gardez à l'esprit, lorsque vous interagissez avec le modèle, qu'il ne s'agit pas, et qu'il
-				ne s'agira jamais, d'un ChatGPT français. Le modèle Lucie est des centaines de fois plus
-				petit que les modèles à l'origine de la plateforme ChatGPT ; le convertir en un assistant
-				général d'IA de ce type est tout simplement impossible. Notre intérêt est de créer un modèle
-				pour aider à la génération de textes en français et en anglais et pour effectuer des tâches
-				pour lesquelles les modèles de langage de base sont performants : résumer des documents,
-				répondre à des questions de culture générale (en gardant à l'esprit qu'il n'a vu que des
-				données jusqu'en 2023), répondre à des questions sur la base d'un texte d'entrée, écrire des
-				histoires, et ainsi de suite. Il n'est pas conçu comme un assistant pour les mathématiques
-				ou le codage et il n'est pas capable de fournir des conseils éthiques.
+				{$i18n.t(
+					'Bear in mind when interacting with the model that it is not, and never will be, a French ChatGPT. The Lucie model is hundreds of times smaller than the models behind the ChatGPT platform; converting it into a general AI assistant of this type is simply impossible. Our interest is in creating a model to help generate texts in French and English, and to perform tasks for which basic language models perform well: summarizing documents, answering general knowledge questions (bearing in mind that it has only seen data up to 2023), answering questions based on input text, writing stories, and so on. It is not designed as an assistant for mathematics or coding, nor is it capable of providing ethical advice.'
+				)}
 			</div>
 		</div>
 
-		<!-- 'I Understand' button -->
+		<!-- 'I understand' button -->
 		<div class="flex justify-end">
 			<button
-				class="mt-2 px-6 py-3 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+				class="px-6 py-3 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
 				on:click={handleOverlayClick}
 			>
-				Je comprends
+				{$i18n.t('I understand')}
 			</button>
 		</div>
 	</div>

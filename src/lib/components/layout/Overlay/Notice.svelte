@@ -1,13 +1,21 @@
 <script lang="ts">
+	// Imports
 	import { showNotice } from '$lib/stores';
 	import { onMount } from 'svelte';
 
-	let noticePopupRef: HTMLDivElement | null = null; // Represents the popup element
+	let noticePopupRef: HTMLDivElement | null = null; // Represents the notice popup element
 
+	/**
+	 * Close the notice popup
+	 */
 	const closeNotice = () => {
 		$showNotice = false;
 	};
 
+	/**
+	 * Close the notice popup if a click is performed outside the popup, or on the 'I Understand' and close buttons.
+	 * @param event represents the mouseEvent
+	 */
 	const handleOverlayClick = (event: MouseEvent) => {
 		if (event.target === event.currentTarget) {
 			closeNotice();
@@ -42,6 +50,9 @@
 		}
 	};
 
+	/**
+	 * Running when the component is mounted to the DOM
+	 */
 	onMount(() => {
 		// Focus the popup container
 		if (noticePopupRef) {
@@ -50,6 +61,8 @@
 
 		// Listen to events
 		document.addEventListener('keydown', handleKeyDown);
+
+		// Clean up event listeners when the component is unmounted
 		return () => {
 			document.removeEventListener('keydown', handleKeyDown);
 		};
@@ -63,6 +76,7 @@
 		selection:bg-blue-500/50"
 	on:click={handleOverlayClick}
 >
+	<!-- Close button -->
 	<button
 		class="absolute top-5 right-5 text-white font-medium text-2xl cursor-pointer transition-all
 			hover:text-gray-200
@@ -82,6 +96,7 @@
 			/>
 		</svg>
 	</button>
+
 	<div
 		class="w-11/12 h-[95vh] p-6 flex flex-col space-y-4 overflow-y-scroll rounded
 			bg-white/90 backdrop-blur-md shadow-md text-gray-700 text-sm text-justify
@@ -89,6 +104,7 @@
 			xl:h- xl:w-2/3"
 		bind:this={noticePopupRef}
 	>
+		<!-- Notice text -->
 		<span class="text-xl font-medium md:text-2xl">Notice</span>
 		<div class="overflow-y-scroll space-y-4">
 			<div>
@@ -133,6 +149,8 @@
 				ou le codage et il n'est pas capable de fournir des conseils éthiques.
 			</div>
 		</div>
+
+		<!-- 'I Understand' button -->
 		<div class="flex justify-end">
 			<button
 				class="mt-2 px-6 py-3 rounded-full bg-blue-500 hover:bg-blue-600 text-white"

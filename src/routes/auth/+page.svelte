@@ -9,7 +9,16 @@
 	import { ldapUserSignIn, getSessionUser, userSignIn, userSignUp } from '$lib/apis/auths';
 
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
-	import { WEBUI_NAME, config, user, socket, mobile, queueID, locale, showNotice } from '$lib/stores';
+	import {
+		WEBUI_NAME,
+		config,
+		user,
+		socket,
+		mobile,
+		queueID,
+		locale,
+		showNotice
+	} from '$lib/stores';
 
 	import { generateInitialsImage, canvasPixelTest } from '$lib/utils';
 
@@ -231,11 +240,12 @@
 	</title>
 </svelte:head>
 
-<!-- Notice -->
+<!-- Notice Popup -->
 {#if $showNotice}
 	<Notice />
 {/if}
 
+<!-- Contact Us Form Popup -->
 {#if showContactUs}
 	<ContactUs bind:show={showContactUs} isLightMode={true} />
 {/if}

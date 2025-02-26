@@ -63,6 +63,8 @@
 
 	let ldapUsername = '';
 
+	let noticePopupRef: HTMLDivElement | null = null; // Represents the popup element
+
 	const closeNotice = () => {
 		showNotice = false;
 	};
@@ -73,9 +75,31 @@
 		}
 	};
 
+	/**
+	 * Handles key down events :
+	 * Escape | Enter -> close notice
+	 * Tab -> prevent focus on other page elements
+	 */
 	const handleKeyDown = (event: KeyboardEvent) => {
-		if (event.key === 'Escape') {
+		if (!noticePopupRef) return;
+		if (event.key === 'Escape' || event.key === 'Enter') {
 			closeNotice();
+			return;
+		} else if (event.key === 'Tab') {
+			const focusableElements = noticePopupRef.querySelectorAll<HTMLElement>(
+				'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+			);
+			const firstElement = focusableElements[0];
+			const lastElement = focusableElements[focusableElements.length - 1];
+			if (event.shiftKey && document.activeElement === firstElement) {
+				// Shift + Tab pressed on the first element
+				lastElement.focus();
+				event.preventDefault();
+			} else if (!event.shiftKey && document.activeElement === lastElement) {
+				// Tab pressed on the last element
+				firstElement.focus();
+				event.preventDefault();
+			}
 		}
 	};
 
@@ -238,6 +262,14 @@
 			onboarding = $config?.onboarding ?? false;
 			// if (onboarding) mode = $config?.features.enable_ldap ? 'ldap' : 'signup';
 		}
+
+		// Focus the popup container
+		if (noticePopupRef) {
+			noticePopupRef.focus();
+		}
+
+		// Listen to events
+		document.addEventListener('keydown', handleKeyDown);
 	});
 </script>
 
@@ -250,20 +282,30 @@
 <!-- Notice -->
 {#if showNotice}
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
+	<!-- svelte-ignore a11y-click-events-have-key-events -->
 	<div
 		class="absolute h-full w-full flex items-center justify-center backdrop-brightness-75 backdrop-blur-sm z-50"
 		on:click={handleOverlayClick}
-		on:keydown={handleKeyDown}
 	>
 		<!-- WIP : Replace with an icon -->
 		<button
-			class="absolute top-4 right-6 text-red-800 font-medium text-2xl cursor-pointer"
+			class="absolute top-4 right-6 text-white font-medium text-2xl cursor-pointer hover:text-gray-200 transition-all"
 			on:click={handleOverlayClick}
 		>
-			X
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 20 20"
+				fill="currentColor"
+				class="w-6 h-6"
+			>
+				<path
+					d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+				/>
+			</svg>
 		</button>
 		<div
 			class="w-2/3 p-10 text-justify flex flex-col space-y-6 shadow-md rounded bg-white/90 backdrop-blur-md text-gray-700"
+			bind:this={noticePopupRef}
 		>
 			<span class="text-2xl font-medium">Notice</span>
 			<div>

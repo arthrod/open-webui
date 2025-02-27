@@ -1161,6 +1161,7 @@
 	"WebUI will make requests to \"{{url}}/chat/completions\"": "WebUI fera des requêtes à \"{{url}}/chat/completions\"",
 	"What are you trying to achieve?": "Que cherchez-vous à accomplir ?",
 	"What are you working on?": "Sur quoi travaillez-vous ?",
+	"What is {{WEBUI_NAME}} ?": "Qu'est ce que {{WEBUI_NAME}} ?",
 	"What makes {{WEBUI_NAME}} truly Open Source ?": "Qu'est-ce qui fait de {{WEBUI_NAME}} un vrai modèle open source ?",
 	"What’s New in": "Quoi de neuf dans",
 	"When enabled, the model will respond to each chat message in real-time, generating a response as soon as the user sends a message. This mode is useful for live chat applications, but may impact performance on slower hardware.": "Lorsqu'il est activé, le modèle répondra à chaque message de chat en temps réel, générant une réponse dès que l'utilisateur envoie un message. Ce mode est utile pour les applications de chat en direct, mais peut affecter les performances sur un matériel plus lent.",

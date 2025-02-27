@@ -243,6 +243,15 @@
 <!-- Notice Popup -->
 {#if $showNotice}
 	<Notice />
+{:else}
+	<button
+		class="fixed bottom-3 right-5 flex items-center justify-center h-6 aspect-square rounded-full border text-xs bg-white/80 hover:bg-gray-100/80 transition-all"
+		on:click={() => {
+			$showNotice = true;
+		}}
+	>
+		?
+	</button>
 {/if}
 
 <!-- Contact Us Form Popup -->
@@ -254,7 +263,7 @@
 <div
 	class="fixed w-full h-20 px-8 md:px-12 xl:px-24 2xl:px-48 flex items-center justify-between bg-white/90 border-b-[2px] backdrop-blur-md border-gray-100 z-30"
 >
-	<div class="flex h-full items-center relative">
+	<div class="relative h-full flex items-center space-x-4">
 		<img
 			crossorigin="anonymous"
 			src="/assets/logos/lucie-with-text.svg"
@@ -276,10 +285,10 @@
 
 <!-- Page -->
 <div class="h-screen overflow-y-scroll pt-20 text-gray-700">
-	<div class="grid xl:grid-cols-2">
-		<div
-			class="p-8 md:p-12 xl:px-24 2xl:px-48 xl:py-24 flex flex-col justify-center space-y-6 bg-slate-100"
-		>
+	<div
+		class="grid xl:grid-cols-2 bg-gradient-to-r from-blue-50 from-40% via-white to-60% to-red-50"
+	>
+		<div class="p-8 md:p-12 xl:px-24 2xl:px-48 xl:py-24 flex flex-col justify-center space-y-6">
 			<span class="text-2xl xl:text-3xl 2xl:text-5xl max-xl:text-center">
 				{$i18n.t(
 					'{{WEBUI_NAME}} — The truly open source AI built on transparency, trust, and efficiency.',
@@ -291,7 +300,8 @@
 			</span>
 			<div
 				class="flex flex-col items-center
-				md:flex-row md:justify-center md:gap-8"
+				md:flex-row md:justify-center md:gap-8
+				xl:justify-start"
 			>
 				{#if queueDisabled}
 					<span
@@ -301,7 +311,7 @@
 					</span>
 				{:else if queueStatus.status === 'disconnected'}
 					<button
-						class="max-xl:self-center h-12 xl:h-16 w-64 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-medium transition-all"
+						class="max-xl:self-center h-12 xl:h-16 w-64 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-medium transition-all"
 						on:click={joinQueueHandler}
 					>
 						{$i18n.t('Try {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
@@ -363,7 +373,7 @@
 				)}
 			</span>
 		</div>
-		<div class="max-xl:p-8 max-xl:pt-0 bg-white flex items-center justify-center">
+		<div class="max-xl:p-8 max-xl:pt-0 flex items-center justify-center">
 			<!-- Lucie Illustration -->
 			<img
 				crossorigin="anonymous"
@@ -375,7 +385,7 @@
 	</div>
 	<!-- Logos -->
 	<div
-		class="px-8 md:px-12 xl:px-24 2xl:px-48 flex flex-wrap items-center justify-center gap-8 py-8"
+		class="px-8 md:px-12 xl:px-24 2xl:px-48 flex flex-wrap items-center justify-center gap-8 py-8 bg-gradient-to-r from-blue-50 from-40% via-white to-60% to-red-50"
 	>
 		<img
 			crossorigin="anonymous"
@@ -436,45 +446,89 @@
 			alt="Scaleway logo"
 		/>
 	</div>
-	<div class="px-8 md:px-12 xl:px-24 2xl:px-48 my-6 xl:mt-12">
-		<div class="text-2xl xl:text-3xl mb-4 xl:mb-8">
-			{$i18n.t('Origins of the name of {{WEBUI_NAME}} model', { WEBUI_NAME: $WEBUI_NAME })}
-		</div>
-		<div class="flex flex-col space-y-4 text-sm xl:text-base">
-			<span>
-				{$i18n.t(
-					'{{WEBUI_NAME}} is our truly Open Source artificial intelligence, developed in collaboration with the OpenLLM-France community and supported by the French General Secretariat for Investment.',
-					{ WEBUI_NAME: $WEBUI_NAME }
-				)}
-			</span>
-			<span>
-				{$i18n.t('The name {{WEBUI_NAME}} carries a dual symbolism:', { WEBUI_NAME: $WEBUI_NAME })}
-			</span>
-			<ol class="list-decimal list-inside space-y-2">
-				<li>
-					{$i18n.t(
-						'It echoes "Lucy", the common ancestor of all humanity, representing universal origins and connection.'
-					)}
-				</li>
-				<li>
-					{$i18n.t(
-						'It also refers to the main character of the film "Lucy" by Luc Besson, who masters all human knowledge.'
-					)}
-				</li>
-			</ol>
-			<span>
-				{$i18n.t(
-					'Her face is inspired by Marianne, the French Republic\'s emblem, while also reminiscent of Scarlett Johansson, the heroine of the film "Lucy". Draped in a tricolor shawl, {{WEBUI_NAME}} embodies sovereignty and French values.',
-					{ WEBUI_NAME: $WEBUI_NAME }
-				)}
-			</span>
+	<div
+		class="px-8 md:p-12 xl:p-24 flex justify-center bg-gradient-to-r from-blue-50 from-40% via-white to-60% to-red-50"
+	>
+		<iframe
+			width="960"
+			height="540"
+			src="https://www.youtube.com/embed/LX6MJamcVBk"
+			title="LUCIE : &quot;Au delà du buzz, une question de souveraineté numérique en Europe&quot; - Michel-Marie MAUDET"
+			frameborder="0"
+			allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+			referrerpolicy="strict-origin-when-cross-origin"
+			allowfullscreen
+			class=" shadow-2xl shadow-gray-500 rounded-3xl"
+		></iframe>
+	</div>
+	<div
+		class="px-8 md:px-12 xl:px-24 2xl:px-48 py-6 xl:pb-12 2xl:pb-24 bg-gradient-to-r from-blue-50 from-40% via-white to-60% to-red-50"
+	>
+		<div class="grid grid-cols-2 gap-36">
+			<!-- What is LUCIE ? -->
+			<div>
+				<div class="text-2xl xl:text-3xl 2xl:text-4xl mb-4 xl:mb-8">
+					{$i18n.t('What is {{WEBUI_NAME}} ?', { WEBUI_NAME: $WEBUI_NAME })}
+				</div>
+				<div class="flex flex-col space-y-4 text-justify text-sm xl:text-base 2xl:text-lg">
+					<span>
+						LUCIE est, encore à ce stade, un projet de recherche académique, issu de la communauté
+						OpenLLM France initiée par Michel-Marie MAUDET, Directeur Général de LINAGORA, le
+						pionier français de l’Open Source le 16 juin 2023.
+					</span>
+
+					<span>
+						A l’origine, LUCIE a été développée sur fonds propres par LINAGORA puis, dans un 2ème
+						temps, a pu bénéficier d’un financement spécifique issu d’un Appel à Projet
+						«&nbsp;Communs Numériques&nbsp;» dans le cadre du programme d’investissements d’avenir
+						France 2030 attribué à un consortium public/privé comptant, en plus de LINAGORA, le
+						CNRS, l’Ecole Politechnique, l’Opsci, l’association Classcode et Talkr.
+					</span>
+				</div>
+			</div>
+			<div>
+				<div class="text-2xl xl:text-3xl 2xl:text-4xl mb-4 xl:mb-8">
+					{$i18n.t('Origins of the name of {{WEBUI_NAME}} model', { WEBUI_NAME: '' })}
+				</div>
+				<div class="flex flex-col space-y-4 text-justify text-sm xl:text-base 2xl:text-lg">
+					<span>
+						{$i18n.t(
+							'{{WEBUI_NAME}} is our truly Open Source artificial intelligence, developed in collaboration with the OpenLLM-France community and supported by the French General Secretariat for Investment.',
+							{ WEBUI_NAME: $WEBUI_NAME }
+						)}
+					</span>
+					<span>
+						{$i18n.t('The name {{WEBUI_NAME}} carries a dual symbolism:', {
+							WEBUI_NAME: $WEBUI_NAME
+						})}
+					</span>
+					<ol class="list-decimal list-inside space-y-2">
+						<li>
+							{$i18n.t(
+								'It echoes "Lucy", the common ancestor of all humanity, representing universal origins and connection.'
+							)}
+						</li>
+						<li>
+							{$i18n.t(
+								'It also refers to the main character of the film "Lucy" by Luc Besson, who masters all human knowledge.'
+							)}
+						</li>
+					</ol>
+					<span>
+						{$i18n.t(
+							'Her face is inspired by Marianne, the French Republic\'s emblem, while also reminiscent of Scarlett Johansson, the heroine of the film "Lucy". Draped in a tricolor shawl, {{WEBUI_NAME}} embodies sovereignty and French values.',
+							{ WEBUI_NAME: $WEBUI_NAME }
+						)}
+					</span>
+				</div>
+			</div>
 		</div>
 	</div>
-	<div class="px-8 md:px-12 xl:px-24 2xl:px-48 my-12 xl:my-16 2xl:my-24">
+	<div class="px-8 md:px-12 xl:px-24 2xl:px-48 py-12 xl:py-16 2xl:py-24">
 		<div class="text-2xl xl:text-3xl mb-8 xl:mb-16">
 			{$i18n.t('What makes {{WEBUI_NAME}} truly Open Source ?', { WEBUI_NAME: $WEBUI_NAME })}
 		</div>
-		<div class="grid gap-12 md:grid-cols-2 lg:grid-cols-3 xl:gap-16 2xl:gap-24 2xl:px-6">
+		<div class="grid gap-12 md:grid-cols-2 lg:grid-cols-3 xl:gap-16 2xl:gap-24">
 			<div class="flex flex-col space-y-4 2xl:space-y-8">
 				<EyeInBox className="size-10" />
 				<span class="text-xl font-medium h-14 xl:h-16 xl:text-2xl">

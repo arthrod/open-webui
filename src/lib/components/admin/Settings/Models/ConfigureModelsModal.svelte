@@ -16,6 +16,8 @@
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import Minus from '$lib/components/icons/Minus.svelte';
 	import Plus from '$lib/components/icons/Plus.svelte';
+	import ChevronUp from '$lib/components/icons/ChevronUp.svelte';
+	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
 
 	export let show = false;
 	export let initHandler = () => {};
@@ -26,12 +28,33 @@
 	let defaultModelIds = [];
 	let modelIds = [];
 
+	let sortKey = '';
+	let sortOrder = '';
+
 	let loading = false;
 	let showResetModal = false;
 
 	$: if (show) {
 		init();
 	}
+
+	$: if (selectedModelId) {
+		onModelSelect();
+	}
+
+	const onModelSelect = () => {
+		if (selectedModelId === '') {
+			return;
+		}
+
+		if (defaultModelIds.includes(selectedModelId)) {
+			selectedModelId = '';
+			return;
+		}
+
+		defaultModelIds = [...defaultModelIds, selectedModelId];
+		selectedModelId = '';
+	};
 
 	const init = async () => {
 		config = await getModelsConfig(localStorage.token);
@@ -53,6 +76,9 @@
 			// Add remaining IDs not in MODEL_ORDER_LIST, sorted alphabetically
 			...allModelIds.filter((id) => !orderedSet.has(id)).sort((a, b) => a.localeCompare(b))
 		];
+
+		sortKey = '';
+		sortOrder = '';
 	};
 	const submitHandler = async () => {
 		loading = true;
@@ -95,7 +121,7 @@
 	<div>
 		<div class=" flex justify-between dark:text-gray-100 px-5 pt-4 pb-2">
 			<div class=" text-lg font-medium self-center font-primary">
-				{$i18n.t('Configure Models')}
+				{$i18n.t('Settings')}
 			</div>
 			<button
 				class="self-center"
@@ -127,9 +153,45 @@
 					>
 						<div>
 							<div class="flex flex-col w-full">
-								<div class="mb-1 flex justify-between">
+								<button
+									class="mb-1 flex gap-2"
+									type="button"
+									on:click={() => {
+										sortKey = 'model';
+
+										if (sortOrder === 'asc') {
+											sortOrder = 'desc';
+										} else {
+											sortOrder = 'asc';
+										}
+
+										modelIds = modelIds
+											.filter((id) => id !== '')
+											.sort((a, b) => {
+												const nameA = $models.find((model) => model.id === a)?.name || a;
+												const nameB = $models.find((model) => model.id === b)?.name || b;
+												return sortOrder === 'desc'
+													? nameA.localeCompare(nameB)
+													: nameB.localeCompare(nameA);
+											});
+									}}
+								>
 									<div class="text-xs text-gray-500">{$i18n.t('Reorder Models')}</div>
-								</div>
+
+									{#if sortKey === 'model'}
+										<span class="font-normal self-center">
+											{#if sortOrder === 'asc'}
+												<ChevronUp className="size-3" />
+											{:else}
+												<ChevronDown className="size-3" />
+											{/if}
+										</span>
+									{:else}
+										<span class="invisible">
+											<ChevronUp className="size-3" />
+										</span>
+									{/if}
+								</button>
 
 								<ModelList bind:modelIds />
 							</div>
@@ -143,6 +205,24 @@
 									<div class="text-xs text-gray-500">{$i18n.t('Default Models')}</div>
 								</div>
 
+								<div class="flex items-center -mr-1">
+									<select
+										class="w-full py-1 text-sm rounded-lg bg-transparent {selectedModelId
+											? ''
+											: 'text-gray-500'} placeholder:text-gray-300 dark:placeholder:text-gray-700 outline-hidden"
+										bind:value={selectedModelId}
+									>
+										<option value="">{$i18n.t('Select a model')}</option>
+										{#each $models as model}
+											<option value={model.id} class="bg-gray-50 dark:bg-gray-700"
+												>{model.name}</option
+											>
+										{/each}
+									</select>
+								</div>
+
+								<!-- <hr class=" border-gray-100 dark:border-gray-700/10 my-2.5 w-full" /> -->
+
 								{#if defaultModelIds.length > 0}
 									<div class="flex flex-col">
 										{#each defaultModelIds as modelId, modelIdx}
@@ -150,7 +230,7 @@
 												<div class=" text-sm flex-1 py-1 rounded-lg">
 													{$models.find((model) => model.id === modelId)?.name}
 												</div>
-												<div class="flex-shrink-0">
+												<div class="shrink-0">
 													<button
 														type="button"
 														on:click={() => {
@@ -170,44 +250,6 @@
 										{$i18n.t('No models selected')}
 									</div>
 								{/if}
-
-								<hr class=" border-gray-100 dark:border-gray-700/10 my-2.5 w-full" />
-
-								<div class="flex items-center">
-									<select
-										class="w-full py-1 text-sm rounded-lg bg-transparent {selectedModelId
-											? ''
-											: 'text-gray-500'} placeholder:text-gray-300 dark:placeholder:text-gray-700 outline-none"
-										bind:value={selectedModelId}
-									>
-										<option value="">{$i18n.t('Select a model')}</option>
-										{#each $models as model}
-											<option value={model.id} class="bg-gray-50 dark:bg-gray-700"
-												>{model.name}</option
-											>
-										{/each}
-									</select>
-
-									<div>
-										<button
-											type="button"
-											on:click={() => {
-												if (selectedModelId === '') {
-													return;
-												}
-
-												if (defaultModelIds.includes(selectedModelId)) {
-													return;
-												}
-
-												defaultModelIds = [...defaultModelIds, selectedModelId];
-												selectedModelId = '';
-											}}
-										>
-											<Plus className="size-3.5" strokeWidth="2" />
-										</button>
-									</div>
-								</div>
 							</div>
 						</div>
 

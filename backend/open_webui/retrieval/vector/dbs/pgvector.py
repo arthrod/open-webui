@@ -1,4 +1,5 @@
 from typing import Optional, List, Dict, Any
+import logging
 from sqlalchemy import (
     cast,
     column,
@@ -9,6 +10,7 @@ from sqlalchemy import (
     select,
     text,
     Text,
+    Table,
     values,
 )
 from sqlalchemy.sql import true
@@ -18,12 +20,18 @@ from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
 from sqlalchemy.dialects.postgresql import JSONB, array
 from pgvector.sqlalchemy import Vector
 from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.exc import NoSuchTableError
 
 from open_webui.retrieval.vector.main import VectorItem, SearchResult, GetResult
 from open_webui.config import PGVECTOR_DB_URL, PGVECTOR_INITIALIZE_MAX_VECTOR_LENGTH
 
+from open_webui.env import SRC_LOG_LEVELS
+
 VECTOR_LENGTH = PGVECTOR_INITIALIZE_MAX_VECTOR_LENGTH
 Base = declarative_base()
+
+log = logging.getLogger(__name__)
+log.setLevel(SRC_LOG_LEVELS["RAG"])
 
 
 class DocumentChunk(Base):
@@ -80,10 +88,10 @@ class PgvectorClient:
                 )
             )
             self.session.commit()
-            print("Initialization complete.")
+            log.info("Initialization complete.")
         except Exception as e:
             self.session.rollback()
-            print(f"Error during initialization: {e}")
+            log.exception(f"Error during initialization: {e}")
             raise
 
     def check_vector_length(self) -> None:
@@ -92,31 +100,34 @@ class PgvectorClient:
         Raises an exception if there is a mismatch.
         """
         metadata = MetaData()
-        metadata.reflect(bind=self.session.bind, only=["document_chunk"])
+        try:
+            # Attempt to reflect the 'document_chunk' table
+            document_chunk_table = Table(
+                "document_chunk", metadata, autoload_with=self.session.bind
+            )
+        except NoSuchTableError:
+            # Table does not exist; no action needed
+            return
 
-        if "document_chunk" in metadata.tables:
-            document_chunk_table = metadata.tables["document_chunk"]
-            if "vector" in document_chunk_table.columns:
-                vector_column = document_chunk_table.columns["vector"]
-                vector_type = vector_column.type
-                if isinstance(vector_type, Vector):
-                    db_vector_length = vector_type.dim
-                    if db_vector_length != VECTOR_LENGTH:
-                        raise Exception(
-                            f"VECTOR_LENGTH {VECTOR_LENGTH} does not match existing vector column dimension {db_vector_length}. "
-                            "Cannot change vector size after initialization without migrating the data."
-                        )
-                else:
+        # Proceed to check the vector column
+        if "vector" in document_chunk_table.columns:
+            vector_column = document_chunk_table.columns["vector"]
+            vector_type = vector_column.type
+            if isinstance(vector_type, Vector):
+                db_vector_length = vector_type.dim
+                if db_vector_length != VECTOR_LENGTH:
                     raise Exception(
-                        "The 'vector' column exists but is not of type 'Vector'."
+                        f"VECTOR_LENGTH {VECTOR_LENGTH} does not match existing vector column dimension {db_vector_length}. "
+                        "Cannot change vector size after initialization without migrating the data."
                     )
             else:
                 raise Exception(
-                    "The 'vector' column does not exist in the 'document_chunk' table."
+                    "The 'vector' column exists but is not of type 'Vector'."
                 )
         else:
-            # Table does not exist yet; no action needed
-            pass
+            raise Exception(
+                "The 'vector' column does not exist in the 'document_chunk' table."
+            )
 
     def adjust_vector_length(self, vector: List[float]) -> List[float]:
         # Adjust vector to have length VECTOR_LENGTH
@@ -145,12 +156,12 @@ class PgvectorClient:
                 new_items.append(new_chunk)
             self.session.bulk_save_objects(new_items)
             self.session.commit()
-            print(
+            log.info(
                 f"Inserted {len(new_items)} items into collection '{collection_name}'."
             )
         except Exception as e:
             self.session.rollback()
-            print(f"Error during insert: {e}")
+            log.exception(f"Error during insert: {e}")
             raise
 
     def upsert(self, collection_name: str, items: List[VectorItem]) -> None:
@@ -179,10 +190,12 @@ class PgvectorClient:
                     )
                     self.session.add(new_chunk)
             self.session.commit()
-            print(f"Upserted {len(items)} items into collection '{collection_name}'.")
+            log.info(
+                f"Upserted {len(items)} items into collection '{collection_name}'."
+            )
         except Exception as e:
             self.session.rollback()
-            print(f"Error during upsert: {e}")
+            log.exception(f"Error during upsert: {e}")
             raise
 
     def search(
@@ -273,7 +286,7 @@ class PgvectorClient:
                 ids=ids, distances=distances, documents=documents, metadatas=metadatas
             )
         except Exception as e:
-            print(f"Error during search: {e}")
+            log.exception(f"Error during search: {e}")
             return None
 
     def query(
@@ -305,7 +318,7 @@ class PgvectorClient:
                 metadatas=metadatas,
             )
         except Exception as e:
-            print(f"Error during query: {e}")
+            log.exception(f"Error during query: {e}")
             return None
 
     def get(
@@ -329,7 +342,7 @@ class PgvectorClient:
 
             return GetResult(ids=ids, documents=documents, metadatas=metadatas)
         except Exception as e:
-            print(f"Error during get: {e}")
+            log.exception(f"Error during get: {e}")
             return None
 
     def delete(
@@ -351,22 +364,22 @@ class PgvectorClient:
                     )
             deleted = query.delete(synchronize_session=False)
             self.session.commit()
-            print(f"Deleted {deleted} items from collection '{collection_name}'.")
+            log.info(f"Deleted {deleted} items from collection '{collection_name}'.")
         except Exception as e:
             self.session.rollback()
-            print(f"Error during delete: {e}")
+            log.exception(f"Error during delete: {e}")
             raise
 
     def reset(self) -> None:
         try:
             deleted = self.session.query(DocumentChunk).delete()
             self.session.commit()
-            print(
+            log.info(
                 f"Reset complete. Deleted {deleted} items from 'document_chunk' table."
             )
         except Exception as e:
             self.session.rollback()
-            print(f"Error during reset: {e}")
+            log.exception(f"Error during reset: {e}")
             raise
 
     def close(self) -> None:
@@ -382,9 +395,9 @@ class PgvectorClient:
             )
             return exists
         except Exception as e:
-            print(f"Error checking collection existence: {e}")
+            log.exception(f"Error checking collection existence: {e}")
             return False
 
     def delete_collection(self, collection_name: str) -> None:
         self.delete(collection_name)
-        print(f"Collection '{collection_name}' deleted.")
+        log.info(f"Collection '{collection_name}' deleted.")

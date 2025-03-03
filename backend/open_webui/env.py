@@ -54,6 +54,8 @@ else:
     DEVICE_TYPE = "cpu"
 
 try:
+    import torch
+
     if torch.backends.mps.is_available() and torch.backends.mps.is_built():
         DEVICE_TYPE = "mps"
 except Exception:
@@ -90,6 +92,7 @@ log_sources = [
     "RAG",
     "WEBHOOK",
     "SOCKET",
+    "OAUTH",
 ]
 
 SRC_LOG_LEVELS = {}
@@ -110,6 +113,7 @@ if WEBUI_NAME != "Open WebUI":
 
 WEBUI_FAVICON_URL = "https://openwebui.com/favicon.png"
 
+TRUSTED_SIGNATURE_KEY = os.environ.get("TRUSTED_SIGNATURE_KEY", "")
 
 ####################################
 # ENV (dev,test,prod)
@@ -272,6 +276,8 @@ DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DATA_DIR}/webui.db")
 if "postgres://" in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://")
 
+DATABASE_SCHEMA = os.environ.get("DATABASE_SCHEMA", None)
+
 DATABASE_POOL_SIZE = os.environ.get("DATABASE_POOL_SIZE", 0)
 
 if DATABASE_POOL_SIZE == "":
@@ -352,14 +358,22 @@ WEBUI_SECRET_KEY = os.environ.get(
     ),  # DEPRECATED: remove at next major version
 )
 
-WEBUI_SESSION_COOKIE_SAME_SITE = os.environ.get(
-    "WEBUI_SESSION_COOKIE_SAME_SITE",
-    os.environ.get("WEBUI_SESSION_COOKIE_SAME_SITE", "lax"),
+WEBUI_SESSION_COOKIE_SAME_SITE = os.environ.get("WEBUI_SESSION_COOKIE_SAME_SITE", "lax")
+
+WEBUI_SESSION_COOKIE_SECURE = (
+    os.environ.get("WEBUI_SESSION_COOKIE_SECURE", "false").lower() == "true"
 )
 
-WEBUI_SESSION_COOKIE_SECURE = os.environ.get(
-    "WEBUI_SESSION_COOKIE_SECURE",
-    os.environ.get("WEBUI_SESSION_COOKIE_SECURE", "false").lower() == "true",
+WEBUI_AUTH_COOKIE_SAME_SITE = os.environ.get(
+    "WEBUI_AUTH_COOKIE_SAME_SITE", WEBUI_SESSION_COOKIE_SAME_SITE
+)
+
+WEBUI_AUTH_COOKIE_SECURE = (
+    os.environ.get(
+        "WEBUI_AUTH_COOKIE_SECURE",
+        os.environ.get("WEBUI_SESSION_COOKIE_SECURE", "false"),
+    ).lower()
+    == "true"
 )
 
 if WEBUI_AUTH and WEBUI_SECRET_KEY == "":
@@ -405,3 +419,25 @@ OFFLINE_MODE = os.environ.get("OFFLINE_MODE", "false").lower() == "true"
 
 if OFFLINE_MODE:
     os.environ["HF_HUB_OFFLINE"] = "1"
+
+####################################
+# AUDIT LOGGING
+####################################
+ENABLE_AUDIT_LOGS = os.getenv("ENABLE_AUDIT_LOGS", "false").lower() == "true"
+# Where to store log file
+AUDIT_LOGS_FILE_PATH = f"{DATA_DIR}/audit.log"
+# Maximum size of a file before rotating into a new log file
+AUDIT_LOG_FILE_ROTATION_SIZE = os.getenv("AUDIT_LOG_FILE_ROTATION_SIZE", "10MB")
+# METADATA | REQUEST | REQUEST_RESPONSE
+AUDIT_LOG_LEVEL = os.getenv("AUDIT_LOG_LEVEL", "REQUEST_RESPONSE").upper()
+try:
+    MAX_BODY_LOG_SIZE = int(os.environ.get("MAX_BODY_LOG_SIZE") or 2048)
+except ValueError:
+    MAX_BODY_LOG_SIZE = 2048
+
+# Comma separated list for urls to exclude from audit
+AUDIT_EXCLUDED_PATHS = os.getenv("AUDIT_EXCLUDED_PATHS", "/chats,/chat,/folders").split(
+    ","
+)
+AUDIT_EXCLUDED_PATHS = [path.strip() for path in AUDIT_EXCLUDED_PATHS]
+AUDIT_EXCLUDED_PATHS = [path.lstrip("/") for path in AUDIT_EXCLUDED_PATHS]

@@ -36,6 +36,7 @@ from open_webui.config import (
     OPENID_PROVIDER_URL,
     ENABLE_OAUTH_SIGNUP,
     WEBUI_URL,
+    ENABLE_LDAP
 )
 from pydantic import BaseModel
 from open_webui.utils.misc import parse_duration, validate_email_format

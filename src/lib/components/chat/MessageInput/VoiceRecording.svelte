@@ -137,7 +137,7 @@
 		const file = blobToFile(audioBlob, 'recording.wav');
 
 		const res = await transcribeAudio(localStorage.token, file).catch((error) => {
-			toast.error(error);
+			toast.error(`${error}`);
 			return null;
 		});
 
@@ -362,7 +362,7 @@
 			{#each visualizerData.slice().reverse() as rms}
 				<div class="flex items-center h-full">
 					<div
-						class="w-[2px] flex-shrink-0
+						class="w-[2px] shrink-0
                     
                     {loading
 							? ' bg-gray-500 dark:bg-gray-400   '

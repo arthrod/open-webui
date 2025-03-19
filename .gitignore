@@ -12,6 +12,8 @@ vite.config.ts.timestamp-*
 __pycache__/
 *.py[cod]
 *$py.class
+mcp-bridge/config.json
+mcp-bridge/mcp_config.json
 
 # C extensions
 *.so

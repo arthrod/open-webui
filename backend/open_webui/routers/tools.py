@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -15,6 +16,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from open_webui.utils.tools import get_tools_specs
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.access_control import has_access, has_permission
+from open_webui.env import SRC_LOG_LEVELS
+
+log = logging.getLogger(__name__)
+log.setLevel(SRC_LOG_LEVELS["MAIN"])
 
 
 router = APIRouter()
@@ -70,7 +75,7 @@ async def create_new_tools(
     user=Depends(get_verified_user),
 ):
     if user.role != "admin" and not has_permission(
-        user.id, "workspace.knowledge", request.app.state.config.USER_PERMISSIONS
+        user.id, "workspace.tools", request.app.state.config.USER_PERMISSIONS
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -100,7 +105,7 @@ async def create_new_tools(
             specs = get_tools_specs(TOOLS[form_data.id])
             tools = Tools.insert_new_tool(user.id, form_data, specs)
 
-            tool_cache_dir = Path(CACHE_DIR) / "tools" / form_data.id
+            tool_cache_dir = CACHE_DIR / "tools" / form_data.id
             tool_cache_dir.mkdir(parents=True, exist_ok=True)
 
             if tools:
@@ -111,7 +116,7 @@ async def create_new_tools(
                     detail=ERROR_MESSAGES.DEFAULT("Error creating tools"),
                 )
         except Exception as e:
-            print(e)
+            log.exception(f"Failed to load the tool by id {form_data.id}: {e}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=ERROR_MESSAGES.DEFAULT(str(e)),
@@ -165,7 +170,12 @@ async def update_tools_by_id(
             detail=ERROR_MESSAGES.NOT_FOUND,
         )
 
-    if tools.user_id != user.id and user.role != "admin":
+    # Is the user the original creator, in a group with write access, or an admin
+    if (
+        tools.user_id != user.id
+        and not has_access(user.id, "write", tools.access_control)
+        and user.role != "admin"
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=ERROR_MESSAGES.UNAUTHORIZED,
@@ -188,7 +198,7 @@ async def update_tools_by_id(
             "specs": specs,
         }
 
-        print(updated)
+        log.debug(updated)
         tools = Tools.update_tool_by_id(id, updated)
 
         if tools:
@@ -222,7 +232,11 @@ async def delete_tools_by_id(
             detail=ERROR_MESSAGES.NOT_FOUND,
         )
 
-    if tools.user_id != user.id and user.role != "admin":
+    if (
+        tools.user_id != user.id
+        and not has_access(user.id, "write", tools.access_control)
+        and user.role != "admin"
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=ERROR_MESSAGES.UNAUTHORIZED,
@@ -304,6 +318,17 @@ async def update_tools_valves_by_id(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=ERROR_MESSAGES.NOT_FOUND,
         )
+
+    if (
+        tools.user_id != user.id
+        and not has_access(user.id, "write", tools.access_control)
+        and user.role != "admin"
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
+        )
+
     if id in request.app.state.TOOLS:
         tools_module = request.app.state.TOOLS[id]
     else:
@@ -323,7 +348,7 @@ async def update_tools_valves_by_id(
         Tools.update_tool_valves_by_id(id, valves.model_dump())
         return valves.model_dump()
     except Exception as e:
-        print(e)
+        log.exception(f"Failed to update tool valves by id {id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=ERROR_MESSAGES.DEFAULT(str(e)),
@@ -401,7 +426,7 @@ async def update_tools_user_valves_by_id(
                 )
                 return user_valves.model_dump()
             except Exception as e:
-                print(e)
+                log.exception(f"Failed to update user valves by id {id}: {e}")
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=ERROR_MESSAGES.DEFAULT(str(e)),

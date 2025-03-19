@@ -19,6 +19,7 @@
 
 	import ShareChatModal from '../chat/ShareChatModal.svelte';
 	import ModelSelector from '../chat/ModelSelector.svelte';
+	import MCPSelector from '$lib/components/chat/MCPSelector.svelte'; // Import the new MCP Selector
 	import Tooltip from '../common/Tooltip.svelte';
 	import Menu from '$lib/components/layout/Navbar/Menu.svelte';
 	import UserMenu from '$lib/components/layout/Sidebar/UserMenu.svelte';
@@ -30,22 +31,41 @@
 	const i18n = getContext('i18n');
 
 	export let initNewChat: Function;
-	export let title: string = $WEBUI_NAME;
+	export const title: string = $WEBUI_NAME;
 	export let shareEnabled: boolean = false;
 
 	export let chat;
 	export let selectedModels;
+	export const selectedMCPs = []; // Changed from export let to export const
 	export let showModelSelector = true;
+	export let showMCPSelector = true; // Add showMCPSelector option
 
 	let showShareChatModal = false;
 	let showDownloadChatModal = false;
+	
+	// MCP items will be loaded from smithery-servers.json by the MCPSelector component
+	let mcpItems = [];
+	
+	let selectedMCP = $settings?.defaultServer || '';
+	
+	function handleMCPChange(event) {
+		// Handle server selection change
+		console.log('Server changed:', event.detail);
+		selectedMCP = event.detail.value;
+		
+		// You could also update a store here if needed
+		settings.update(($settings) => {
+			$settings.currentServer = event.detail.value;
+			return $settings;
+		});
+	}
 </script>
 
 <ShareChatModal bind:show={showShareChatModal} chatId={$chatId} />
 
-<div class="sticky top-0 z-30 w-full px-1.5 py-1.5 -mb-8 flex items-center">
+<nav class="sticky top-0 z-30 w-full px-1.5 py-1.5 -mb-8 flex items-center drag-region">
 	<div
-		class=" bg-gradient-to-b via-50% from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pointer-events-none absolute inset-0 -bottom-7 z-[-1] blur"
+		class=" bg-linear-to-b via-50% from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pointer-events-none absolute inset-0 -bottom-7 z-[-1]"
 	></div>
 
 	<div class=" flex max-w-full w-full mx-auto px-1 pt-0.5 bg-transparent">
@@ -70,13 +90,33 @@
 			</div>
 
 			<div
-				class="flex-1 overflow-hidden max-w-full py-0.5
+				class="flex-1 overflow-hidden max-w-full py-0.5 flex items-center flex-row
 			{$showSidebar ? 'ml-1' : ''}
 			"
 			>
-				{#if showModelSelector}
-					<ModelSelector bind:selectedModels showSetDefault={!shareEnabled} />
-				{/if}
+				<!-- Horizontal flex container for Model and MCP Selectors -->
+				<div class="flex flex-row w-full space-x-2">
+					<!-- Model Selector -->
+					{#if showModelSelector}
+						<div class="flex-1">
+							<ModelSelector bind:selectedModels showSetDefault={!shareEnabled} />
+						</div>
+					{/if}
+					
+					<!-- MCP Selector -->
+					{#if showMCPSelector}
+						<div class="flex-1">
+							<MCPSelector 
+								placeholder="Select MCPs"
+								searchPlaceholder={$i18n.t('Search MCP')}
+								items={mcpItems} 
+								value={selectedMCP} 
+								on:change={handleMCPChange}
+								showSetDefault={!shareEnabled}
+							/>
+						</div>
+					{/if}
+				</div>
 			</div>
 
 			<div class="self-start flex flex-none items-center text-gray-600 dark:text-gray-400">
@@ -114,7 +154,7 @@
 							</div>
 						</button>
 					</Menu>
-				{:else if $mobile}
+				{:else if $mobile && ($user.role === 'admin' || $user?.permissions?.chat?.controls)}
 					<Tooltip content={$i18n.t('Controls')}>
 						<button
 							class=" flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
@@ -130,7 +170,7 @@
 					</Tooltip>
 				{/if}
 
-				{#if !$mobile}
+				{#if !$mobile && ($user.role === 'admin' || $user?.permissions?.chat?.controls)}
 					<Tooltip content={$i18n.t('Controls')}>
 						<button
 							class=" flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
@@ -191,4 +231,4 @@
 			</div>
 		</div>
 	</div>
-</div>
+</nav>

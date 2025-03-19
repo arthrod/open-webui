@@ -40,7 +40,21 @@ class PDFGenerator:
             return ""
 
     def _build_html_message(self, message: Dict[str, Any]) -> str:
-        """Build HTML for a single message."""
+        """
+        Generate an HTML snippet for a single chat message.
+        
+        This method constructs an HTML representation of a chat message by extracting the sender's role, content, timestamp, and, if applicable, the model information (for messages sent by an assistant). It replaces newline characters in the content with HTML <br/> tags and formats the timestamp using the instance's `format_timestamp` method. The resulting HTML includes a header with the sender's role (capitalized) and model information, as well as the message content formatted into HTML.
+        
+        Args:
+            message (Dict[str, Any]): A dictionary representing a chat message. Expected keys include:
+                - "role" (str, optional): The sender's role (e.g., "user" or "assistant"). Defaults to "user" if not provided.
+                - "content" (str, optional): The text content of the message. Defaults to an empty string.
+                - "timestamp" (float, optional): A UNIX timestamp for when the message was sent.
+                - "model" (str, optional): The model identifier for assistant messages; used only if "role" is "assistant".
+        
+        Returns:
+            str: A string containing the HTML representation of the chat message.
+        """
         role = message.get("role", "user")
         content = message.get("content", "")
         timestamp = message.get("timestamp")
@@ -53,6 +67,7 @@ class PDFGenerator:
         # - https://facelessuser.github.io/pymdown-extensions/usage_notes/
         # html_content = markdown(content, extensions=["pymdownx.extra"])
 
+        content = content.replace("\n", "<br/>")
         html_message = f"""
             <div>
                 <div>

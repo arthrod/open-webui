@@ -9,6 +9,7 @@ from sqlalchemy import (
     select,
     text,
     Text,
+    Table,
     values,
 )
 from sqlalchemy.sql import true
@@ -18,6 +19,7 @@ from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
 from sqlalchemy.dialects.postgresql import JSONB, array
 from pgvector.sqlalchemy import Vector
 from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.exc import NoSuchTableError
 
 from open_webui.retrieval.vector.main import VectorItem, SearchResult, GetResult
 from open_webui.config import PGVECTOR_DB_URL, PGVECTOR_INITIALIZE_MAX_VECTOR_LENGTH
@@ -88,38 +90,66 @@ class PgvectorClient:
 
     def check_vector_length(self) -> None:
         """
-        Check if the VECTOR_LENGTH matches the existing vector column dimension in the database.
-        Raises an exception if there is a mismatch.
+        Verify that the expected VECTOR_LENGTH matches the dimension of the 'vector' column in the database.
+        
+        This method reflects the 'document_chunk' table using SQLAlchemy's MetaData. If the table exists, it checks for the presence of the 'vector' column and verifies that:
+          - The column is of type Vector.
+          - The dimension of the column (db_vector_length) is equal to the expected global VECTOR_LENGTH.
+          
+        If the 'vector' column exists but is not of type Vector, or if the column is missing from the table, an exception is raised. Similarly, if the column exists but its dimension does not match VECTOR_LENGTH, an exception is thrown to prevent inadvertent changes to the vector size. If the table does not exist, the check is skipped.
+         
+        Raises:
+            Exception: If the 'vector' column exists but is not of type 'Vector'.
+            Exception: If the 'vector' column is missing from the 'document_chunk' table.
+            Exception: If the dimension of the existing vector column does not match the expected VECTOR_LENGTH.
         """
         metadata = MetaData()
-        metadata.reflect(bind=self.session.bind, only=["document_chunk"])
+        try:
+            # Attempt to reflect the 'document_chunk' table
+            document_chunk_table = Table(
+                "document_chunk", metadata, autoload_with=self.session.bind
+            )
+        except NoSuchTableError:
+            # Table does not exist; no action needed
+            return
 
-        if "document_chunk" in metadata.tables:
-            document_chunk_table = metadata.tables["document_chunk"]
-            if "vector" in document_chunk_table.columns:
-                vector_column = document_chunk_table.columns["vector"]
-                vector_type = vector_column.type
-                if isinstance(vector_type, Vector):
-                    db_vector_length = vector_type.dim
-                    if db_vector_length != VECTOR_LENGTH:
-                        raise Exception(
-                            f"VECTOR_LENGTH {VECTOR_LENGTH} does not match existing vector column dimension {db_vector_length}. "
-                            "Cannot change vector size after initialization without migrating the data."
-                        )
-                else:
+        # Proceed to check the vector column
+        if "vector" in document_chunk_table.columns:
+            vector_column = document_chunk_table.columns["vector"]
+            vector_type = vector_column.type
+            if isinstance(vector_type, Vector):
+                db_vector_length = vector_type.dim
+                if db_vector_length != VECTOR_LENGTH:
                     raise Exception(
-                        "The 'vector' column exists but is not of type 'Vector'."
+                        f"VECTOR_LENGTH {VECTOR_LENGTH} does not match existing vector column dimension {db_vector_length}. "
+                        "Cannot change vector size after initialization without migrating the data."
                     )
             else:
                 raise Exception(
-                    "The 'vector' column does not exist in the 'document_chunk' table."
+                    "The 'vector' column exists but is not of type 'Vector'."
                 )
         else:
-            # Table does not exist yet; no action needed
-            pass
+            raise Exception(
+                "The 'vector' column does not exist in the 'document_chunk' table."
+            )
 
     def adjust_vector_length(self, vector: List[float]) -> List[float]:
         # Adjust vector to have length VECTOR_LENGTH
+        """
+        Adjusts the input vector's length to match the required VECTOR_LENGTH.
+        
+        If the vector is shorter than VECTOR_LENGTH, the function pads it with zeros. If the vector is longer than VECTOR_LENGTH,
+        an Exception is raised.
+        
+        Parameters:
+            vector (List[float]): The input vector to adjust.
+        
+        Returns:
+            List[float]: The vector adjusted to have exactly VECTOR_LENGTH elements.
+        
+        Raises:
+            Exception: If the input vector's length exceeds VECTOR_LENGTH.
+        """
         current_length = len(vector)
         if current_length < VECTOR_LENGTH:
             # Pad the vector with zeros

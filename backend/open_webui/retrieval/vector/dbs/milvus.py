@@ -7,15 +7,53 @@ from typing import Optional
 from open_webui.retrieval.vector.main import VectorItem, SearchResult, GetResult
 from open_webui.config import (
     MILVUS_URI,
+    MILVUS_DB,
 )
 
 
 class MilvusClient:
     def __init__(self):
+        """
+        Initialize a MilvusClient instance.
+        
+        This constructor sets the default collection prefix to "open_webui" and initializes the underlying Milvus client
+        using the specified URI and database constants (MILVUS_URI and MILVUS_DB). The client instance is used for
+        subsequent operations such as creating, inserting, querying, and deleting collections and vector data.
+            
+        Attributes:
+            collection_prefix (str): Prefix used for naming collections.
+            client (Client): An instance of the Milvus Client configured with the provided URI and database.
+        """
         self.collection_prefix = "open_webui"
-        self.client = Client(uri=MILVUS_URI)
+        self.client = Client(uri=MILVUS_URI, database=MILVUS_DB)
 
     def _result_to_get_result(self, result) -> GetResult:
+        """
+        Converts a raw nested query result into a GetResult object.
+        
+        This function processes a nested iterable of match groups, where each inner iterable
+        contains dictionaries representing individual items from a Milvus query. Each dictionary
+        is expected to have the following keys:
+          - "id": A unique identifier for the item.
+          - "data": A dictionary that contains the document text under the "text" key.
+          - "metadata": Additional metadata related to the item.
+        
+        The function aggregates these values into separate lists for IDs, documents, and metadatas,
+        maintaining the grouping from the original result, and returns them encapsulated in a GetResult object.
+        
+        Parameters:
+            result (Iterable[Iterable[dict]]):
+                A nested iterable of match groups from a query result, where each inner iterable
+                is a collection of dictionaries with keys "id", "data", and "metadata".
+                The "data" dictionary should contain a "text" key for the document content.
+        
+        Returns:
+            GetResult:
+                An object containing the following fields:
+                    - ids (List[List[Any]]): A nested list of item IDs.
+                    - documents (List[List[str]]): A nested list of document texts.
+                    - metadatas (List[List[Any]]): A nested list of metadata for each item.
+        """
         ids = []
         documents = []
         metadatas = []

@@ -446,13 +446,34 @@ async def pin_chat_by_id(id: str, user=Depends(get_verified_user)):
 
 @router.post("/{id}/clone", response_model=Optional[ChatResponse])
 async def clone_chat_by_id(id: str, user=Depends(get_verified_user)):
+    """
+    Clone a chat by its ID for the authenticated user.
+    
+    This asynchronous endpoint retrieves a chat associated with the current user using the provided chat ID.
+    If the chat exists, it creates a clone by copying the original chat's data while adding metadata:
+    - Sets "originalChatId" to the ID of the original chat.
+    - Sets "branchPointMessageId" to the current message ID from the chat's history.
+    - Retains the original chat's title.
+    The cloned chat is then inserted into the database and returned as a ChatResponse object.
+    
+    Parameters:
+        id (str): The unique identifier of the chat to clone.
+        user: The authenticated user instance, injected via FastAPI dependencies.
+    
+    Returns:
+        ChatResponse: An object representing the newly cloned chat.
+    
+    Raises:
+        HTTPException: If no chat matching the provided ID is found for the authenticated user,
+                       a 401 Unauthorized error is raised.
+    """
     chat = Chats.get_chat_by_id_and_user_id(id, user.id)
     if chat:
         updated_chat = {
             **chat.chat,
             "originalChatId": chat.id,
             "branchPointMessageId": chat.chat["history"]["currentId"],
-            "title": f"Clone of {chat.title}",
+            "title": chat.title,
         }
 
         chat = Chats.insert_new_chat(user.id, ChatForm(**{"chat": updated_chat}))
@@ -470,13 +491,31 @@ async def clone_chat_by_id(id: str, user=Depends(get_verified_user)):
 
 @router.post("/{id}/clone/shared", response_model=Optional[ChatResponse])
 async def clone_shared_chat_by_id(id: str, user=Depends(get_verified_user)):
+    """
+    Clone a shared chat by its share ID for the authenticated user.
+    
+    This asynchronous endpoint retrieves a shared chat using the provided share ID. If the chat exists, it creates a clone by copying the original chat data,
+    adding a reference to the original chat ID and the branch point message ID from the chat's history. The title of the cloned chat remains identical to the
+    original chat's title. The cloned chat is then inserted into the database and returned as a ChatResponse. If the shared chat is not found, an HTTPException
+    with a 401 status code is raised.
+    
+    Parameters:
+        id (str): The share ID of the chat to clone.
+        user: The authenticated user obtained via dependency injection (using get_verified_user).
+    
+    Returns:
+        ChatResponse: A response model containing details of the newly cloned chat.
+    
+    Raises:
+        HTTPException: If no chat is found with the provided share ID, raises a 401 Unauthorized error with a default error message.
+    """
     chat = Chats.get_chat_by_share_id(id)
     if chat:
         updated_chat = {
             **chat.chat,
             "originalChatId": chat.id,
             "branchPointMessageId": chat.chat["history"]["currentId"],
-            "title": f"Clone of {chat.title}",
+            "title": chat.title,
         }
 
         chat = Chats.insert_new_chat(user.id, ChatForm(**{"chat": updated_chat}))

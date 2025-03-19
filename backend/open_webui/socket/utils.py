@@ -25,8 +25,18 @@ class RedisLock:
         )
 
     def release_lock(self):
+        """
+        Release the lock in Redis if it is held by the current instance.
+        
+        This method retrieves the current lock value from Redis using the key specified by self.lock_name.
+        If the retrieved value is not None and matches the instance's lock_id, the lock is released by deleting the key from Redis.
+        If the lock does not exist or the stored value does not match, no action is taken.
+        
+        Returns:
+            None
+        """
         lock_value = self.redis.get(self.lock_name)
-        if lock_value and lock_value.decode("utf-8") == self.lock_id:
+        if lock_value and lock_value == self.lock_id:
             self.redis.delete(self.lock_name)
 
 

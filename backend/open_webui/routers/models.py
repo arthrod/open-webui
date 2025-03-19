@@ -147,12 +147,45 @@ async def update_model_by_id(
     form_data: ModelForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Update an existing model by its unique identifier.
+    
+    This asynchronous function retrieves a model using the provided ID and attempts to update it using
+    the supplied form data. The function enforces that only the model owner, a user with write access,
+    or an administrator is permitted to modify the model. If no model is found with the given ID, it raises
+    an HTTPException with a 401 Unauthorized status. If the user lacks sufficient permissions, it raises
+    an HTTPException with a 400 Bad Request status.
+    
+    Parameters:
+        id (str): The unique identifier of the model to update.
+        form_data (ModelForm): An object containing the fields for updating the model.
+        user: The verified user instance obtained via dependency injection. The user must be the model's owner,
+              have write access to the model, or be an admin.
+    
+    Returns:
+        The updated model object reflecting the applied changes.
+    
+    Raises:
+        HTTPException:
+            - 401 Unauthorized: If the model with the specified ID is not found.
+            - 400 Bad Request: If the user is not authorized to update the model due to insufficient permissions.
+    """
     model = Models.get_model_by_id(id)
 
     if not model:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=ERROR_MESSAGES.NOT_FOUND,
+        )
+
+    if (
+        model.user_id != user.id
+        and not has_access(user.id, "write", model.access_control)
+        and user.role != "admin"
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
         )
 
     model = Models.update_model_by_id(id, form_data)

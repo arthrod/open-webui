@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.background import BackgroundTask
 
+from open_webui.models.credits import Credits
 from open_webui.models.models import Models
 from open_webui.config import (
     CACHE_DIR,
@@ -39,7 +40,7 @@ from open_webui.utils.payload import (
 
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.access_control import has_access
-
+from open_webui.utils.usage import CreditDeduct
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OPENAI"])
@@ -578,6 +579,10 @@ async def generate_chat_completion(
     user=Depends(get_verified_user),
     bypass_filter: Optional[bool] = False,
 ):
+    Credits.check_credit_by_user_id(
+        user_id=user.id, error_msg=request.app.state.config.CREDIT_NO_CREDIT_MSG
+    )
+
     if BYPASS_MODEL_ACCESS_CONTROL:
         bypass_filter = True
 
@@ -708,9 +713,22 @@ async def generate_chat_completion(
 
         # Check if response is SSE
         if "text/event-stream" in r.headers.get("Content-Type", ""):
+
+            async def consumer_content(content):
+                with CreditDeduct(
+                    request=request,
+                    user=user,
+                    model=model,
+                    body=form_data,
+                    is_stream=True,
+                ) as credit_deduct:
+                    async for chunk in content:
+                        credit_deduct.run(response=chunk)
+                        yield chunk
+
             streaming = True
             return StreamingResponse(
-                r.content,
+                consumer_content(r.content),
                 status_code=r.status,
                 headers=dict(r.headers),
                 background=BackgroundTask(
@@ -725,6 +743,12 @@ async def generate_chat_completion(
                 response = await r.text()
 
             r.raise_for_status()
+
+            with CreditDeduct(
+                request=request, user=user, model=model, body=form_data, is_stream=False
+            ) as credit_deduct:
+                credit_deduct.run(response=response)
+
             return response
     except Exception as e:
         log.exception(e)

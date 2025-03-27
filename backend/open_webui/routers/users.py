@@ -1,16 +1,25 @@
 import logging
-from typing import Optional
+from decimal import Decimal
+from typing import Optional, List
+
+from fastapi import Response
 
 from open_webui.models.auths import Auths
 from open_webui.models.chats import Chats
+from open_webui.models.credits import (
+    Credits,
+    SetCreditForm,
+    SetCreditFormDetail,
+    AddCreditForm,
+)
 from open_webui.models.users import (
     UserModel,
     UserRoleUpdateForm,
     Users,
     UserSettings,
     UserUpdateForm,
+    UserCreditUpdateForm,
 )
-
 
 from open_webui.socket.main import get_active_status_by_user_id
 from open_webui.constants import ERROR_MESSAGES
@@ -35,7 +44,16 @@ async def get_users(
     limit: Optional[int] = None,
     user=Depends(get_admin_user),
 ):
-    return Users.get_users(skip, limit)
+    users: List[UserModel] = Users.get_users(skip, limit)
+    credit_map = {
+        credit.user_id: {"credit": "%.4f" % credit.credit}
+        for credit in Credits.list_credits_by_user_id(
+            user_ids=(user.id for user in users)
+        )
+    }
+    for user in users:
+        setattr(user, "credit", credit_map.get(user.id, {}).get("credit", 0))
+    return users
 
 
 ############################
@@ -259,6 +277,7 @@ async def get_user_by_id(user_id: str, user=Depends(get_verified_user)):
 
 @router.post("/{user_id}/update", response_model=Optional[UserModel])
 async def update_user_by_id(
+    request: Request,
     user_id: str,
     form_data: UserUpdateForm,
     session_user=Depends(get_admin_user),
@@ -289,6 +308,20 @@ async def update_user_by_id(
             },
         )
 
+        if form_data.credit is not None:
+            credit = Credits.set_credit_by_user_id(
+                SetCreditForm(
+                    user_id=user_id,
+                    credit=Decimal(form_data.credit),
+                    detail=SetCreditFormDetail(
+                        api_path=str(request.url),
+                        api_params={"credit": form_data.credit},
+                        desc=f"updated by {session_user.name}",
+                    ),
+                )
+            )
+            setattr(updated_user, "credit", "%.4f" % credit.credit)
+
         if updated_user:
             return updated_user
 
@@ -301,6 +334,50 @@ async def update_user_by_id(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail=ERROR_MESSAGES.USER_NOT_FOUND,
     )
+
+
+############################
+# UpdateCreditByUserId
+############################
+
+
+@router.put("/{user_id}/credit", response_model=Optional[UserModel])
+async def update_credit_by_user_id(
+    request: Request,
+    user_id: str,
+    form_data: UserCreditUpdateForm,
+    session_user: UserModel = Depends(get_admin_user),
+) -> Response:
+    user = Users.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ERROR_MESSAGES.USER_NOT_FOUND,
+        )
+
+    if form_data.amount is None and form_data.credit is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="amount or credit must be specified",
+        )
+
+    params = {
+        "user_id": user_id,
+        "detail": SetCreditFormDetail(
+            api_path=str(request.url),
+            api_params=form_data.model_dump(),
+            desc=f"updated by {session_user.name}",
+        ),
+    }
+
+    if form_data.credit is not None:
+        params["credit"] = Decimal(form_data.credit)
+        Credits.set_credit_by_user_id(form_data=SetCreditForm(**params))
+    elif form_data.amount is not None:
+        params["amount"] = Decimal(form_data.amount)
+        Credits.add_credit_by_user_id(form_data=AddCreditForm(**params))
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 ############################

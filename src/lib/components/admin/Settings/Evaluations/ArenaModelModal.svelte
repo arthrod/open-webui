@@ -1,5 +1,6 @@
 <script>
 	import { createEventDispatcher, getContext, onMount } from 'svelte';
+	import { base } from '$app/paths';
 	const i18n = getContext('i18n');
 	const dispatch = createEventDispatcher();
 
@@ -10,6 +11,7 @@
 	import PencilSolid from '$lib/components/icons/PencilSolid.svelte';
 	import { toast } from 'svelte-sonner';
 	import AccessControl from '$lib/components/workspace/common/AccessControl.svelte';
+	import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
 
 	export let show = false;
 	export let edit = false;
@@ -33,7 +35,7 @@
 		}
 	};
 
-	let profileImageUrl = '/favicon.png';
+	let profileImageUrl = `${base}/favicon.png`;
 	let description = '';
 
 	let selectedModelId = '';
@@ -44,6 +46,7 @@
 
 	let imageInputElement;
 	let loading = false;
+	let showDeleteConfirmDialog = false;
 
 	const addModelHandler = () => {
 		if (selectedModelId) {
@@ -88,7 +91,7 @@
 
 		name = '';
 		id = '';
-		profileImageUrl = '/favicon.png';
+		profileImageUrl = `${base}/favicon.png`;
 		description = '';
 		modelIds = [];
 		selectedModelId = '';
@@ -114,6 +117,14 @@
 		initModel();
 	});
 </script>
+
+<ConfirmDialog
+	bind:show={showDeleteConfirmDialog}
+	on:confirm={() => {
+		dispatch('delete', model);
+		show = false;
+	}}
+/>
 
 <Modal size="sm" bind:show>
 	<div>
@@ -378,8 +389,7 @@
 								class="px-3.5 py-1.5 text-sm font-medium dark:bg-black dark:hover:bg-gray-950 dark:text-white bg-white text-black hover:bg-gray-100 transition rounded-full flex flex-row space-x-1 items-center"
 								type="button"
 								on:click={() => {
-									dispatch('delete', model);
-									show = false;
+									showDeleteConfirmDialog = true;
 								}}
 							>
 								{$i18n.t('Delete')}

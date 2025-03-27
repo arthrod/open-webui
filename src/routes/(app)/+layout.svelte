@@ -21,6 +21,7 @@
 
 	import { WEBUI_VERSION } from '$lib/constants';
 	import { compareVersion } from '$lib/utils';
+	import { base } from '$app/paths';
 
 	import {
 		config,
@@ -54,7 +55,7 @@
 
 	onMount(async () => {
 		if ($user === undefined) {
-			await goto('/auth');
+			await goto(`${base}/auth`);
 		} else if (['user', 'admin'].includes($user.role)) {
 			try {
 				// Check if IndexedDB exists
@@ -171,11 +172,15 @@
 				}
 
 				// Check if Ctrl + Shift + ' is pressed
-				if (isCtrlPressed && isShiftPressed && event.key.toLowerCase() === `'`) {
+				if (
+					isCtrlPressed &&
+					isShiftPressed &&
+					(event.key.toLowerCase() === `'` || event.key.toLowerCase() === `"`)
+				) {
 					event.preventDefault();
 					console.log('temporaryChat');
 					temporaryChatEnabled.set(!$temporaryChatEnabled);
-					await goto('/');
+					await goto(`${base}/`);
 					const newChatButton = document.getElementById('new-chat-button');
 					setTimeout(() => {
 						newChatButton?.click();

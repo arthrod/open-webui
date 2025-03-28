@@ -576,7 +576,7 @@
 							}}
 						>
 							<div
-								class="flex-1 flex flex-col relative w-full rounded-3xl px-1 bg-gray-600/5 dark:bg-gray-400/5 dark:text-gray-100"
+								class="flex-1 flex flex-col relative w-full rounded-3xl px-1 fr-background-contrast--grey dark:text-gray-100"
 								dir={$settings?.chatDirection ?? 'LTR'}
 							>
 								{#if files.length > 0}
@@ -671,7 +671,7 @@
 								<div class="px-2.5">
 									{#if $settings?.richTextInput ?? true}
 										<div
-											class="scrollbar-hidden text-left bg-transparent dark:text-gray-100 outline-hidden w-full pt-3 px-1 resize-none h-fit max-h-80 overflow-auto"
+											class="scrollbar-hidden text-left fr-background-contrast--grey dark:text-gray-100 outline-hidden w-full rounded-md px-2 py-2 resize-none h-fit max-h-80 overflow-auto"
 										>
 											<RichTextInput
 												bind:this={chatInputElement}
@@ -1235,7 +1235,7 @@
 											<Tooltip content={$i18n.t('Record voice')}>
 												<button
 													id="voice-input-button"
-													class=" text-gray-600 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 transition rounded-full p-1.5 mr-0.5 self-center"
+													class=" text-gray-600 dark:text-gray-300 hover:text-[var(--text-action-high-blue-france)] transition rounded-full p-1.5 mr-0.5 self-center"
 													type="button"
 													on:click={async () => {
 														try {
@@ -1281,9 +1281,9 @@
 										{/if}
 
 										{#if !history.currentId || history.messages[history.currentId]?.done == true}
-											{#if prompt === '' && files.length === 0}
+											{#if prompt === ''}
 												<div class=" flex items-center">
-													<Tooltip content={$i18n.t('Call')}>
+													<!-- <Tooltip content={$i18n.t('Call')}>
 														<button
 															class=" {webSearchEnabled ||
 															($settings?.webSearch ?? false) === 'always'
@@ -1346,7 +1346,7 @@
 														>
 															<Headphone className="size-5" />
 														</button>
-													</Tooltip>
+													</Tooltip> -->
 												</div>
 											{:else}
 												<div class=" flex items-center">
@@ -1357,7 +1357,7 @@
 																? webSearchEnabled || ($settings?.webSearch ?? false) === 'always'
 																	? 'bg-blue-500 text-white hover:bg-blue-400 '
 																	: 'bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 '
-																: 'text-white bg-gray-200 dark:text-gray-900 dark:bg-gray-700 disabled'} transition rounded-full p-1.5 self-center"
+																: 'text-white bg-gray-200 dark:text-gray-900 dark:bg-gray-700 disabled'} transition rounded-full p-1.5 self-center fr-background-action-high--blue-france"
 															type="submit"
 															disabled={prompt === '' && files.length === 0}
 														>

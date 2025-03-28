@@ -354,6 +354,7 @@ from open_webui.utils.security_headers import SecurityHeadersMiddleware
 
 from open_webui.tasks import stop_task, list_tasks  # Import from tasks.py
 
+from open_webui.storage.redis import RedisSessionMiddleware
 
 if SAFE_MODE:
     print("SAFE MODE ENABLED")
@@ -419,6 +420,7 @@ app = FastAPI(
 oauth_manager = OAuthManager(app)
 
 app.state.config = AppConfig()
+app.add_middleware(RedisSessionMiddleware, secret_key=WEBUI_SECRET_KEY)
 
 app.state.WEBUI_NAME = WEBUI_NAME
 app.state.LICENSE_METADATA = None

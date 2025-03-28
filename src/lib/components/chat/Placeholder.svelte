@@ -85,6 +85,15 @@
 
 	$: models = selectedModels.map((id) => $_models.find((m) => m.id === id));
 
+	// Add debug logging
+	$: {
+		// console.log('Selected model idx:', selectedModelIdx);
+		// console.log('Models array:', models);
+		// console.log('Selected model:', models[selectedModelIdx]);
+		// console.log('Model meta:', models[selectedModelIdx]?.info?.meta);
+		// console.log('Config default prompts:', $config?.default_prompt_suggestions);
+	}
+
 	onMount(() => {});
 </script>
 
@@ -136,13 +145,7 @@
 					</div>
 				</div>
 
-				<div class=" text-3xl @sm:text-4xl line-clamp-1" in:fade={{ duration: 100 }}>
-					{#if models[selectedModelIdx]?.name}
-						{models[selectedModelIdx]?.name}
-					{:else}
-						{$i18n.t('Hello, {{name}}', { name: $user.name })}
-					{/if}
-				</div>
+				<div class="text-3xl @sm:text-4xl line-clamp-1" in:fade={{ duration: 100 }}>Albert</div>
 			</div>
 
 			<div class="flex mt-1 mb-2">
@@ -216,7 +219,28 @@
 				suggestionPrompts={atSelectedModel?.info?.meta?.suggestion_prompts ??
 					models[selectedModelIdx]?.info?.meta?.suggestion_prompts ??
 					$config?.default_prompt_suggestions ??
-					[]}
+					[
+						{
+							title: ['Assistant administratif'],
+							content: "Aidez-moi à rédiger une lettre pour informer d'un changement d'horaires."
+						},
+						{
+							title: ['Gestion des demandes'],
+							content: 'Comment optimiser le traitement des permis de construire?'
+						},
+						{
+							title: ['Service social'],
+							content: "Créer un guide d'accès aux services d'aide à domicile pour seniors."
+						},
+						{
+							title: ['Urbanisme'],
+							content: 'Comment présenter les modifications du PLU aux habitants?'
+						},
+						{
+							title: ['Communication publique'],
+							content: 'Rédiger un communiqué sur une nouvelle initiative écologique.'
+						}
+					]}
 				inputValue={prompt}
 				on:select={(e) => {
 					selectSuggestionPrompt(e.detail);

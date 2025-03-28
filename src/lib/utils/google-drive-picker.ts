@@ -167,10 +167,7 @@ export const createPicker = () => {
 							}
 							// Create a Blob from the file download
 							const response = await fetch(downloadUrl, {
-								headers: {
-									Authorization: `Bearer ${token}`,
-									Accept: '*/*'
-								}
+								headers: { Authorization: `Bearer ${token}`, Accept: '*/*' }
 							});
 
 							if (!response.ok) {

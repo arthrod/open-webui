@@ -84,47 +84,43 @@
 		}}
 	/>
 
-	<div class="flex flex-col gap-1 my-1.5">
-		<div class="flex justify-between items-center">
-			<div class="flex md:self-center text-xl font-medium px-0.5 items-center">
+	<div class="flex flex-col gap-10 my-1.5">
+		<div class="flex justify-center items-center">
+			<div class="text-2xl font-medium px-0.5">
 				{$i18n.t('Knowledge')}
-				<div class="flex self-center w-[1px] h-6 mx-2.5 bg-gray-50 dark:bg-gray-850" />
-				<span class="text-lg font-medium text-gray-500 dark:text-gray-300"
-					>{filteredItems.length}</span
-				>
 			</div>
 		</div>
 
-		<div class=" flex w-full space-x-2">
-			<div class="flex flex-1">
-				<div class=" self-center ml-1 mr-3">
-					<Search className="size-3.5" />
+		<div class="flex flex-1 items-center w-full space-x-2 justify-center">
+			<div class="flex items-center max-w-md w-full fr-background-contrast--grey rounded-md">
+				<div class="self-center ml-1 mr-3">
+					<Search className="size-6" />
 				</div>
 				<input
-					class=" w-full text-sm py-1 rounded-r-xl outline-hidden bg-transparent"
+					class="w-full text-sm py-2.5 rounded-r-xl outline-hidden bg-transparent"
 					bind:value={query}
 					placeholder={$i18n.t('Search Knowledge')}
 				/>
 			</div>
-
-			<div>
-				<button
-					class=" px-2 py-2 rounded-xl hover:bg-gray-700/10 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition font-medium text-sm flex items-center space-x-1"
-					aria-label={$i18n.t('Create Knowledge')}
-					on:click={() => {
-						goto('/workspace/knowledge/create');
-					}}
-				>
-					<Plus className="size-3.5" />
-				</button>
-			</div>
 		</div>
 	</div>
 
-	<div class="mb-5 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
+	<div class="my-4 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-2">
+		<a
+			href="/workspace/knowledge/create"
+			class="flex flex-col justify-center items-center cursor-pointer w-full px-3 py-8 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl transition border border-gray-100 dark:border-gray-800 min-h-[200px]"
+		>
+			<div class="p-4 rounded-full bg-gray-50 dark:bg-gray-800">
+				<Plus className="size-8" />
+			</div>
+			<div class="mt-2 font-medium">
+				{$i18n.t('Add a knowledge base')}
+			</div>
+		</a>
+
 		{#each filteredItems as item}
-			<button
-				class=" flex space-x-4 cursor-pointer text-left w-full px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-850 transition rounded-xl"
+			<div
+				class="flex flex-col cursor-pointer w-full px-3 py-3 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl transition border border-gray-100 dark:border-gray-800 min-h-[200px]"
 				on:click={() => {
 					if (item?.meta?.document) {
 						toast.error(
@@ -137,7 +133,7 @@
 					}
 				}}
 			>
-				<div class=" w-full">
+				<div class="flex flex-col flex-1">
 					<div class="flex items-center justify-between -mt-1">
 						{#if item?.meta?.document}
 							<Badge type="muted" content={$i18n.t('Document')} />
@@ -145,7 +141,7 @@
 							<Badge type="success" content={$i18n.t('Collection')} />
 						{/if}
 
-						<div class=" flex self-center -mr-1 translate-y-1">
+						<div class="flex self-center -mr-1 translate-y-1">
 							<ItemMenu
 								on:delete={() => {
 									selectedItem = item;
@@ -155,14 +151,16 @@
 						</div>
 					</div>
 
-					<div class=" self-center flex-1 px-1 mb-1">
-						<div class=" font-semibold line-clamp-1 h-fit">{item.name}</div>
+					<div class="flex-1 px-1 mb-1 text-center">
+						<div class="font-semibold line-clamp-1 h-fit">{item.name}</div>
 
-						<div class=" text-xs overflow-hidden text-ellipsis line-clamp-1">
+						<div class="text-xs overflow-hidden text-ellipsis line-clamp-1">
 							{item.description}
 						</div>
+					</div>
 
-						<div class="mt-3 flex justify-between">
+					<div class="mt-auto">
+						<div class="flex justify-between">
 							<div class="text-xs text-gray-500">
 								<Tooltip
 									content={item?.user?.email ?? $i18n.t('Deleted User')}
@@ -176,14 +174,14 @@
 									})}
 								</Tooltip>
 							</div>
-							<div class=" text-xs text-gray-500 line-clamp-1">
+							<div class="text-xs text-gray-500 line-clamp-1">
 								{$i18n.t('Updated')}
 								{dayjs(item.updated_at * 1000).fromNow()}
 							</div>
 						</div>
 					</div>
 				</div>
-			</button>
+			</div>
 		{/each}
 	</div>
 

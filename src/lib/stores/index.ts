@@ -2,6 +2,7 @@ import { APP_NAME } from '$lib/constants';
 import { type Writable, writable } from 'svelte/store';
 import type { ModelConfig } from '$lib/apis';
 import type { Banner } from '$lib/types';
+import type { SessionUser } from '$lib/types/auth';
 import type { Socket } from 'socket.io-client';
 
 import emojiShortCodes from '$lib/emoji-shortcodes.json';
@@ -129,7 +130,7 @@ type OllamaModelDetails = {
 	quantization_level: string;
 };
 
-type Settings = {
+export type Settings = {
 	models?: string[];
 	conversationMode?: boolean;
 	speechAutoSend?: boolean;
@@ -154,28 +155,62 @@ type Settings = {
 	num_batch?: string;
 	num_keep?: string;
 	options?: ModelOptions;
+	params?: {
+		stream_response?: boolean | null;
+		function_calling?: boolean | null;
+		seed?: number | null;
+		stop?: string[] | null;
+		temperature?: number | null;
+		reasoning_effort?: number | null;
+		frequency_penalty?: number | null;
+		presence_penalty?: number | null;
+		repeat_penalty?: number | null;
+		repeat_last_n?: number | null;
+		mirostat?: number | null;
+		mirostat_eta?: number | null;
+		mirostat_tau?: number | null;
+		top_k?: number | null;
+		top_p?: number | null;
+		min_p?: number | null;
+		tfs_z?: number | null;
+		num_ctx?: number | null;
+		num_batch?: number | null;
+		num_keep?: number | null;
+		max_tokens?: number | null;
+		use_mmap?: boolean | null;
+		use_mlock?: boolean | null;
+		num_thread?: number | null;
+		num_gpu?: number | null;
+		template?: string | null;
+	};
 };
 
-type ModelOptions = {
+export type ModelOptions = {
 	stop?: boolean;
 };
 
-type AudioSettings = {
-	STTEngine?: string;
-	TTSEngine?: string;
-	speaker?: string;
-	model?: string;
-	nonLocalVoices?: boolean;
+export type AudioSettings = {
+	stt?: {
+		engine?: string;
+	};
+	tts?: {
+		engine?: string;
+		engineConfig?: Record<string, any>;
+		playbackRate?: number;
+		voice?: string;
+		defaultVoice?: string;
+		nonLocalVoices?: boolean;
+	};
 };
 
-type TitleSettings = {
+export type TitleSettings = {
 	auto?: boolean;
 	model?: string;
 	modelExternal?: string;
 	prompt?: string;
 };
 
-type Prompt = {
+export type Prompt = {
 	command: string;
 	user_id: string;
 	title: string;
@@ -183,14 +218,14 @@ type Prompt = {
 	timestamp: number;
 };
 
-type Document = {
+export type Document = {
 	collection_name: string;
 	filename: string;
 	name: string;
 	title: string;
 };
 
-type Config = {
+export type Config = {
 	status: boolean;
 	name: string;
 	version: string;
@@ -217,17 +252,18 @@ type Config = {
 			[key: string]: string;
 		};
 	};
+	audio?: {
+		tts?: {
+			voice?: string;
+			engine?: string;
+		};
+		stt?: {
+			engine?: string;
+		};
+	};
 };
 
-type PromptSuggestion = {
+export type PromptSuggestion = {
 	content: string;
 	title: [string, string];
-};
-
-type SessionUser = {
-	id: string;
-	email: string;
-	name: string;
-	role: string;
-	profile_image_url: string;
 };

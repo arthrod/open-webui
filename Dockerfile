@@ -27,11 +27,17 @@ ARG BUILD_HASH
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN rm -f package-lock.json && npm install && npm cache clean --force
+
 
 COPY . .
 ENV APP_BUILD_HASH=${BUILD_HASH}
-RUN npm run build
+ENV NODE_ENV=production
+ENV VITE_DISABLE_SOURCEMAPS=true
+
+RUN npm run pyodide:fetch
+
+RUN node --max-old-space-size=4096 ./node_modules/vite/bin/vite.js build
 
 ######## WebUI backend ########
 FROM python:3.11-slim-bookworm AS base
@@ -111,7 +117,7 @@ RUN if [ "$USE_OLLAMA" = "true" ]; then \
     apt-get install -y --no-install-recommends git build-essential pandoc netcat-openbsd curl && \
     apt-get install -y --no-install-recommends gcc python3-dev && \
     # for RAG OCR
-    apt-get install -y --no-install-recommends ffmpeg libsm6 libxext6 && \
+    apt-get install -y --no-install-recommends ffmpeg libsm6 libxext6 tesseract-ocr tesseract-ocr-eng && \
     # install helper tools
     apt-get install -y --no-install-recommends curl jq && \
     # install ollama
@@ -124,7 +130,7 @@ RUN if [ "$USE_OLLAMA" = "true" ]; then \
     apt-get install -y --no-install-recommends git build-essential pandoc gcc netcat-openbsd curl jq && \
     apt-get install -y --no-install-recommends gcc python3-dev && \
     # for RAG OCR
-    apt-get install -y --no-install-recommends ffmpeg libsm6 libxext6 && \
+    apt-get install -y --no-install-recommends ffmpeg libsm6 libxext6 tesseract-ocr tesseract-ocr-eng && \
     # cleanup
     rm -rf /var/lib/apt/lists/*; \
     fi

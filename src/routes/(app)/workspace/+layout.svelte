@@ -15,6 +15,7 @@
 	import { goto } from '$app/navigation';
 
 	import MenuLines from '$lib/components/icons/MenuLines.svelte';
+	import DrawerOpen from '$lib/components/icons/DrawerOpen.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -52,7 +53,7 @@
 {#if loaded}
 	<div
 		class=" relative flex flex-col w-full h-screen max-h-[100dvh] transition-width duration-200 ease-in-out {$showSidebar
-			? 'md:max-w-[calc(100%-260px)]'
+			? ''
 			: ''} max-w-full"
 	>
 		<nav class="   px-2.5 pt-1 backdrop-blur-xl drag-region">
@@ -67,7 +68,7 @@
 						aria-label="Toggle Sidebar"
 					>
 						<div class=" m-auto self-center">
-							<MenuLines />
+							<DrawerOpen className="size-5" strokeWidth="2" />
 						</div>
 					</button>
 				</div>

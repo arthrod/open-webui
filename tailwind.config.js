@@ -3,7 +3,7 @@ import containerQuries from '@tailwindcss/container-queries';
 
 /** @type {import('tailwindcss').Config} */
 export default {
-	darkMode: 'class',
+	darkMode: ['selector', '[theme="dark"]'],
 	content: ['./src/**/*.{html,js,svelte,ts}'],
 	theme: {
 		extend: {
@@ -19,7 +19,7 @@ export default {
 					700: 'var(--color-gray-700, #4e4e4e)',
 					800: 'var(--color-gray-800, #333)',
 					850: 'var(--color-gray-850, #262626)',
-					900: 'var(--color-gray-900, #171717)',
+					900: 'var(--color-gray-900, #161616)',
 					950: 'var(--color-gray-950, #0d0d0d)'
 				}
 			},

@@ -26,16 +26,22 @@
 	import AdjustmentsHorizontal from '../icons/AdjustmentsHorizontal.svelte';
 
 	import PencilSquare from '../icons/PencilSquare.svelte';
+	import DrawerOpen from '../icons/DrawerOpen.svelte';
 
-	const i18n = getContext('i18n');
+	const i18n = getContext<{
+		t: (key: string) => string;
+		subscribe: (callback: (value: any) => void) => () => void;
+	}>('i18n');
 
-	export let initNewChat: Function;
-	export let title: string = $WEBUI_NAME;
-	export let shareEnabled: boolean = false;
+	export let initNewChat: () => void;
+	export const title = $WEBUI_NAME;
+	export const shareEnabled = false;
 
-	export let chat;
-	export let selectedModels;
-	export let showModelSelector = true;
+	export let chat: {
+		id?: string;
+	} | null = null;
+	export let selectedModels: string[] = [];
+	export const showModelSelector = true;
 
 	let showShareChatModal = false;
 	let showDownloadChatModal = false;
@@ -57,14 +63,14 @@
 			>
 				<button
 					id="sidebar-toggle-button"
-					class="cursor-pointer px-2 py-2 flex rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
+					class="cursor-pointer px-2 py-2 flex rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition hover:text-[var(--text-action-high-blue-france)]"
 					on:click={() => {
 						showSidebar.set(!$showSidebar);
 					}}
 					aria-label="Toggle Sidebar"
 				>
 					<div class=" m-auto self-center">
-						<MenuLines />
+						<DrawerOpen className="size-5" strokeWidth="2" />
 					</div>
 				</button>
 			</div>
@@ -114,7 +120,7 @@
 							</div>
 						</button>
 					</Menu>
-				{:else if $mobile && ($user.role === 'admin' || $user?.permissions?.chat?.controls)}
+				{:else if $mobile && $user && ($user.role === 'admin' || ($user?.permissions?.chat?.controls ?? false))}
 					<Tooltip content={$i18n.t('Controls')}>
 						<button
 							class=" flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
@@ -130,8 +136,9 @@
 					</Tooltip>
 				{/if}
 
-				{#if !$mobile && ($user.role === 'admin' || $user?.permissions?.chat?.controls)}
+				{#if !$mobile && $user && ($user.role === 'admin' || ($user?.permissions?.chat?.controls ?? false))}
 					<Tooltip content={$i18n.t('Controls')}>
+						<!-- Controls button -->
 						<button
 							class=" flex cursor-pointer px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-850 transition"
 							on:click={async () => {
@@ -162,7 +169,7 @@
 						</div>
 					</button>
 				</Tooltip>
-
+				<!-- 
 				{#if $user !== undefined}
 					<UserMenu
 						className="max-w-[200px]"
@@ -187,7 +194,7 @@
 							</div>
 						</button>
 					</UserMenu>
-				{/if}
+				{/if} -->
 			</div>
 		</div>
 	</div>

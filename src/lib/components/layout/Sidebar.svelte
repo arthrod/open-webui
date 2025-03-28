@@ -58,6 +58,8 @@
 	import ChannelItem from './Sidebar/ChannelItem.svelte';
 	import PencilSquare from '../icons/PencilSquare.svelte';
 	import Home from '../icons/Home.svelte';
+	import DrawerClose from '../icons/DrawerClose.svelte';
+	import FolderCreate from '../icons/FolderCreate.svelte';
 
 	const BREAKPOINT = 768;
 
@@ -113,7 +115,7 @@
 		}
 	};
 
-	const createFolder = async (name = 'Untitled') => {
+	const createFolder = async (name = 'Dossier') => {
 		if (name === '') {
 			toast.error($i18n.t('Folder name cannot be empty.'));
 			return;
@@ -132,18 +134,6 @@
 			name = `${name} ${i}`;
 		}
 
-		// Add a dummy folder to the list to show the user that the folder is being created
-		const tempId = uuidv4();
-		folders = {
-			...folders,
-			tempId: {
-				id: tempId,
-				name: name,
-				created_at: Date.now(),
-				updated_at: Date.now()
-			}
-		};
-
 		const res = await createNewFolder(localStorage.token, name).catch((error) => {
 			toast.error(`${error}`);
 			return null;
@@ -151,6 +141,17 @@
 
 		if (res) {
 			await initFolders();
+			// After folder is created, find it and trigger edit mode
+			await tick();
+			const folderButton = document.querySelector(`#folder-${res.id}-button`);
+			if (folderButton) {
+				const event = new MouseEvent('dblclick', {
+					bubbles: true,
+					cancelable: true,
+					view: window
+				});
+				folderButton.dispatchEvent(event);
+			}
 		}
 	};
 
@@ -462,111 +463,34 @@
 <div
 	bind:this={navElement}
 	id="sidebar"
-	class="h-screen max-h-[100dvh] min-h-screen select-none {$showSidebar
-		? 'md:relative w-[260px] max-w-[260px]'
-		: '-translate-x-[260px] w-[0px]'} {$isApp
-		? `ml-[4.5rem] md:ml-0 `
-		: 'transition-width duration-200 ease-in-out'}  shrink-0 bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-200 text-sm fixed z-50 top-0 left-0 overflow-x-hidden
+	class="h-[95vh] select-none {$showSidebar
+		? 'md:relative w-[285px] max-w-[285px]'
+		: '-translate-x-[285px] w-[0px]'} bg-[#f6f6f6] text-gray-900 dark:bg-[#1e1e1e] dark:text-gray-200 text-sm transition fixed z-50 top-0 left-0 overflow-x-hidden
         "
 	data-state={$showSidebar}
 >
 	<div
-		class="py-2 my-auto flex flex-col justify-between h-screen max-h-[100dvh] w-[260px] overflow-x-hidden z-50 {$showSidebar
+		class="py-2 my-auto flex flex-col justify-between h-[95vh] w-[285px] overflow-x-hidden z-50 {$showSidebar
 			? ''
 			: 'invisible'}"
 	>
 		<div class="px-1.5 flex justify-between space-x-1 text-gray-600 dark:text-gray-400">
 			<button
-				class=" cursor-pointer p-[7px] flex rounded-xl hover:bg-gray-100 dark:hover:bg-gray-900 transition"
+				class=" cursor-pointer p-[7px] flex rounded-xl hover:bg-gray-100 dark:hover:bg-gray-900 transition hover:text-[var(--text-action-high-blue-france)]"
 				on:click={() => {
 					showSidebar.set(!$showSidebar);
 				}}
 			>
 				<div class=" m-auto self-center">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke-width="2"
-						stroke="currentColor"
-						class="size-5"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"
-						/>
-					</svg>
+					<DrawerClose className="size-5" strokeWidth="2" />
 				</div>
 			</button>
-
-			<a
-				id="sidebar-new-chat-button"
-				class="flex justify-between items-center flex-1 rounded-lg px-2 py-1 h-full text-right hover:bg-gray-100 dark:hover:bg-gray-900 transition no-drag-region"
-				href="/"
-				draggable="false"
-				on:click={async () => {
-					selectedChatId = null;
-					await goto('/');
-					const newChatButton = document.getElementById('new-chat-button');
-					setTimeout(() => {
-						newChatButton?.click();
-						if ($mobile) {
-							showSidebar.set(false);
-						}
-					}, 0);
-				}}
-			>
-				<div class="flex items-center">
-					<div class="self-center mx-1.5">
-						<img
-							crossorigin="anonymous"
-							src="{WEBUI_BASE_URL}/static/favicon.png"
-							class=" size-5 -translate-x-1.5 rounded-full"
-							alt="logo"
-						/>
-					</div>
-					<div class=" self-center font-medium text-sm text-gray-850 dark:text-white font-primary">
-						{$i18n.t('New Chat')}
-					</div>
-				</div>
-
-				<div>
-					<PencilSquare className=" size-5" strokeWidth="2" />
-				</div>
-			</a>
 		</div>
-
-		<!-- {#if $user?.role === 'admin'}
-			<div class="px-1.5 flex justify-center text-gray-800 dark:text-gray-200">
-				<a
-					class="grow flex items-center space-x-3 rounded-lg px-2 py-[7px] hover:bg-gray-100 dark:hover:bg-gray-900 transition"
-					href="/home"
-					on:click={() => {
-						selectedChatId = null;
-						chatId.set('');
-
-						if ($mobile) {
-							showSidebar.set(false);
-						}
-					}}
-					draggable="false"
-				>
-					<div class="self-center">
-						<Home strokeWidth="2" className="size-[1.1rem]" />
-					</div>
-
-					<div class="flex self-center translate-y-[0.5px]">
-						<div class=" self-center font-medium text-sm font-primary">{$i18n.t('Home')}</div>
-					</div>
-				</a>
-			</div>
-		{/if} -->
 
 		{#if $user?.role === 'admin' || $user?.permissions?.workspace?.models || $user?.permissions?.workspace?.knowledge || $user?.permissions?.workspace?.prompts || $user?.permissions?.workspace?.tools}
 			<div class="px-1.5 flex justify-center text-gray-800 dark:text-gray-200">
 				<a
-					class="grow flex items-center space-x-3 rounded-lg px-2 py-[7px] hover:bg-gray-100 dark:hover:bg-gray-900 transition"
+					class="flex-grow flex space-x-3 rounded-lg px-2 py-[7px] fr-background-action-high--blue-france hover:bg-gray-100 dark:hover:bg-gray-900 transition"
 					href="/workspace"
 					on:click={() => {
 						selectedChatId = null;
@@ -584,7 +508,7 @@
 							fill="none"
 							viewBox="0 0 24 24"
 							stroke-width="2"
-							stroke="currentColor"
+							stroke="white"
 							class="size-[1.1rem]"
 						>
 							<path
@@ -595,12 +519,43 @@
 						</svg>
 					</div>
 
-					<div class="flex self-center translate-y-[0.5px]">
-						<div class=" self-center font-medium text-sm font-primary">{$i18n.t('Workspace')}</div>
+					<div class="flex self-center">
+						<div class=" self-center font-medium text-sm font-primary text-white">
+							{$i18n.t('Workspace')}
+						</div>
 					</div>
 				</a>
 			</div>
 		{/if}
+		<div class="px-1.5 flex justify-center text-gray-800 dark:text-gray-200">
+			<a
+				id="sidebar-new-chat-button"
+				class="flex-grow flex space-x-3 rounded-lg px-2 py-[7px] hover:bg-gray-100 dark:hover:bg-gray-900 transition no-drag-region"
+				href="/"
+				draggable="false"
+				on:click={async (e) => {
+					e.preventDefault();
+					selectedChatId = null;
+					chatId.set('');
+					await goto('/');
+					const newChatButton = document.getElementById('new-chat-button');
+					setTimeout(() => {
+						newChatButton?.click();
+						if ($mobile) {
+							showSidebar.set(false);
+						}
+					}, 0);
+				}}
+			>
+				<div class="self-center">
+					<PencilSquare className="size-[1.1rem]" strokeWidth="2" />
+				</div>
+
+				<div class="flex self-center">
+					<div class="self-center font-medium text-sm font-primary">{$i18n.t('New Chat')}</div>
+				</div>
+			</a>
+		</div>
 
 		<div class="relative {$temporaryChatEnabled ? 'opacity-20' : ''}">
 			{#if $temporaryChatEnabled}
@@ -646,239 +601,116 @@
 				</Folder>
 			{/if}
 
-			<Folder
-				collapsible={!search}
-				className="px-2 mt-0.5"
-				name={$i18n.t('Chats')}
-				onAdd={() => {
-					createFolder();
-				}}
-				onAddLabel={$i18n.t('New Folder')}
-				on:import={(e) => {
-					importChatHandler(e.detail);
-				}}
-				on:drop={async (e) => {
-					const { type, id, item } = e.detail;
+			{#if !search}
+				<div class="px-2 mt-4 flex items-center justify-between">
+					<div class="text-sm font-medium">{$i18n.t('Folders')}</div>
+					<button
+						class="p-1 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg transition hover:text-[var(--text-action-high-blue-france)]"
+						on:click={() => createFolder()}
+					>
+						<FolderCreate className="size-[1.3rem]" strokeWidth="2" />
+					</button>
+				</div>
+				<Folders
+					{folders}
+					on:import={(e) => {
+						const { folderId, items } = e.detail;
+						importChatHandler(items, false, folderId);
+					}}
+					on:update={async (e) => {
+						initChatList();
+					}}
+					on:change={async () => {
+						initChatList();
+					}}
+				/>
+			{/if}
 
-					if (type === 'chat') {
-						let chat = await getChatById(localStorage.token, id).catch((error) => {
-							return null;
-						});
-						if (!chat && item) {
-							chat = await importChat(localStorage.token, item.chat, item?.meta ?? {});
-						}
-
-						if (chat) {
-							console.log(chat);
-							if (chat.folder_id) {
-								const res = await updateChatFolderIdById(localStorage.token, chat.id, null).catch(
-									(error) => {
-										toast.error(`${error}`);
-										return null;
-									}
-								);
-							}
-
-							if (chat.pinned) {
-								const res = await toggleChatPinnedStatusById(localStorage.token, chat.id);
-							}
-
-							initChatList();
-						}
-					} else if (type === 'folder') {
-						if (folders[id].parent_id === null) {
-							return;
-						}
-
-						const res = await updateFolderParentIdById(localStorage.token, id, null).catch(
-							(error) => {
-								toast.error(`${error}`);
-								return null;
-							}
-						);
-
-						if (res) {
-							await initFolders();
-						}
-					}
-				}}
-			>
-				{#if $temporaryChatEnabled}
-					<div class="absolute z-40 w-full h-full flex justify-center"></div>
-				{/if}
-
-				{#if !search && $pinnedChats.length > 0}
-					<div class="flex flex-col space-y-1 rounded-xl">
-						<Folder
-							className=""
-							bind:open={showPinnedChat}
-							on:change={(e) => {
-								localStorage.setItem('showPinnedChat', e.detail);
-								console.log(e.detail);
-							}}
-							on:import={(e) => {
-								importChatHandler(e.detail, true);
-							}}
-							on:drop={async (e) => {
-								const { type, id, item } = e.detail;
-
-								if (type === 'chat') {
-									let chat = await getChatById(localStorage.token, id).catch((error) => {
-										return null;
-									});
-									if (!chat && item) {
-										chat = await importChat(localStorage.token, item.chat, item?.meta ?? {});
-									}
-
-									if (chat) {
-										console.log(chat);
-										if (chat.folder_id) {
-											const res = await updateChatFolderIdById(
-												localStorage.token,
-												chat.id,
-												null
-											).catch((error) => {
-												toast.error(`${error}`);
-												return null;
-											});
-										}
-
-										if (!chat.pinned) {
-											const res = await toggleChatPinnedStatusById(localStorage.token, chat.id);
-										}
-
-										initChatList();
-									}
-								}
-							}}
-							name={$i18n.t('Pinned')}
-						>
-							<div
-								class="ml-3 pl-1 mt-[1px] flex flex-col overflow-y-auto scrollbar-hidden border-s border-gray-100 dark:border-gray-900"
-							>
-								{#each $pinnedChats as chat, idx}
-									<ChatItem
-										className=""
-										id={chat.id}
-										title={chat.title}
-										{shiftKey}
-										selected={selectedChatId === chat.id}
-										on:select={() => {
-											selectedChatId = chat.id;
-										}}
-										on:unselect={() => {
-											selectedChatId = null;
-										}}
-										on:change={async () => {
-											initChatList();
-										}}
-										on:tag={(e) => {
-											const { type, name } = e.detail;
-											tagEventHandler(type, name, chat.id);
-										}}
-									/>
-								{/each}
-							</div>
-						</Folder>
-					</div>
-				{/if}
-
-				{#if !search && folders}
-					<Folders
-						{folders}
-						on:import={(e) => {
-							const { folderId, items } = e.detail;
-							importChatHandler(items, false, folderId);
-						}}
-						on:update={async (e) => {
-							initChatList();
-						}}
-						on:change={async () => {
-							initChatList();
-						}}
-					/>
-				{/if}
-
-				<div class=" flex-1 flex flex-col overflow-y-auto scrollbar-hidden">
-					<div class="pt-1.5">
-						{#if $chats}
-							{#each $chats as chat, idx}
-								{#if idx === 0 || (idx > 0 && chat.time_range !== $chats[idx - 1].time_range)}
-									<div
-										class="w-full pl-2.5 text-xs text-gray-500 dark:text-gray-500 font-medium {idx ===
-										0
-											? ''
-											: 'pt-5'} pb-1.5"
-									>
-										{$i18n.t(chat.time_range)}
-										<!-- localisation keys for time_range to be recognized from the i18next parser (so they don't get automatically removed):
-							{$i18n.t('Today')}
-							{$i18n.t('Yesterday')}
-							{$i18n.t('Previous 7 days')}
-							{$i18n.t('Previous 30 days')}
-							{$i18n.t('January')}
-							{$i18n.t('February')}
-							{$i18n.t('March')}
-							{$i18n.t('April')}
-							{$i18n.t('May')}
-							{$i18n.t('June')}
-							{$i18n.t('July')}
-							{$i18n.t('August')}
-							{$i18n.t('September')}
-							{$i18n.t('October')}
-							{$i18n.t('November')}
-							{$i18n.t('December')}
-							-->
-									</div>
-								{/if}
-
-								<ChatItem
-									className=""
-									id={chat.id}
-									title={chat.title}
-									{shiftKey}
-									selected={selectedChatId === chat.id}
-									on:select={() => {
-										selectedChatId = chat.id;
-									}}
-									on:unselect={() => {
-										selectedChatId = null;
-									}}
-									on:change={async () => {
-										initChatList();
-									}}
-									on:tag={(e) => {
-										const { type, name } = e.detail;
-										tagEventHandler(type, name, chat.id);
-									}}
-								/>
-							{/each}
-
-							{#if $scrollPaginationEnabled && !allChatsLoaded}
-								<Loader
-									on:visible={(e) => {
-										if (!chatListLoading) {
-											loadMoreChats();
-										}
-									}}
-								>
-									<div
-										class="w-full flex justify-center py-1 text-xs animate-pulse items-center gap-2"
-									>
-										<Spinner className=" size-4" />
-										<div class=" ">Loading...</div>
-									</div>
-								</Loader>
-							{/if}
-						{:else}
-							<div class="w-full flex justify-center py-1 text-xs animate-pulse items-center gap-2">
-								<Spinner className=" size-4" />
-								<div class=" ">Loading...</div>
-							</div>
-						{/if}
+			{#if !search && $pinnedChats.length > 0}
+				<div class="flex flex-col space-y-1 px-2 mt-2">
+					<div class="text-sm font-medium mb-1">{$i18n.t('Pinned')}</div>
+					<div class="flex flex-col space-y-1">
+						{#each $pinnedChats as chat}
+							<ChatItem
+								id={chat.id}
+								title={chat.title}
+								{shiftKey}
+								selected={selectedChatId === chat.id}
+								on:select={() => {
+									selectedChatId = chat.id;
+								}}
+								on:unselect={() => {
+									selectedChatId = null;
+								}}
+								on:change={async () => {
+									initChatList();
+								}}
+								on:tag={(e) => {
+									const { type, name } = e.detail;
+									tagEventHandler(type, name, chat.id);
+								}}
+							/>
+						{/each}
 					</div>
 				</div>
-			</Folder>
+			{/if}
+
+			<div class="flex-1 flex flex-col overflow-y-auto scrollbar-hidden">
+				<div class="pt-1.5 mt-4">
+					{#if $chats}
+						{#each $chats as chat, idx}
+							{#if idx === 0 || (idx > 0 && chat.time_range !== $chats[idx - 1].time_range)}
+								<div class="w-full px-2 text-xs font-medium {idx === 0 ? '' : 'pt-5'} pb-1.5">
+									{$i18n.t(chat.time_range)}
+								</div>
+							{/if}
+
+							<ChatItem
+								className=""
+								id={chat.id}
+								title={chat.title}
+								{shiftKey}
+								selected={selectedChatId === chat.id}
+								on:select={() => {
+									selectedChatId = chat.id;
+								}}
+								on:unselect={() => {
+									selectedChatId = null;
+								}}
+								on:change={async () => {
+									initChatList();
+								}}
+								on:tag={(e) => {
+									const { type, name } = e.detail;
+									tagEventHandler(type, name, chat.id);
+								}}
+							/>
+						{/each}
+
+						{#if $scrollPaginationEnabled && !allChatsLoaded}
+							<Loader
+								on:visible={(e) => {
+									if (!chatListLoading) {
+										loadMoreChats();
+									}
+								}}
+							>
+								<div
+									class="w-full flex justify-center py-1 text-xs animate-pulse items-center gap-2"
+								>
+									<Spinner className="size-4" />
+									<div>Loading...</div>
+								</div>
+							</Loader>
+						{/if}
+					{:else}
+						<div class="w-full flex justify-center py-1 text-xs animate-pulse items-center gap-2">
+							<Spinner className="size-4" />
+							<div>Loading...</div>
+						</div>
+					{/if}
+				</div>
+			</div>
 		</div>
 
 		<div class="px-2">

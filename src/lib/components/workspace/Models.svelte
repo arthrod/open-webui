@@ -211,76 +211,71 @@
 		}}
 	/>
 
-	<div class="flex flex-col gap-1 my-1.5">
-		<div class="flex justify-between items-center">
-			<div class="flex items-center md:self-center text-xl font-medium px-0.5">
+	<div class="flex flex-col gap-10 my-1.5">
+		<div class="flex justify-center items-center">
+			<div class="text-2xl font-medium px-0.5">
 				{$i18n.t('Models')}
-				<div class="flex self-center w-[1px] h-6 mx-2.5 bg-gray-50 dark:bg-gray-850" />
-				<span class="text-lg font-medium text-gray-500 dark:text-gray-300"
-					>{filteredModels.length}</span
-				>
 			</div>
 		</div>
 
-		<div class=" flex flex-1 items-center w-full space-x-2">
-			<div class="flex flex-1 items-center">
-				<div class=" self-center ml-1 mr-3">
-					<Search className="size-3.5" />
+		<div class="flex flex-1 items-center w-full space-x-2 justify-center">
+			<div class="flex items-center max-w-md w-full fr-background-contrast--grey rounded-md">
+				<div class="self-center ml-1 mr-3">
+					<Search className="size-6" />
 				</div>
 				<input
-					class=" w-full text-sm py-1 rounded-r-xl outline-hidden bg-transparent"
+					class="w-full text-sm py-2.5 rounded-r-xl outline-hidden bg-transparent"
 					bind:value={searchValue}
 					placeholder={$i18n.t('Search Models')}
 				/>
 			</div>
-
-			<div>
-				<a
-					class=" px-2 py-2 rounded-xl hover:bg-gray-700/10 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition font-medium text-sm flex items-center space-x-1"
-					href="/workspace/models/create"
-				>
-					<Plus className="size-3.5" />
-				</a>
-			</div>
 		</div>
 	</div>
 
-	<div class=" my-2 mb-5 gap-2 grid lg:grid-cols-2 xl:grid-cols-3" id="model-list">
+	<div class="my-4 mb-5 gap-2 grid lg:grid-cols-2 xl:grid-cols-3" id="model-list">
+		<a
+			href="/workspace/models/create"
+			class="flex flex-col justify-center items-center cursor-pointer w-full px-3 py-8 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl transition border border-gray-100 dark:border-gray-800 min-h-[160px]"
+		>
+			<div class="p-4 rounded-full bg-gray-50 dark:bg-gray-800">
+				<Plus className="size-8" />
+			</div>
+			<div class="mt-2 font-medium">
+				{$i18n.t('Add a model')}
+			</div>
+		</a>
+
 		{#each filteredModels as model}
 			<div
-				class=" flex flex-col cursor-pointer w-full px-3 py-2 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl transition"
+				class="flex flex-col cursor-pointer w-full px-3 py-3 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl transition border border-gray-100 dark:border-gray-800 min-h-[200px]"
 				id="model-item-{model.id}"
 			>
-				<div class="flex gap-4 mt-0.5 mb-0.5">
-					<div class=" w-[44px]">
-						<div
-							class=" rounded-full object-cover {model.is_active
-								? ''
-								: 'opacity-50 dark:opacity-50'} "
-						>
-							<img
-								src={model?.meta?.profile_image_url ?? '/static/favicon.png'}
-								alt="modelfile profile"
-								class=" rounded-full w-full h-auto object-cover"
-							/>
+				<div class="flex flex-col gap-3 flex-1">
+					<div class="flex justify-center">
+						<div class="w-[60px] shrink-0">
+							<div
+								class="rounded-full object-cover {model.is_active
+									? ''
+									: 'opacity-50 dark:opacity-50'}"
+							>
+								<img
+									src={model?.meta?.profile_image_url ?? '/static/favicon.png'}
+									alt="modelfile profile"
+									class="rounded-full w-full h-auto object-cover"
+								/>
+							</div>
 						</div>
 					</div>
 
 					<a
-						class=" flex flex-1 cursor-pointer w-full"
+						class="flex flex-1 cursor-pointer w-full"
 						href={`/?models=${encodeURIComponent(model.id)}`}
 					>
-						<div class=" flex-1 self-center {model.is_active ? '' : 'text-gray-500'}">
-							<Tooltip
-								content={marked.parse(model?.meta?.description ?? model.id)}
-								className=" w-fit"
-								placement="top-start"
-							>
-								<div class=" font-semibold line-clamp-1">{model.name}</div>
-							</Tooltip>
+						<div class="flex-1 text-center {model.is_active ? '' : 'text-gray-500'}">
+							<div class="font-semibold text-lg line-clamp-1">{model.name}</div>
 
-							<div class="flex gap-1 text-xs overflow-hidden">
-								<div class="line-clamp-1">
+							<div class="flex gap-1 text-sm overflow-hidden mt-1">
+								<div class="line-clamp-2 w-full">
 									{#if (model?.meta?.description ?? '').trim()}
 										{model?.meta?.description}
 									{:else}
@@ -292,8 +287,8 @@
 					</a>
 				</div>
 
-				<div class="flex justify-between items-center -mb-0.5 px-0.5">
-					<div class=" text-xs mt-0.5">
+				<div class="flex justify-between items-center mt-auto pt-2 px-0.5">
+					<div class="text-xs">
 						<Tooltip
 							content={model?.user?.email ?? $i18n.t('Deleted User')}
 							className="flex shrink-0"
@@ -309,11 +304,11 @@
 						</Tooltip>
 					</div>
 
-					<div class="flex flex-row gap-0.5 items-center">
+					<div class="flex items-center gap-2">
 						{#if shiftKey}
 							<Tooltip content={$i18n.t('Delete')}>
 								<button
-									class="self-center w-fit text-sm px-2 py-2 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
+									class="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition"
 									type="button"
 									on:click={() => {
 										deleteModelHandler(model);
@@ -325,7 +320,7 @@
 						{:else}
 							{#if $user?.role === 'admin' || model.user_id === $user?.id || model.access_control.write.group_ids.some( (wg) => group_ids.includes(wg) )}
 								<a
-									class="self-center w-fit text-sm px-2 py-2 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
+									class="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition"
 									type="button"
 									href={`/workspace/models/edit?id=${encodeURIComponent(model.id)}`}
 								>
@@ -368,14 +363,14 @@
 								onClose={() => {}}
 							>
 								<button
-									class="self-center w-fit text-sm p-1.5 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
+									class="p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition"
 									type="button"
 								>
 									<EllipsisHorizontal className="size-5" />
 								</button>
 							</ModelMenu>
 
-							<div class="ml-1">
+							<div>
 								<Tooltip content={model.is_active ? $i18n.t('Enabled') : $i18n.t('Disabled')}>
 									<Switch
 										bind:state={model.is_active}
@@ -501,7 +496,7 @@
 	{#if $config?.features.enable_community_sharing}
 		<div class=" my-16">
 			<div class=" text-xl font-medium mb-1 line-clamp-1">
-				{$i18n.t('Made by Open WebUI Community')}
+				{$i18n.t('Made by the community')}
 			</div>
 
 			<a

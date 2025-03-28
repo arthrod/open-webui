@@ -105,61 +105,65 @@
 		</div>
 	</DeleteConfirmDialog>
 
-	<div class="flex flex-col gap-1 my-1.5">
-		<div class="flex justify-between items-center">
-			<div class="flex md:self-center text-xl font-medium px-0.5 items-center">
+	<div class="flex flex-col gap-10 my-1.5">
+		<div class="flex justify-center items-center">
+			<div class="text-2xl font-medium px-0.5">
 				{$i18n.t('Prompts')}
-				<div class="flex self-center w-[1px] h-6 mx-2.5 bg-gray-50 dark:bg-gray-850" />
-				<span class="text-lg font-medium text-gray-500 dark:text-gray-300"
-					>{filteredItems.length}</span
-				>
 			</div>
 		</div>
 
-		<div class=" flex w-full space-x-2">
-			<div class="flex flex-1">
-				<div class=" self-center ml-1 mr-3">
-					<Search className="size-3.5" />
+		<div class="flex flex-1 items-center w-full space-x-2 justify-center">
+			<div class="flex items-center max-w-md w-full fr-background-contrast--grey rounded-md">
+				<div class="self-center ml-1 mr-3">
+					<Search className="size-6" />
 				</div>
 				<input
-					class=" w-full text-sm pr-4 py-1 rounded-r-xl outline-hidden bg-transparent"
+					class="w-full text-sm py-2.5 rounded-r-xl outline-hidden bg-transparent"
 					bind:value={query}
 					placeholder={$i18n.t('Search Prompts')}
 				/>
 			</div>
-
-			<div>
-				<a
-					class=" px-2 py-2 rounded-xl hover:bg-gray-700/10 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition font-medium text-sm flex items-center space-x-1"
-					href="/workspace/prompts/create"
-				>
-					<Plus className="size-3.5" />
-				</a>
-			</div>
 		</div>
 	</div>
 
-	<div class="mb-5 gap-2 grid lg:grid-cols-2 xl:grid-cols-3">
+	<div class="my-4 gap-2 grid lg:grid-cols-2 xl:grid-cols-3">
+		<a
+			href="/workspace/prompts/create"
+			class="flex flex-col justify-center items-center cursor-pointer w-full px-3 py-8 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl transition border border-gray-100 dark:border-gray-800 min-h-[200px]"
+		>
+			<div class="p-4 rounded-full bg-gray-50 dark:bg-gray-800">
+				<Plus className="size-8" />
+			</div>
+			<div class="mt-2 font-medium">
+				{$i18n.t('Add a prompt')}
+			</div>
+		</a>
+
 		{#each filteredItems as prompt}
 			<div
-				class=" flex space-x-4 cursor-pointer w-full px-3 py-2 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl transition"
+				class="flex flex-col cursor-pointer w-full px-3 py-3 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl transition border border-gray-100 dark:border-gray-800 min-h-[200px]"
 			>
-				<div class=" flex flex-1 space-x-4 cursor-pointer w-full">
-					<a href={`/workspace/prompts/edit?command=${encodeURIComponent(prompt.command)}`}>
-						<div class=" flex-1 flex items-center gap-2 self-center">
-							<div class=" font-semibold line-clamp-1 capitalize">{prompt.title}</div>
-							<div class=" text-xs overflow-hidden text-ellipsis line-clamp-1">
+				<div class="flex flex-col flex-1">
+					<a
+						href={`/workspace/prompts/edit?command=${encodeURIComponent(prompt.command)}`}
+						class="flex-1 flex"
+					>
+						<div class="flex-1 px-1 mb-1 flex flex-col justify-center text-center">
+							<div class="font-semibold line-clamp-1 h-fit">{prompt.title}</div>
+							<div class="text-xs overflow-hidden text-ellipsis line-clamp-1">
 								{prompt.command}
 							</div>
 						</div>
+					</a>
 
-						<div class=" text-xs px-0.5">
+					<div class="flex justify-between items-end mt-auto">
+						<div class="text-xs text-gray-500">
 							<Tooltip
 								content={prompt?.user?.email ?? $i18n.t('Deleted User')}
 								className="flex shrink-0"
 								placement="top-start"
 							>
-								<div class="shrink-0 text-gray-500">
+								<div class="shrink-0">
 									{$i18n.t('By {{name}}', {
 										name: capitalizeFirstLetter(
 											prompt?.user?.name ?? prompt?.user?.email ?? $i18n.t('Deleted User')
@@ -168,53 +172,54 @@
 								</div>
 							</Tooltip>
 						</div>
-					</a>
-				</div>
-				<div class="flex flex-row gap-0.5 self-center">
-					<a
-						class="self-center w-fit text-sm px-2 py-2 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
-						type="button"
-						href={`/workspace/prompts/edit?command=${encodeURIComponent(prompt.command)}`}
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke-width="1.5"
-							stroke="currentColor"
-							class="w-4 h-4"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
-							/>
-						</svg>
-					</a>
 
-					<PromptMenu
-						shareHandler={() => {
-							shareHandler(prompt);
-						}}
-						cloneHandler={() => {
-							cloneHandler(prompt);
-						}}
-						exportHandler={() => {
-							exportHandler(prompt);
-						}}
-						deleteHandler={async () => {
-							deletePrompt = prompt;
-							showDeleteConfirm = true;
-						}}
-						onClose={() => {}}
-					>
-						<button
-							class="self-center w-fit text-sm p-1.5 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
-							type="button"
-						>
-							<EllipsisHorizontal className="size-5" />
-						</button>
-					</PromptMenu>
+						<div class="flex flex-row gap-0.5">
+							<a
+								class="self-center w-fit text-sm px-2 py-2 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
+								type="button"
+								href={`/workspace/prompts/edit?command=${encodeURIComponent(prompt.command)}`}
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke-width="1.5"
+									stroke="currentColor"
+									class="w-4 h-4"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"
+									/>
+								</svg>
+							</a>
+
+							<PromptMenu
+								shareHandler={() => {
+									shareHandler(prompt);
+								}}
+								cloneHandler={() => {
+									cloneHandler(prompt);
+								}}
+								exportHandler={() => {
+									exportHandler(prompt);
+								}}
+								deleteHandler={async () => {
+									deletePrompt = prompt;
+									showDeleteConfirm = true;
+								}}
+								onClose={() => {}}
+							>
+								<button
+									class="self-center w-fit text-sm p-1.5 dark:text-gray-300 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 rounded-xl"
+									type="button"
+								>
+									<EllipsisHorizontal className="size-5" />
+								</button>
+							</PromptMenu>
+						</div>
+					</div>
 				</div>
 			</div>
 		{/each}
@@ -319,7 +324,7 @@
 	{#if $config?.features.enable_community_sharing}
 		<div class=" my-16">
 			<div class=" text-xl font-medium mb-1 line-clamp-1">
-				{$i18n.t('Made by Open WebUI Community')}
+				{$i18n.t('Made by the community')}
 			</div>
 
 			<a

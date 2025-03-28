@@ -45,6 +45,7 @@
 	import { getAllTags, getChatList } from '$lib/apis/chats';
 	import NotificationToast from '$lib/components/NotificationToast.svelte';
 	import AppSidebar from '$lib/components/app/AppSidebar.svelte';
+	import { updateDayjsLocale } from '$lib/dayjs';
 	import { chatCompletion } from '$lib/apis/openai';
 
 	setContext('i18n', i18n);
@@ -469,7 +470,9 @@
 		let backendConfig = null;
 		try {
 			backendConfig = await getBackendConfig();
-			console.log('Backend config:', backendConfig);
+			if (import.meta.env.DEV) {
+				console.log('Backend config:', backendConfig);
+			}
 		} catch (error) {
 			console.error('Error loading backend config:', error);
 		}
@@ -485,7 +488,15 @@
 			const lang = backendConfig.default_locale
 				? backendConfig.default_locale
 				: bestMatchingLanguage(languages, browserLanguages, 'en-US');
-			changeLanguage(lang);
+			$i18n.changeLanguage(lang);
+			updateDayjsLocale(lang);
+		} else {
+			updateDayjsLocale(localStorage.locale);
+		}
+
+		// Watch for language changes
+		$: if ($i18n) {
+			updateDayjsLocale($i18n.language);
 		}
 
 		if (backendConfig) {
@@ -494,30 +505,41 @@
 			await WEBUI_NAME.set(backendConfig.name);
 
 			if ($config) {
+				// Check for token in URL hash first
+				const hash = $page.url.hash;
+				if (hash && hash.includes('token=')) {
+					const params = new URLSearchParams(hash.substring(1));
+					const token = params.get('token');
+					if (token) {
+						localStorage.setItem('token', token);
+						// Wait a tick to ensure token is stored
+						await tick();
+					}
+				}
+
+				// Now setup socket with the token (if any)
 				await setupSocket($config.features?.enable_websocket ?? true);
 
-				if (localStorage.token) {
-					// Get Session User Info
-					const sessionUser = await getSessionUser(localStorage.token).catch((error) => {
-						toast.error(`${error}`);
-						return null;
-					});
+				// Try to get session user with the token
+				const sessionUser = await getSessionUser().catch(async (error) => {
+					console.log('error', error);
+					// Clear token if session user retrieval fails
+					localStorage.removeItem('token');
+					return null;
+				});
 
-					if (sessionUser) {
-						// Save Session User to Store
-						$socket.emit('user-join', { auth: { token: sessionUser.token } });
+				if (sessionUser) {
+					// Save Session User to Store
+					$socket?.emit('user-join', { auth: { token: sessionUser.token } });
 
-						await user.set(sessionUser);
-						await config.set(await getBackendConfig());
-					} else {
-						// Redirect Invalid Session User to /auth Page
-						localStorage.removeItem('token');
-						await goto('/auth');
-					}
+					$socket?.on('chat-events', chatEventHandler);
+					$socket?.on('channel-events', channelEventHandler);
+
+					await user.set(sessionUser);
+					await config.set(await getBackendConfig());
 				} else {
-					// Don't redirect if we're already on the auth page
-					// Needed because we pass in tokens from OAuth logins via URL fragments
-					if ($page.url.pathname !== '/auth') {
+					// Redirect Invalid Session User to /auth Page
+					if ($page.url.pathname !== '/auth' && $page.url.pathname !== '/logadmin') {
 						await goto('/auth');
 					}
 				}

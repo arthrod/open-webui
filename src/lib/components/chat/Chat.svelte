@@ -85,6 +85,7 @@
 	import Placeholder from './Placeholder.svelte';
 	import NotificationToast from '../NotificationToast.svelte';
 	import Spinner from '../common/Spinner.svelte';
+	import Footer from './Footer.svelte';
 
 	export let chatIdProp = '';
 
@@ -644,6 +645,8 @@
 	//////////////////////////
 
 	const initNewChat = async () => {
+		console.log('initNewChat - starting selectedModels:', selectedModels);
+
 		if ($page.url.searchParams.get('models')) {
 			selectedModels = $page.url.searchParams.get('models')?.split(',');
 		} else if ($page.url.searchParams.get('model')) {
@@ -674,24 +677,35 @@
 			if (sessionStorage.selectedModels) {
 				selectedModels = JSON.parse(sessionStorage.selectedModels);
 				sessionStorage.removeItem('selectedModels');
-			} else {
-				if ($settings?.models) {
-					selectedModels = $settings?.models;
-				} else if ($config?.default_models) {
-					console.log($config?.default_models.split(',') ?? '');
-					selectedModels = $config?.default_models.split(',');
+			} else if ($settings?.models && $settings.models.length > 0) {
+				// Check if the model from settings exists in available models
+				const validModel = $settings.models.find((modelId) =>
+					$models.some((m) => m.id === modelId)
+				);
+				if (validModel) {
+					selectedModels = [$settings.models[0]];
+					console.log('Using model from settings:', selectedModels);
 				}
+			} else if ($config?.default_models) {
+				selectedModels = $config.default_models.split(',');
 			}
 		}
 
-		selectedModels = selectedModels.filter((modelId) => $models.map((m) => m.id).includes(modelId));
+		// Ensure we have valid models
+		selectedModels = selectedModels.filter((modelId) => $models.some((m) => m.id === modelId));
+
+		// If no valid models selected, use first available model
 		if (selectedModels.length === 0 || (selectedModels.length === 1 && selectedModels[0] === '')) {
 			if ($models.length > 0) {
 				selectedModels = [$models[0].id];
+				console.log('Using first available model:', selectedModels);
 			} else {
 				selectedModels = [''];
+				console.error('No models available!');
 			}
 		}
+
+		console.log('initNewChat - final selectedModels:', selectedModels);
 
 		await showControls.set(false);
 		await showCallOverlay.set(false);
@@ -1540,8 +1554,10 @@
 						})
 			}))
 			.filter((message) => message?.role === 'user' || message?.content?.trim());
+							console.log("CONFIG, ", $config?.features?.enable_web_search)
 
 		const res = await generateOpenAIChatCompletion(
+			
 			localStorage.token,
 			{
 				stream: stream,
@@ -1563,7 +1579,6 @@
 
 				files: (files?.length ?? 0) > 0 ? files : undefined,
 				tool_ids: selectedToolIds.length > 0 ? selectedToolIds : undefined,
-
 				features: {
 					image_generation:
 						$config?.features?.enable_image_generation &&
@@ -1897,22 +1912,22 @@
 />
 
 <div
-	class="h-screen max-h-[100dvh] transition-width duration-200 ease-in-out {$showSidebar
-		? '  md:max-w-[calc(100%-260px)]'
-		: ' '} w-full max-w-full flex flex-col"
+	class="h-[95vh] max-h-[100dvh] transition-width duration-200 ease-in-out{$showSidebar
+		? ' '
+		: ' '} w-full max-w-full flex flex-col fr-background-default--grey"
 	id="chat-container"
 >
 	{#if chatIdProp === '' || (!loading && chatIdProp)}
 		{#if $settings?.backgroundImageUrl ?? null}
 			<div
 				class="absolute {$showSidebar
-					? 'md:max-w-[calc(100%-260px)] md:translate-x-[260px]'
+					? 'md:max-w-[calc(100%-285px)] md:translate-x-[285px]'
 					: ''} top-0 left-0 w-full h-full bg-cover bg-center bg-no-repeat"
 				style="background-image: url({$settings.backgroundImageUrl})  "
 			/>
 
 			<div
-				class="absolute top-0 left-0 w-full h-full bg-linear-to-t from-white to-white/85 dark:from-gray-900 dark:to-gray-900/90 z-0"
+				class="absolute top-0 left-0 w-full h-full bg-linear-to-t from-white to-white/85 dark:from-gray-900 dark:to-[#161616]/90 z-0"
 			/>
 		{/if}
 
@@ -2071,7 +2086,9 @@
 							</div>
 						</div>
 					{:else}
-						<div class="overflow-auto w-full h-full flex items-center">
+						<div
+							class="overflow-auto w-full h-full flex flex-col items-center fr-background-default--grey"
+						>
 							<Placeholder
 								{history}
 								{selectedModels}
@@ -2106,6 +2123,7 @@
 									}
 								}}
 							/>
+							<Footer />
 						</div>
 					{/if}
 				</div>

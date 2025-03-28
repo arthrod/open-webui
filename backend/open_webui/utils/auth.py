@@ -12,7 +12,6 @@ from datetime import UTC, datetime, timedelta
 from typing import Optional, Union, List, Dict
 
 from open_webui.models.users import Users
-
 from open_webui.constants import ERROR_MESSAGES
 from open_webui.env import (
     WEBUI_SECRET_KEY,
@@ -20,12 +19,13 @@ from open_webui.env import (
     STATIC_DIR,
     SRC_LOG_LEVELS,
 )
+from open_webui.storage.redis_client import redis_client
 
 from fastapi import BackgroundTasks, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
-
-
+from authlib.oidc.core import UserInfo
+import requests
 logging.getLogger("passlib").setLevel(logging.ERROR)
 
 log = logging.getLogger(__name__)
@@ -104,9 +104,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def verify_password(plain_password, hashed_password):
-    return (
-        pwd_context.verify(plain_password, hashed_password) if hashed_password else None
-    )
+    return pwd_context.verify(plain_password, hashed_password) if hashed_password else None
 
 
 def get_password_hash(password):
@@ -141,6 +139,11 @@ def create_api_key():
     return f"sk-{key}"
 
 
+def get_organization_name(siret: str):
+    org = requests.get(f"https://recherche-entreprises.api.gouv.fr/search?q={siret}&page=1&per_page=1")
+    return org.json()["results"][0]["nom_complet"] if org.json()["results"] else ""
+
+
 def get_http_authorization_cred(auth_header: str):
     try:
         scheme, credentials = auth_header.split(" ")
@@ -149,100 +152,45 @@ def get_http_authorization_cred(auth_header: str):
         raise ValueError(ERROR_MESSAGES.INVALID_TOKEN)
 
 
-def get_current_user(
-    request: Request,
-    background_tasks: BackgroundTasks,
-    auth_token: HTTPAuthorizationCredentials = Depends(bearer_security),
-):
-    token = None
+async def get_current_user(request: Request, background_tasks: BackgroundTasks,):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
-    if auth_token is not None:
-        token = auth_token.credentials
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise credentials_exception
 
-    if token is None and "token" in request.cookies:
-        token = request.cookies.get("token")
+    token = auth_header.split(" ")[1]
 
-    if token is None:
-        raise HTTPException(status_code=403, detail="Not authenticated")
-
-    # auth by api key
-    if token.startswith("sk-"):
-        if not request.state.enable_api_key:
-            raise HTTPException(
-                status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.API_KEY_NOT_ALLOWED
-            )
-
-        if request.app.state.config.ENABLE_API_KEY_ENDPOINT_RESTRICTIONS:
-            allowed_paths = [
-                path.strip()
-                for path in str(
-                    request.app.state.config.API_KEY_ALLOWED_ENDPOINTS
-                ).split(",")
-            ]
-
-            if request.url.path not in allowed_paths:
-                raise HTTPException(
-                    status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.API_KEY_NOT_ALLOWED
-                )
-
-        return get_current_user_by_api_key(token)
-
-    # auth by jwt token
     try:
-        data = decode_token(token)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-        )
+        payload = jwt.decode(token, SESSION_SECRET, algorithms=[ALGORITHM])
+        user_id = payload.get("id")
+        if user_id is None:
+            raise credentials_exception
+    except jwt.InvalidTokenError:
+        raise credentials_exception
 
-    if data is not None and "id" in data:
-        user = Users.get_user_by_id(data["id"])
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=ERROR_MESSAGES.INVALID_TOKEN,
-            )
-        else:
-            # Refresh the user's last active timestamp asynchronously
-            # to prevent blocking the request
-            if background_tasks:
-                background_tasks.add_task(Users.update_user_last_active_by_id, user.id)
-        return user
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ERROR_MESSAGES.UNAUTHORIZED,
-        )
-
-
-def get_current_user_by_api_key(api_key: str):
-    user = Users.get_user_by_api_key(api_key)
-
+    user = Users.get_user_by_id(user_id)
     if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ERROR_MESSAGES.INVALID_TOKEN,
-        )
+        raise credentials_exception
     else:
-        Users.update_user_last_active_by_id(user.id)
-
+        # Refresh the user's last active timestamp asynchronously
+        # to prevent blocking the request
+        if background_tasks:
+            background_tasks.add_task(Users.update_user_last_active_by_id, user.id)
     return user
 
 
-def get_verified_user(user=Depends(get_current_user)):
-    if user.role not in {"user", "admin"}:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
-        )
+async def get_verified_user(user=Depends(get_current_user)):
+    if not user:
+        raise HTTPException(401, "Could not validate credentials")
     return user
 
 
-def get_admin_user(user=Depends(get_current_user)):
-    if user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
-        )
+async def get_admin_user(user=Depends(get_current_user)):
+    if not user or user.role != "admin":
+        raise HTTPException(401, "Admin privileges required")
     return user

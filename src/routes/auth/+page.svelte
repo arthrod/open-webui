@@ -1,4 +1,4 @@
-<script>
+	<script lang="ts">
 	import { toast } from 'svelte-sonner';
 
 	import { onMount, getContext, tick } from 'svelte';
@@ -6,27 +6,65 @@
 	import { page } from '$app/stores';
 
 	import { getBackendConfig } from '$lib/apis';
-	import { ldapUserSignIn, getSessionUser, userSignIn, userSignUp } from '$lib/apis/auths';
+	import { ldapUserSignIn, getSessionUser } from '$lib/apis/auths';
 
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 	import { WEBUI_NAME, config, user, socket } from '$lib/stores';
 
-	import { generateInitialsImage, canvasPixelTest } from '$lib/utils';
+	import { generateInitialsImage } from '$lib/utils';
 
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import OnBoarding from '$lib/components/OnBoarding.svelte';
+	import Header from '$lib/components/layout/Header.svelte';
+	import Footer from '$lib/components/chat/Footer.svelte';
+	import ProconnectButton from '$lib/components/auth/ProconnectButton.svelte';
 
-	const i18n = getContext('i18n');
+	import { fade, fly } from 'svelte/transition';
+
+	import type { Writable } from 'svelte/store';
+	import type { i18n as i18nType } from 'i18next';
+
+	const i18n = getContext<Writable<i18nType>>('i18n');
 
 	let loaded = false;
-
 	let mode = $config?.features.enable_ldap ? 'ldap' : 'signin';
-
-	let name = '';
-	let email = '';
+	let ldapUsername = '';
 	let password = '';
 
-	let ldapUsername = '';
+	// Carousel state
+	let currentIndex = 0;
+	const carouselItems = [
+		{
+			title: 'Posez vos questions',
+			description: 'Albert répond à vos question au quotidien.',
+			image: '/assets/illustrations/question.svg'
+		},
+		{
+			title: 'Intégrez vos documents',
+			description: 'Albert vous aide à discuter avec vos documents.',
+			image: '/assets/illustrations/file-search.svg'
+		},
+		{
+			title: 'IA ❤️ Internet',
+			description: 'Albert peut utiliser internet pour répondre à vos questions.',
+			image: '/assets/illustrations/internet.svg'
+		}
+	];
+
+	const nextSlide = () => {
+		currentIndex = (currentIndex + 1) % carouselItems.length;
+	};
+
+	const previousSlide = () => {
+		currentIndex = (currentIndex - 1 + carouselItems.length) % carouselItems.length;
+	};
+
+	// Auto-advance carousel
+	let carouselInterval: ReturnType<typeof setInterval>;
+	onMount(() => {
+		carouselInterval = setInterval(nextSlide, 7000);
+		return () => clearInterval(carouselInterval);
+	});
 
 	const querystringValue = (key) => {
 		const querystring = window.location.search;
@@ -39,36 +77,16 @@
 			console.log(sessionUser);
 			toast.success($i18n.t(`You're now logged in.`));
 			if (sessionUser.token) {
-				localStorage.token = sessionUser.token;
+				localStorage.setItem('token', sessionUser.token);
 			}
 
-			$socket.emit('user-join', { auth: { token: sessionUser.token } });
+			$socket?.emit('user-join', { auth: { token: sessionUser.token } });
 			await user.set(sessionUser);
 			await config.set(await getBackendConfig());
 
 			const redirectPath = querystringValue('redirect') || '/';
 			goto(redirectPath);
 		}
-	};
-
-	const signInHandler = async () => {
-		const sessionUser = await userSignIn(email, password).catch((error) => {
-			toast.error(`${error}`);
-			return null;
-		});
-
-		await setSessionUser(sessionUser);
-	};
-
-	const signUpHandler = async () => {
-		const sessionUser = await userSignUp(name, email, password, generateInitialsImage(name)).catch(
-			(error) => {
-				toast.error(`${error}`);
-				return null;
-			}
-		);
-
-		await setSessionUser(sessionUser);
 	};
 
 	const ldapSignInHandler = async () => {
@@ -80,12 +98,9 @@
 	};
 
 	const submitHandler = async () => {
+		console.log('Submit Handler', mode);
 		if (mode === 'ldap') {
 			await ldapSignInHandler();
-		} else if (mode === 'signin') {
-			await signInHandler();
-		} else {
-			await signUpHandler();
 		}
 	};
 
@@ -102,15 +117,23 @@
 		if (!token) {
 			return;
 		}
-		const sessionUser = await getSessionUser(token).catch((error) => {
-			toast.error(`${error}`);
+
+		localStorage.setItem('token', token);
+
+		const sessionUser = await getSessionUser().catch((error) => {
+			localStorage.removeItem('token'); // Clear token if getSessionUser fails
+			toast.error(error);
 			return null;
 		});
+
 		if (!sessionUser) {
 			return;
 		}
-		localStorage.token = token;
-		await setSessionUser(sessionUser);
+
+		$socket?.emit('user-join', { auth: { token: sessionUser.token } });
+		await user.set(sessionUser);
+		await config.set(await getBackendConfig());
+		goto('/');
 	};
 
 	let onboarding = false;
@@ -142,13 +165,14 @@
 		if ($user !== undefined) {
 			await goto('/');
 		}
+
 		await checkOauthCallback();
 
 		loaded = true;
 		setLogoImage();
 
 		if (($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false) {
-			await signInHandler();
+			await ldapSignInHandler();
 		} else {
 			onboarding = $config?.onboarding ?? false;
 		}
@@ -165,319 +189,139 @@
 	bind:show={onboarding}
 	getStartedHandler={() => {
 		onboarding = false;
-		mode = $config?.features.enable_ldap ? 'ldap' : 'signup';
+		mode = $config?.features.enable_ldap ? 'ldap' : 'signin';
 	}}
 />
-
+<Header />
+<!-- Main container -->
 <div class="w-full h-screen max-h-[100dvh] text-white relative">
+	<!-- Background -->
 	<div class="w-full h-full absolute top-0 left-0 bg-white dark:bg-black"></div>
 
+	<!-- Drag region -->
 	<div class="w-full absolute top-0 left-0 right-0 h-8 drag-region" />
 
-	{#if loaded}
-		<div class="fixed m-10 z-50">
-			<div class="flex space-x-2">
-				<div class=" self-center">
-					<img
-						id="logo"
-						crossorigin="anonymous"
-						src="{WEBUI_BASE_URL}/static/splash.png"
-						class=" w-6 rounded-full"
-						alt="logo"
-					/>
-				</div>
-			</div>
-		</div>
-
+	<!-- Loading spinner -->
+	{#if !loaded || !$i18n?.isInitialized}
 		<div
-			class="fixed bg-transparent min-h-screen w-full flex justify-center font-primary z-50 text-black dark:text-white"
+			class="fixed bg-transparent min-h-screen w-full flex justify-center items-center font-primary z-10"
 		>
-			<div class="w-full sm:max-w-md px-10 min-h-screen flex flex-col text-center">
+			<Spinner />
+		</div>
+	{:else}
+		<!-- Main content -->
+		<div
+			class="fixed bg-transparent min-h-screen w-full flex justify-center font-primary z-10 text-black dark:text-white pt-16"
+		>
+			<!-- Content container -->	
+			<div
+				class="container max-w-6xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-start md:items-center md:justify-between min-h-[calc(100vh-10rem)] md:min-h-[calc(100vh-8rem)] py-4 md:py-0 gap-4 md:gap-12"
+			>
 				{#if ($config?.features.auth_trusted_header ?? false) || $config?.features.auth === false}
-					<div class=" my-auto pb-10 w-full">
-						<div
-							class="flex items-center justify-center gap-3 text-xl sm:text-2xl text-center font-semibold dark:text-gray-200"
-						>
-							<div>
-								{$i18n.t('Signing in to {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
-							</div>
+					<!-- Trusted header auth loading state -->
+					<div class="w-full order-1 md:order-none">
+						<div class="pb-6 md:pb-10 w-full">
+							<div
+								class="flex items-center justify-center gap-3 text-lg sm:text-xl md:text-2xl text-center font-semibold dark:text-gray-200"
+							>
+								<div>
+									{$i18n.t('Signing in to {{WEBUI_NAME}}', { WEBUI_NAME: $WEBUI_NAME })}
+								</div>
 
-							<div>
-								<Spinner />
+								<div>
+									<Spinner />
+								</div>
 							</div>
 						</div>
 					</div>
 				{:else}
-					<div class="  my-auto pb-10 w-full dark:text-gray-100">
-						<form
-							class=" flex flex-col justify-center"
-							on:submit={(e) => {
-								e.preventDefault();
-								submitHandler();
-							}}
-						>
-							<div class="mb-1">
-								<div class=" text-2xl font-medium">
-									{#if $config?.onboarding ?? false}
-										{$i18n.t(`Get started with {{WEBUI_NAME}}`, { WEBUI_NAME: $WEBUI_NAME })}
-									{:else if mode === 'ldap'}
-										{$i18n.t(`Sign in to {{WEBUI_NAME}} with LDAP`, { WEBUI_NAME: $WEBUI_NAME })}
-									{:else if mode === 'signin'}
-										{$i18n.t(`Sign in to {{WEBUI_NAME}}`, { WEBUI_NAME: $WEBUI_NAME })}
-									{:else}
-										{$i18n.t(`Sign up to {{WEBUI_NAME}}`, { WEBUI_NAME: $WEBUI_NAME })}
-									{/if}
-								</div>
-
-								{#if $config?.onboarding ?? false}
-									<div class=" mt-1 text-xs font-medium text-gray-500">
-										ⓘ {$WEBUI_NAME}
-										{$i18n.t(
-											'does not make any external connections, and your data stays securely on your locally hosted server.'
-										)}
+					<!-- Left column - Login content -->
+					<div class="flex flex-col w-full md:w-1/2 gap-4 items-center justify-center">
+						<!-- Title section -->
+						<div class="">
+							<div class="w-full max-w-md mx-auto">
+								<div class="pb-4 w-full dark:text-gray-100 text-center">
+									<div class="flex flex-col gap-3 items-center text-center">
+										<div
+											class="text-2xl sm:text-4xl md:text-5xl fr-text-default--grey font-bold text-center"
+										>
+											{$i18n.t("L'IA")}
+											<br />
+											{$i18n.t('au service')}
+											<br />
+											{$i18n.t('des agents.')}
+										</div>
 									</div>
-								{/if}
+								</div>
 							</div>
+						</div>
 
-							{#if $config?.features.enable_login_form || $config?.features.enable_ldap}
-								<div class="flex flex-col mt-4">
-									{#if mode === 'signup'}
-										<div class="mb-2">
-											<div class=" text-sm font-medium text-left mb-1">{$i18n.t('Name')}</div>
-											<input
-												bind:value={name}
-												type="text"
-												class="my-0.5 w-full text-sm outline-hidden bg-transparent"
-												autocomplete="name"
-												placeholder={$i18n.t('Enter Your Full Name')}
-												required
-											/>
-										</div>
-									{/if}
+						<!-- Login button -->
+						<div class=" w-full flex justify-center">
+							<ProconnectButton />
+						</div>
+					</div>
 
-									{#if mode === 'ldap'}
-										<div class="mb-2">
-											<div class=" text-sm font-medium text-left mb-1">{$i18n.t('Username')}</div>
-											<input
-												bind:value={ldapUsername}
-												type="text"
-												class="my-0.5 w-full text-sm outline-hidden bg-transparent"
-												autocomplete="username"
-												name="username"
-												placeholder={$i18n.t('Enter Your Username')}
-												required
-											/>
-										</div>
-									{:else}
-										<div class="mb-2">
-											<div class=" text-sm font-medium text-left mb-1">{$i18n.t('Email')}</div>
-											<input
-												bind:value={email}
-												type="email"
-												class="my-0.5 w-full text-sm outline-hidden bg-transparent"
-												autocomplete="email"
-												name="email"
-												placeholder={$i18n.t('Enter Your Email')}
-												required
-											/>
-										</div>
-									{/if}
-
-									<div>
-										<div class=" text-sm font-medium text-left mb-1">{$i18n.t('Password')}</div>
-
-										<input
-											bind:value={password}
-											type="password"
-											class="my-0.5 w-full text-sm outline-hidden bg-transparent"
-											placeholder={$i18n.t('Enter Your Password')}
-											autocomplete="current-password"
-											name="current-password"
-											required
-										/>
-									</div>
-								</div>
-							{/if}
-							<div class="mt-5">
-								{#if $config?.features.enable_login_form || $config?.features.enable_ldap}
-									{#if mode === 'ldap'}
-										<button
-											class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
-											type="submit"
+					<!-- Right column - Carousel -->
+					<div class="mt-6 md:mt-0 md:order-none w-full md:w-1/2">
+						<div class="w-full max-w-md mx-auto">
+							<!-- Carousel container -->
+							<div
+								class="carousel relative min-h-[180px] sm:min-h-[250px] md:min-h-[300px] mb-16 md:mb-0"
+							>
+								{#each carouselItems as item, i}
+									{#if currentIndex === i}
+										<!-- Carousel item -->
+										<div
+											class="carousel-item flex flex-col gap-4 md:gap-6 absolute w-full"
+											in:fly={{ x: 200, duration: 1000, opacity: 1 }}
+											out:fly={{ x: -200, duration: 1000, opacity: 0 }}
 										>
-											{$i18n.t('Authenticate')}
-										</button>
-									{:else}
-										<button
-											class="bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
-											type="submit"
-										>
-											{mode === 'signin'
-												? $i18n.t('Sign in')
-												: ($config?.onboarding ?? false)
-													? $i18n.t('Create Admin Account')
-													: $i18n.t('Create Account')}
-										</button>
-
-										{#if $config?.features.enable_signup && !($config?.onboarding ?? false)}
-											<div class=" mt-4 text-sm text-center">
-												{mode === 'signin'
-													? $i18n.t("Don't have an account?")
-													: $i18n.t('Already have an account?')}
-
-												<button
-													class=" font-medium underline"
-													type="button"
-													on:click={() => {
-														if (mode === 'signin') {
-															mode = 'signup';
-														} else {
-															mode = 'signin';
-														}
-													}}
-												>
-													{mode === 'signin' ? $i18n.t('Sign up') : $i18n.t('Sign in')}
-												</button>
+											<!-- Carousel text content -->
+											<div class="text-center md:text-left">
+												<h2 class="text-xl md:text-2xl font-bold mb-2">
+													{$i18n.t(item.title)}
+												</h2>
+												<p class="text-sm md:text-base text-gray-600 dark:text-gray-300">
+													{$i18n.t(item.description)}
+												</p>
 											</div>
-										{/if}
+											<!-- Carousel image -->
+											<div class="w-full h-36 md:h-48 relative">
+												<img
+													src={item.image}
+													alt={$i18n.t(item.title)}
+													class="w-full h-full object-contain"
+												/>
+											</div>
+											<!-- Carousel navigation dots -->
+											<div class="flex justify-center gap-2 mt-2 md:mt-4">
+												{#each carouselItems as _, i}
+													<button
+														class="w-2 h-2 rounded-full transition-colors duration-200 {currentIndex ===
+														i
+															? 'bg-blue-500'
+															: 'bg-gray-300 dark:bg-gray-600'}"
+														on:click={() => (currentIndex = i)}
+														aria-label={$i18n.t('Go to slide {{number}}', {
+															number: i + 1
+														})}
+													/>
+												{/each}
+											</div>
+										</div>
 									{/if}
-								{/if}
+								{/each}
 							</div>
-						</form>
-
-						{#if Object.keys($config?.oauth?.providers ?? {}).length > 0}
-							<div class="inline-flex items-center justify-center w-full">
-								<hr class="w-32 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
-								{#if $config?.features.enable_login_form || $config?.features.enable_ldap}
-									<span
-										class="px-3 text-sm font-medium text-gray-900 dark:text-white bg-transparent"
-										>{$i18n.t('or')}</span
-									>
-								{/if}
-
-								<hr class="w-32 h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
-							</div>
-							<div class="flex flex-col space-y-2">
-								{#if $config?.oauth?.providers?.google}
-									<button
-										class="flex justify-center items-center bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
-										on:click={() => {
-											window.location.href = `${WEBUI_BASE_URL}/oauth/google/login`;
-										}}
-									>
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" class="size-6 mr-3">
-											<path
-												fill="#EA4335"
-												d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-											/><path
-												fill="#4285F4"
-												d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-											/><path
-												fill="#FBBC05"
-												d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-											/><path
-												fill="#34A853"
-												d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-											/><path fill="none" d="M0 0h48v48H0z" />
-										</svg>
-										<span>{$i18n.t('Continue with {{provider}}', { provider: 'Google' })}</span>
-									</button>
-								{/if}
-								{#if $config?.oauth?.providers?.microsoft}
-									<button
-										class="flex justify-center items-center bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
-										on:click={() => {
-											window.location.href = `${WEBUI_BASE_URL}/oauth/microsoft/login`;
-										}}
-									>
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" class="size-6 mr-3">
-											<rect x="1" y="1" width="9" height="9" fill="#f25022" /><rect
-												x="1"
-												y="11"
-												width="9"
-												height="9"
-												fill="#00a4ef"
-											/><rect x="11" y="1" width="9" height="9" fill="#7fba00" /><rect
-												x="11"
-												y="11"
-												width="9"
-												height="9"
-												fill="#ffb900"
-											/>
-										</svg>
-										<span>{$i18n.t('Continue with {{provider}}', { provider: 'Microsoft' })}</span>
-									</button>
-								{/if}
-								{#if $config?.oauth?.providers?.github}
-									<button
-										class="flex justify-center items-center bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
-										on:click={() => {
-											window.location.href = `${WEBUI_BASE_URL}/oauth/github/login`;
-										}}
-									>
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="size-6 mr-3">
-											<path
-												fill="currentColor"
-												d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.92 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57C20.565 21.795 24 17.31 24 12c0-6.63-5.37-12-12-12z"
-											/>
-										</svg>
-										<span>{$i18n.t('Continue with {{provider}}', { provider: 'GitHub' })}</span>
-									</button>
-								{/if}
-								{#if $config?.oauth?.providers?.oidc}
-									<button
-										class="flex justify-center items-center bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition w-full rounded-full font-medium text-sm py-2.5"
-										on:click={() => {
-											window.location.href = `${WEBUI_BASE_URL}/oauth/oidc/login`;
-										}}
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke-width="1.5"
-											stroke="currentColor"
-											class="size-6 mr-3"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"
-											/>
-										</svg>
-
-										<span
-											>{$i18n.t('Continue with {{provider}}', {
-												provider: $config?.oauth?.providers?.oidc ?? 'SSO'
-											})}</span
-										>
-									</button>
-								{/if}
-							</div>
-						{/if}
-
-						{#if $config?.features.enable_ldap && $config?.features.enable_login_form}
-							<div class="mt-2">
-								<button
-									class="flex justify-center items-center text-xs w-full text-center underline"
-									type="button"
-									on:click={() => {
-										if (mode === 'ldap')
-											mode = ($config?.onboarding ?? false) ? 'signup' : 'signin';
-										else mode = 'ldap';
-									}}
-								>
-									<span
-										>{mode === 'ldap'
-											? $i18n.t('Continue with Email')
-											: $i18n.t('Continue with LDAP')}</span
-									>
-								</button>
-							</div>
-						{/if}
+						</div>
 					</div>
 				{/if}
 			</div>
 		</div>
 	{/if}
+
+	<!-- Footer -->
+	<div class="w-full fixed bottom-0 left-0 right-0 fr-background-default--grey z-20">
+		<Footer />
+	</div>
 </div>

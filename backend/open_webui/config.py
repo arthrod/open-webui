@@ -847,7 +847,7 @@ OPENAI_API_BASE_URL = "https://api.openai.com/v1"
 
 
 WEBUI_URL = PersistentConfig(
-    "WEBUI_URL", "webui.url", os.environ.get("WEBUI_URL", "http://localhost:3000")
+    "WEBUI_URL", "webui.url", os.environ.get("WEBUI_URL", "http://localhost:8080")
 )
 
 

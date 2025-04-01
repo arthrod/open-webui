@@ -3,7 +3,7 @@ import uuid
 from typing import Optional
 
 from open_webui.internal.db import Base, get_db
-from open_webui.models.users import UserModel, Users
+from beyond_the_loop.models.users import UserModel, Users
 from open_webui.env import SRC_LOG_LEVELS
 from pydantic import BaseModel
 from sqlalchemy import Boolean, Column, String, Text
@@ -90,7 +90,10 @@ class SignupForm(BaseModel):
     profile_image_url: Optional[str] = "/user.png"
 
 
-class AddUserForm(SignupForm):
+class AddUserForm(BaseModel):
+    name: str
+    email: str
+    profile_image_url: Optional[str] = "/user.png"
     role: Optional[str] = "pending"
 
 
@@ -100,10 +103,28 @@ class AuthsTable:
         email: str,
         password: str,
         name: str,
+        company_id: str,
         profile_image_url: str = "/user.png",
         role: str = "pending",
         oauth_sub: Optional[str] = None,
     ) -> Optional[UserModel]:
+        """
+        Inserts a new authentication record and associated user record.
+        
+        Generates a unique identifier to create a new authentication entry and then
+        delegates user creation to the Users.insert_new_user function using the provided
+        details. Commits the transaction and returns the created user record if both
+        entries are successfully added; otherwise, returns None.
+        
+        Args:
+            email: The user's email address.
+            password: The user's password.
+            name: The full name of the user.
+            company_id: Identifier of the company the user is associated with.
+            profile_image_url: URL for the user's profile image. Defaults to "/user.png".
+            role: The user's role. Defaults to "pending".
+            oauth_sub: Optional OAuth subject identifier.
+        """
         with get_db() as db:
             log.info("insert_new_auth")
 
@@ -116,7 +137,7 @@ class AuthsTable:
             db.add(result)
 
             user = Users.insert_new_user(
-                id, name, email, profile_image_url, role, oauth_sub
+                id, name, email, company_id, profile_image_url, role, oauth_sub
             )
 
             db.commit()

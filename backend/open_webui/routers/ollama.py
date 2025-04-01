@@ -6,7 +6,6 @@ import asyncio
 import json
 import logging
 import os
-import random
 import re
 import time
 from typing import Optional, Union
@@ -56,6 +55,7 @@ from open_webui.env import (
     BYPASS_MODEL_ACCESS_CONTROL,
 )
 from open_webui.constants import ERROR_MESSAGES
+import secrets
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OLLAMA"])
@@ -718,7 +718,7 @@ async def show_model_info(
             detail=ERROR_MESSAGES.MODEL_NOT_FOUND(form_data.name),
         )
 
-    url_idx = random.choice(models[form_data.name]["urls"])
+    url_idx = secrets.choice(models[form_data.name]["urls"])
 
     url = request.app.state.config.OLLAMA_BASE_URLS[url_idx]
     key = get_api_key(url_idx, url, request.app.state.config.OLLAMA_API_CONFIGS)
@@ -782,7 +782,7 @@ async def embed(
             model = f"{model}:latest"
 
         if model in models:
-            url_idx = random.choice(models[model]["urls"])
+            url_idx = secrets.choice(models[model]["urls"])
         else:
             raise HTTPException(
                 status_code=400,
@@ -851,7 +851,7 @@ async def embeddings(
             model = f"{model}:latest"
 
         if model in models:
-            url_idx = random.choice(models[model]["urls"])
+            url_idx = secrets.choice(models[model]["urls"])
         else:
             raise HTTPException(
                 status_code=400,
@@ -926,7 +926,7 @@ async def generate_completion(
             model = f"{model}:latest"
 
         if model in models:
-            url_idx = random.choice(models[model]["urls"])
+            url_idx = secrets.choice(models[model]["urls"])
         else:
             raise HTTPException(
                 status_code=400,
@@ -976,7 +976,7 @@ async def get_ollama_url(request: Request, model: str, url_idx: Optional[int] = 
                 status_code=400,
                 detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model),
             )
-        url_idx = random.choice(models[model].get("urls", []))
+        url_idx = secrets.choice(models[model].get("urls", []))
     url = request.app.state.config.OLLAMA_BASE_URLS[url_idx]
     return url, url_idx
 

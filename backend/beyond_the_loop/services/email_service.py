@@ -20,7 +20,7 @@ class EmailService:
         
         # Initialize Jinja2 environment
         template_dir = Path(__file__).parent.parent / 'templates' / 'email'
-        self.jinja_env = Environment(loader=FileSystemLoader(template_dir))
+        self.jinja_env = Environment(loader=FileSystemLoader(template_dir), autoescape=True)
     
     def send_welcome_mail(self, to_email: EmailStr, username: str, password: str) -> bool:
         """

@@ -6,7 +6,6 @@ import asyncio
 import json
 import logging
 import os
-import random
 import re
 import time
 from typing import Optional, Union
@@ -56,6 +55,7 @@ from open_webui.env import (
     BYPASS_MODEL_ACCESS_CONTROL,
 )
 from open_webui.constants import ERROR_MESSAGES
+import secrets
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["OLLAMA"])
@@ -387,7 +387,7 @@ async def get_ollama_tags(
                 method="GET",
                 url=f"{url}/api/tags",
                 headers={**({"Authorization": f"Bearer {key}"} if key else {})},
-            )
+            timeout=60)
             r.raise_for_status()
 
             models = r.json()
@@ -454,7 +454,7 @@ async def get_ollama_versions(request: Request, url_idx: Optional[int] = None):
 
             r = None
             try:
-                r = requests.request(method="GET", url=f"{url}/api/version")
+                r = requests.request(method="GET", url=f"{url}/api/version", timeout=60)
                 r.raise_for_status()
 
                 return r.json()
@@ -627,7 +627,7 @@ async def copy_model(
                 **({"Authorization": f"Bearer {key}"} if key else {}),
             },
             data=form_data.model_dump_json(exclude_none=True).encode(),
-        )
+        timeout=60)
         r.raise_for_status()
 
         log.debug(f"r.text: {r.text}")
@@ -682,7 +682,7 @@ async def delete_model(
                 "Content-Type": "application/json",
                 **({"Authorization": f"Bearer {key}"} if key else {}),
             },
-        )
+        timeout=60)
         r.raise_for_status()
 
         log.debug(f"r.text: {r.text}")
@@ -718,7 +718,7 @@ async def show_model_info(
             detail=ERROR_MESSAGES.MODEL_NOT_FOUND(form_data.name),
         )
 
-    url_idx = random.choice(models[form_data.name]["urls"])
+    url_idx = secrets.choice(models[form_data.name]["urls"])
 
     url = request.app.state.config.OLLAMA_BASE_URLS[url_idx]
     key = get_api_key(url_idx, url, request.app.state.config.OLLAMA_API_CONFIGS)
@@ -732,7 +732,7 @@ async def show_model_info(
                 **({"Authorization": f"Bearer {key}"} if key else {}),
             },
             data=form_data.model_dump_json(exclude_none=True).encode(),
-        )
+        timeout=60)
         r.raise_for_status()
 
         return r.json()
@@ -782,7 +782,7 @@ async def embed(
             model = f"{model}:latest"
 
         if model in models:
-            url_idx = random.choice(models[model]["urls"])
+            url_idx = secrets.choice(models[model]["urls"])
         else:
             raise HTTPException(
                 status_code=400,
@@ -801,7 +801,7 @@ async def embed(
                 **({"Authorization": f"Bearer {key}"} if key else {}),
             },
             data=form_data.model_dump_json(exclude_none=True).encode(),
-        )
+        timeout=60)
         r.raise_for_status()
 
         data = r.json()
@@ -851,7 +851,7 @@ async def embeddings(
             model = f"{model}:latest"
 
         if model in models:
-            url_idx = random.choice(models[model]["urls"])
+            url_idx = secrets.choice(models[model]["urls"])
         else:
             raise HTTPException(
                 status_code=400,
@@ -870,7 +870,7 @@ async def embeddings(
                 **({"Authorization": f"Bearer {key}"} if key else {}),
             },
             data=form_data.model_dump_json(exclude_none=True).encode(),
-        )
+        timeout=60)
         r.raise_for_status()
 
         data = r.json()
@@ -926,7 +926,7 @@ async def generate_completion(
             model = f"{model}:latest"
 
         if model in models:
-            url_idx = random.choice(models[model]["urls"])
+            url_idx = secrets.choice(models[model]["urls"])
         else:
             raise HTTPException(
                 status_code=400,
@@ -976,7 +976,7 @@ async def get_ollama_url(request: Request, model: str, url_idx: Optional[int] = 
                 status_code=400,
                 detail=ERROR_MESSAGES.MODEL_NOT_FOUND(model),
             )
-        url_idx = random.choice(models[model].get("urls", []))
+        url_idx = secrets.choice(models[model].get("urls", []))
     url = request.app.state.config.OLLAMA_BASE_URLS[url_idx]
     return url, url_idx
 
@@ -1327,7 +1327,7 @@ async def get_openai_models(
     else:
         url = request.app.state.config.OLLAMA_BASE_URLS[url_idx]
         try:
-            r = requests.request(method="GET", url=f"{url}/api/tags")
+            r = requests.request(method="GET", url=f"{url}/api/tags", timeout=60)
             r.raise_for_status()
 
             model_list = r.json()
@@ -1433,7 +1433,7 @@ async def download_file_stream(
                     file.seek(0)
 
                     url = f"{ollama_url}/api/blobs/sha256:{hashed}"
-                    response = requests.post(url, data=file)
+                    response = requests.post(url, data=file, timeout=60)
 
                     if response.ok:
                         res = {
@@ -1531,7 +1531,7 @@ def upload_model(
                     f.seek(0)
 
                     url = f"{ollama_url}/api/blobs/sha256:{hashed}"
-                    response = requests.post(url, data=f)
+                    response = requests.post(url, data=f, timeout=60)
 
                     if response.ok:
                         res = {

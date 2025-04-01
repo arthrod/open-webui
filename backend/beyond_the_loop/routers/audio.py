@@ -41,6 +41,7 @@ from open_webui.env import (
     DEVICE_TYPE,
     ENABLE_FORWARD_USER_INFO_HEADERS,
 )
+from security import safe_requests
 
 
 router = APIRouter()
@@ -623,7 +624,7 @@ def get_available_models(request: Request) -> list[dict]:
         available_models = [{"id": "tts-1"}, {"id": "tts-1-hd"}]
     elif request.app.state.config.TTS_ENGINE == "elevenlabs":
         try:
-            response = requests.get(
+            response = safe_requests.get(
                 "https://api.elevenlabs.io/v1/models",
                 headers={
                     "xi-api-key": request.app.state.config.TTS_API_KEY,
@@ -675,7 +676,7 @@ def get_available_voices(request) -> dict:
                 "Ocp-Apim-Subscription-Key": request.app.state.config.TTS_API_KEY
             }
 
-            response = requests.get(url, headers=headers, timeout=60)
+            response = safe_requests.get(url, headers=headers, timeout=60)
             response.raise_for_status()
             voices = response.json()
 
@@ -701,7 +702,7 @@ def get_elevenlabs_voices(api_key: str) -> dict:
 
     try:
         # TODO: Add retries
-        response = requests.get(
+        response = safe_requests.get(
             "https://api.elevenlabs.io/v1/voices",
             headers={
                 "xi-api-key": api_key,

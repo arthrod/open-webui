@@ -514,7 +514,7 @@ def transcribe(request: Request, file_path):
                 },
                 files={"file": (filename, open(file_path, "rb"))},
                 data={"model": request.app.state.config.STT_MODEL, "language": "de"},
-            )
+            timeout=60)
 
             r.raise_for_status()
             data = r.json()
@@ -675,7 +675,7 @@ def get_available_voices(request) -> dict:
                 "Ocp-Apim-Subscription-Key": request.app.state.config.TTS_API_KEY
             }
 
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=60)
             response.raise_for_status()
             voices = response.json()
 
@@ -707,7 +707,7 @@ def get_elevenlabs_voices(api_key: str) -> dict:
                 "xi-api-key": api_key,
                 "Content-Type": "application/json",
             },
-        )
+        timeout=60)
         response.raise_for_status()
         voices_data = response.json()
 

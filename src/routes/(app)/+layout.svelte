@@ -44,7 +44,7 @@
 	import ChangelogModal from '$lib/components/ChangelogModal.svelte';
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
 	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
-	import { get } from 'svelte/store';
+	import { redirectWebAuth } from '$lib/apis/auths';
 
 	const i18n = getContext('i18n');
 
@@ -56,7 +56,7 @@
 
 	onMount(async () => {
 		if ($user === undefined) {
-			await goto('/auth');
+			redirectWebAuth();
 		} else if (['user', 'admin'].includes($user.role)) {
 			try {
 				// Check if IndexedDB exists

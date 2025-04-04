@@ -3,6 +3,7 @@ import uuid
 import time
 import datetime
 import logging
+import requests
 from aiohttp import ClientSession
 
 from open_webui.models.auths import (
@@ -31,7 +32,12 @@ from open_webui.env import (
 )
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse, Response
-from open_webui.config import OPENID_PROVIDER_URL, ENABLE_OAUTH_SIGNUP, ENABLE_LDAP
+from open_webui.config import (
+    OPENID_PROVIDER_URL,
+    ENABLE_OAUTH_SIGNUP,
+    WEBUI_URL,
+    ENABLE_LDAP
+)
 from pydantic import BaseModel
 from open_webui.utils.misc import parse_duration, validate_email_format
 from open_webui.utils.auth import (
@@ -72,6 +78,7 @@ class SessionUserResponse(Token, UserResponse):
 async def get_session_user(
     request: Request, response: Response, user=Depends(get_current_user)
 ):
+
     expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
     expires_at = None
     if expires_delta:
@@ -138,7 +145,7 @@ async def update_profile(
 
 
 ############################
-# Update Password
+# Update Password (TODO: HANDLED BY WEBAUTH)
 ############################
 
 
@@ -325,92 +332,66 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
 ############################
 
 
-@router.post("/signin", response_model=SessionUserResponse)
-async def signin(request: Request, response: Response, form_data: SigninForm):
-    if WEBUI_AUTH_TRUSTED_EMAIL_HEADER:
-        if WEBUI_AUTH_TRUSTED_EMAIL_HEADER not in request.headers:
-            raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_TRUSTED_HEADER)
+@router.get("/signin", response_model=SessionUserResponse)
+async def signin(request: Request, response: Response, ticket: str):
 
-        trusted_email = request.headers[WEBUI_AUTH_TRUSTED_EMAIL_HEADER].lower()
-        trusted_name = trusted_email
-        if WEBUI_AUTH_TRUSTED_NAME_HEADER:
-            trusted_name = request.headers.get(
-                WEBUI_AUTH_TRUSTED_NAME_HEADER, trusted_email
-            )
-        if not Users.get_user_by_email(trusted_email.lower()):
-            await signup(
-                request,
-                response,
-                SignupForm(
-                    email=trusted_email, password=str(uuid.uuid4()), name=trusted_name
-                ),
-            )
-        user = Auths.authenticate_user_by_trusted_header(trusted_email)
-    elif WEBUI_AUTH == False:
-        admin_email = "admin@localhost"
-        admin_password = "admin"
+    # Get the ticket from the query parameters
+    WEBAUTH_CALLBACK = request.url.remove_query_params("ticket")
 
-        if Users.get_user_by_email(admin_email.lower()):
-            user = Auths.authenticate_user(admin_email.lower(), admin_password)
+    # Construct the URL for the webauth validation
+    WEBAUTH_URL = f"https://webauth.arizona.edu/webauth/validate?service={WEBAUTH_CALLBACK}&ticket={ticket}"
+
+    if ticket != None:
+        user = Auths.authenticate_user(WEBAUTH_URL)
+        if user:
+            expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
+            expires_at = None
+            if expires_delta:
+                expires_at = int(time.time()) + int(expires_delta.total_seconds())
+
+            token = create_token(
+                data={"id": user.id},
+                expires_delta=expires_delta,
+            )
+
+            datetime_expires_at = (
+                datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
+                if expires_at
+                else None
+            )
+
+            # Set the cookie token
+            response.set_cookie(
+                key="token",
+                value=token,
+                expires=datetime_expires_at,
+                httponly=True,  # Ensures the cookie is not accessible via JavaScript
+                samesite=WEBUI_AUTH_COOKIE_SAME_SITE,
+                secure=WEBUI_AUTH_COOKIE_SECURE,
+            )
+
+            user_permissions = get_permissions(
+                user.id, request.app.state.config.USER_PERMISSIONS
+            )
+
+            # return {
+            #     "token": token,
+            #     "token_type": "Bearer",
+            #     "expires_at": expires_at,
+            #     "id": user.id,
+            #     "email": user.email,
+            #     "name": user.name,
+            #     "role": user.role,
+            #     "profile_image_url": user.profile_image_url,
+            #     "permissions": user_permissions,
+            # }
+            auth_callback_url = f"{WEBUI_URL}/auth?token={token}"
+            logging.info(f"Redirecting authorized login to {auth_callback_url}")
+            return RedirectResponse(url=auth_callback_url)
         else:
-            if Users.get_num_users() != 0:
-                raise HTTPException(400, detail=ERROR_MESSAGES.EXISTING_USERS)
-
-            await signup(
-                request,
-                response,
-                SignupForm(email=admin_email, password=admin_password, name="User"),
-            )
-
-            user = Auths.authenticate_user(admin_email.lower(), admin_password)
+            raise HTTPException(400, detail="Invalid credentials")
     else:
-        user = Auths.authenticate_user(form_data.email.lower(), form_data.password)
-
-    if user:
-
-        expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
-        expires_at = None
-        if expires_delta:
-            expires_at = int(time.time()) + int(expires_delta.total_seconds())
-
-        token = create_token(
-            data={"id": user.id},
-            expires_delta=expires_delta,
-        )
-
-        datetime_expires_at = (
-            datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
-            if expires_at
-            else None
-        )
-
-        # Set the cookie token
-        response.set_cookie(
-            key="token",
-            value=token,
-            expires=datetime_expires_at,
-            httponly=True,  # Ensures the cookie is not accessible via JavaScript
-            samesite=WEBUI_AUTH_COOKIE_SAME_SITE,
-            secure=WEBUI_AUTH_COOKIE_SECURE,
-        )
-
-        user_permissions = get_permissions(
-            user.id, request.app.state.config.USER_PERMISSIONS
-        )
-
-        return {
-            "token": token,
-            "token_type": "Bearer",
-            "expires_at": expires_at,
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "role": user.role,
-            "profile_image_url": user.profile_image_url,
-            "permissions": user_permissions,
-        }
-    else:
-        raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
+        raise HTTPException(400, detail="Invalid credentials")
 
 
 ############################

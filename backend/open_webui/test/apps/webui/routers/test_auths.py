@@ -1,5 +1,6 @@
 from test.util.abstract_integration_test import AbstractPostgresTest
 from test.util.mock_user import mock_webui_user
+from beyond_the_loop.models.companies import NO_COMPANY
 
 
 class TestAuths(AbstractPostgresTest):
@@ -26,12 +27,21 @@ class TestAuths(AbstractPostgresTest):
         }
 
     def test_update_profile(self):
+        """
+        Tests the profile update API endpoint.
+        
+        Creates a new user with an initial profile, simulates an authenticated session,
+        and sends a POST request to update the user's name and profile image URL.
+        Verifies that the update succeeds with a 200 status code and that the user's
+        details in the database reflect the changes.
+        """
         from open_webui.utils.auth import get_password_hash
 
         user = self.auths.insert_new_auth(
             email="john.doe@openwebui.com",
             password=get_password_hash("old_password"),
             name="John Doe",
+            company_id=NO_COMPANY,
             profile_image_url="/user.png",
             role="user",
         )
@@ -53,6 +63,7 @@ class TestAuths(AbstractPostgresTest):
             email="john.doe@openwebui.com",
             password=get_password_hash("old_password"),
             name="John Doe",
+            company_id=NO_COMPANY,
             profile_image_url="/user.png",
             role="user",
         )
@@ -80,6 +91,7 @@ class TestAuths(AbstractPostgresTest):
             email="john.doe@openwebui.com",
             password=get_password_hash("password"),
             name="John Doe",
+            company_id=NO_COMPANY,
             profile_image_url="/user.png",
             role="user",
         )
@@ -142,6 +154,7 @@ class TestAuths(AbstractPostgresTest):
             email="john.doe@openwebui.com",
             password="password",
             name="John Doe",
+            company_id=NO_COMPANY,
             profile_image_url="/user.png",
             role="admin",
         )
@@ -155,10 +168,18 @@ class TestAuths(AbstractPostgresTest):
         }
 
     def test_create_api_key_(self):
+        """
+        Tests API key creation for an admin user.
+        
+        Inserts a new admin user with a specified company ID (NO_COMPANY) and mocks the user context.
+        Sends a POST request to the '/api_key' endpoint and asserts that the response is successful,
+        returning a non-empty API key.
+        """
         user = self.auths.insert_new_auth(
             email="john.doe@openwebui.com",
             password="password",
             name="John Doe",
+            company_id=NO_COMPANY,
             profile_image_url="/user.png",
             role="admin",
         )
@@ -174,6 +195,7 @@ class TestAuths(AbstractPostgresTest):
             email="john.doe@openwebui.com",
             password="password",
             name="John Doe",
+            company_id=NO_COMPANY,
             profile_image_url="/user.png",
             role="admin",
         )
@@ -190,6 +212,7 @@ class TestAuths(AbstractPostgresTest):
             email="john.doe@openwebui.com",
             password="password",
             name="John Doe",
+            company_id=NO_COMPANY,
             profile_image_url="/user.png",
             role="admin",
         )

@@ -13,6 +13,14 @@ declare global {
 	}
 }
 
+/**
+ * Loads the Pyodide runtime and installs specified Python packages.
+ *
+ * This asynchronous function resets global output variables, initializes Pyodide from a defined index URL, and sets up custom stdout and stderr handlers 
+ * that log and accumulate Python output. It creates a directory in the Pyodide filesystem and uses micropip to install any provided packages.
+ *
+ * @param packages - An optional array of package names to install. Defaults to an empty array.
+ */
 async function loadPyodideAndPackages(packages: string[] = []) {
 	self.stdout = null;
 	self.stderr = null;
@@ -60,6 +68,7 @@ async function loadPyodideAndPackages(packages: string[] = []) {
 	const micropip = self.pyodide.pyimport('micropip');
 
 	// await micropip.set_index_urls('https://pypi.org/pypi/{package_name}/json');
+
 	await micropip.install(packages);
 }
 

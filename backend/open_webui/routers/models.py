@@ -1,19 +1,19 @@
 from typing import Optional
 
-from open_webui.models.models import (
+from beyond_the_loop.models.models import (
     ModelForm,
     ModelModel,
     ModelResponse,
-    ModelUserResponse,
+    ModelCompanyResponse,
     Models,
 )
 from open_webui.constants import ERROR_MESSAGES
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.access_control import has_access, has_permission
 
+from beyond_the_loop.models.companies import Companies
 
 router = APIRouter()
 
@@ -23,8 +23,20 @@ router = APIRouter()
 ###########################
 
 
-@router.get("/", response_model=list[ModelUserResponse])
+@router.get("/", response_model=list[ModelCompanyResponse])
 async def get_models(id: Optional[str] = None, user=Depends(get_verified_user)):
+    """
+    Retrieve models based on the authenticated user's role.
+    
+    For admin users, returns all models; for non-admin users, returns only models associated with 
+    their user ID.
+    
+    Args:
+        id (Optional[str]): Reserved for future filtering; currently not used.
+    
+    Returns:
+        A list of model records.
+    """
     if user.role == "admin":
         return Models.get_models()
     else:
@@ -52,6 +64,21 @@ async def create_new_model(
     form_data: ModelForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Creates a new model using the provided form data if the user is authorized.
+    
+    This async function checks that the current user is an admin or has the necessary
+    permissions to manage models. It verifies that the model identifier in the form data
+    is not already in use. If valid, it retrieves the company associated with the user and
+    inserts a new model linked to that company. If any check fails or model creation does
+    not succeed, an HTTPException with a 401 status is raised.
+    
+    Args:
+        form_data: A ModelForm instance containing the details for the new model.
+    
+    Returns:
+        The newly created model.
+    """
     if user.role != "admin" and not has_permission(
         user.id, "workspace.models", request.app.state.config.USER_PERMISSIONS
     ):
@@ -68,7 +95,9 @@ async def create_new_model(
         )
 
     else:
-        model = Models.insert_new_model(form_data, user.id)
+        company = Companies.get_company_by_id(user.company_id)
+
+        model = Models.insert_new_model(form_data, company.id)
         if model:
             return model
         else:
@@ -147,6 +176,24 @@ async def update_model_by_id(
     form_data: ModelForm,
     user=Depends(get_verified_user),
 ):
+    """
+    Updates an existing model using its identifier.
+    
+    Retrieves the model with the given ID and verifies that the current user's company
+    affiliation, write access, or admin role permits modification of the model. Updates
+    the model with the provided form data and returns the updated model. Raises an HTTP
+    exception if the model is not found or if the user lacks the necessary permissions.
+    
+    Args:
+        id: The unique identifier of the model to update.
+        form_data: The new values for updating the model.
+    
+    Returns:
+        The updated model.
+    
+    Raises:
+        HTTPException: If the model does not exist or if access is prohibited.
+    """
     model = Models.get_model_by_id(id)
 
     if not model:
@@ -156,7 +203,7 @@ async def update_model_by_id(
         )
 
     if (
-        model.user_id != user.id
+        model.company_id != user.company_id
         and not has_access(user.id, "write", model.access_control)
         and user.role != "admin"
     ):

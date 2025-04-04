@@ -2,15 +2,16 @@ import time
 import logging
 import sys
 
-from aiocache import cached
 from fastapi import Request
 
-from open_webui.routers import openai, ollama
+from beyond_the_loop.models.users import User
+from open_webui.routers import ollama
+from beyond_the_loop.routers import openai
 from open_webui.functions import get_function_models
 
 
 from open_webui.models.functions import Functions
-from open_webui.models.models import Models
+from beyond_the_loop.models.models import Models, ModelForm, ModelMeta, ModelParams
 
 
 from open_webui.utils.plugin import load_function_module_by_id
@@ -22,7 +23,6 @@ from open_webui.config import (
 )
 
 from open_webui.env import SRC_LOG_LEVELS, GLOBAL_LOG_LEVEL
-from open_webui.models.users import UserModel
 
 
 logging.basicConfig(stream=sys.stdout, level=GLOBAL_LOG_LEVEL)
@@ -30,17 +30,50 @@ log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MAIN"])
 
 
-async def get_all_base_models(request: Request, user: UserModel = None):
+async def get_all_base_models(request: Request, user: User):
+    """
+    Retrieves and registers available base models asynchronously.
+    
+    This function aggregates models from multiple sources based on configuration settings. When the OpenAI API is enabled,
+    it fetches OpenAI models and registers any that are not already present in the database. Similarly, if the Ollama API is
+    enabled, it retrieves and reformats models from Ollama. Additionally, function models are obtained via a dedicated helper.
+    The resulting list combines function models, OpenAI models, and Ollama models.
+    
+    Parameters:
+        request: The HTTP request object providing access to application state and configuration.
+        user: The current user, whose company information is used for registering OpenAI models.
+    
+    Returns:
+        A list of base models aggregated from function models, OpenAI, and Ollama.
+    """
     function_models = []
     openai_models = []
     ollama_models = []
 
     if request.app.state.config.ENABLE_OPENAI_API:
-        openai_models = await openai.get_all_models(request, user=user)
+        openai_models = await openai.get_all_models(request)
         openai_models = openai_models["data"]
+        
+        # Register OpenAI models in the database if they don't exist
+        for model in openai_models:
+            existing_model = Models.get_model_by_id(model["id"])
+            if not existing_model:
+                Models.insert_new_model(
+                    ModelForm(
+                        id=model["id"],
+                        name=model["id"],  # Use ID as name since OpenAI models don't have separate names
+                        meta=ModelMeta(
+                            description="OpenAI model",
+                            profile_image_url="/static/favicon.png",
+                        ),
+                        params=ModelParams(),
+                        access_control=None,  # None means public access
+                    ),
+                    company_id=user.company_id,
+                )
 
     if request.app.state.config.ENABLE_OLLAMA_API:
-        ollama_models = await ollama.get_all_models(request, user=user)
+        ollama_models = await ollama.get_all_models(request)
         ollama_models = [
             {
                 "id": model["model"],
@@ -49,7 +82,6 @@ async def get_all_base_models(request: Request, user: UserModel = None):
                 "created": int(time.time()),
                 "owned_by": "ollama",
                 "ollama": model,
-                "tags": model.get("tags", []),
             }
             for model in ollama_models["models"]
         ]
@@ -60,8 +92,22 @@ async def get_all_base_models(request: Request, user: UserModel = None):
     return models
 
 
-async def get_all_models(request, user: UserModel = None):
-    models = await get_all_base_models(request, user=user)
+async def get_all_models(request: Request, user: User):
+    """
+    Retrieves and aggregates available models with custom and arena configurations.
+    
+    This asynchronous function compiles a complete list of models by first retrieving base models from
+    external APIs. It then optionally adds evaluation arena models from a predefined configuration if enabled,
+    integrates custom models from the database, and enhances each model with associated action metadata.
+    The updated model list is stored in the application state before being returned.
+    
+    Returns:
+        List[dict]: A list of dictionaries representing the compiled model information.
+    
+    Raises:
+        Exception: If an action defined by a model is not found.
+    """
+    models = await get_all_base_models(request, user)
 
     # If there are no models, return an empty list
     if len(models) == 0:
@@ -144,7 +190,7 @@ async def get_all_models(request, user: UserModel = None):
                     custom_model.base_model_id == model["id"]
                     or custom_model.base_model_id == model["id"].split(":")[0]
                 ):
-                    owned_by = model.get("owned_by", "unknown owner")
+                    owned_by = model["owned_by"]
                     if "pipe" in model:
                         pipe = model["pipe"]
                     break
@@ -225,6 +271,15 @@ async def get_all_models(request, user: UserModel = None):
 
 
 def check_model_access(user, model):
+    """
+    Checks if a user is authorized to access a model.
+    
+    Verifies that the specified user has read permission for the given model. For arena 
+    models, access is determined using the model’s embedded access control metadata. 
+    For non-arena models, the function retrieves model details from storage and validates 
+    access based on the stored access control settings. An exception is raised if the 
+    model is not found or the user lacks the required access.
+    """
     if model.get("arena"):
         if not has_access(
             user.id,
@@ -239,8 +294,7 @@ def check_model_access(user, model):
         if not model_info:
             raise Exception("Model not found")
         elif not (
-            user.id == model_info.user_id
-            or has_access(
+            has_access(
                 user.id, type="read", access_control=model_info.access_control
             )
         ):

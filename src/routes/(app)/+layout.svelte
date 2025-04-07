@@ -227,7 +227,7 @@
 		}
 
 		loaded = true;
-	});
+	}});
 
 	const checkForVersionUpdates = async () => {
 		version = await getVersionUpdates(localStorage.token).catch((error) => {

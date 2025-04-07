@@ -34,7 +34,6 @@
 
 	import { executeToolServer, getBackendConfig } from '$lib/apis';
 	import { getSessionUser, redirectWebAuth } from '$lib/apis/auths';
-	import { getSessionUser, redirectWebAuth } from '$lib/apis/auths';
 
 	import '../tailwind.css';
 	import '../app.css';

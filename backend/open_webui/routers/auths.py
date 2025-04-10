@@ -3,6 +3,7 @@ import uuid
 import time
 import datetime
 import logging
+import requests
 from aiohttp import ClientSession
 
 from open_webui.models.auths import (
@@ -31,7 +32,12 @@ from open_webui.env import (
 )
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse, Response
-from open_webui.config import OPENID_PROVIDER_URL, ENABLE_OAUTH_SIGNUP, ENABLE_LDAP
+from open_webui.config import (
+    OPENID_PROVIDER_URL,
+    ENABLE_OAUTH_SIGNUP,
+    WEBUI_URL,
+    ENABLE_LDAP
+)
 from pydantic import BaseModel
 from open_webui.utils.misc import parse_duration, validate_email_format
 from open_webui.utils.auth import (
@@ -72,6 +78,7 @@ class SessionUserResponse(Token, UserResponse):
 async def get_session_user(
     request: Request, response: Response, user=Depends(get_current_user)
 ):
+
     expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
     expires_at = None
     if expires_delta:
@@ -138,7 +145,7 @@ async def update_profile(
 
 
 ############################
-# Update Password
+# Update Password (TODO: HANDLED BY WEBAUTH)
 ############################
 
 
@@ -194,8 +201,9 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
             ciphers=LDAP_CIPHERS,
         )
     except Exception as e:
-        log.error(f"An error occurred on TLS: {str(e)}")
-        raise HTTPException(400, detail=str(e))
+        log.error(f"TLS configuration error: {str(e)}")
+        raise HTTPException(
+            400, detail="Failed to configure TLS for LDAP connection.")
 
     try:
         server = Server(
@@ -226,13 +234,15 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
         )
 
         if not search_success:
-            raise HTTPException(400, detail="User not found in the LDAP server")
+            raise HTTPException(
+                400, detail="User not found in the LDAP server")
 
         entry = connection_app.entries[0]
         username = str(entry[f"{LDAP_ATTRIBUTE_FOR_USERNAME}"]).lower()
         email = str(entry[f"{LDAP_ATTRIBUTE_FOR_MAIL}"])
         if not email or email == "" or email == "[]":
-            raise HTTPException(400, f"User {form_data.user} does not have email.")
+            raise HTTPException(
+                400, "User does not have a valid email address.")
         else:
             email = email.lower()
 
@@ -248,7 +258,7 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
                 authentication="SIMPLE",
             )
             if not connection_user.bind():
-                raise HTTPException(400, f"Authentication failed for {form_data.user}")
+                raise HTTPException(400, "Authentication failed.")
 
             user = Users.get_user_by_email(email)
             if not user:
@@ -276,7 +286,10 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
                 except HTTPException:
                     raise
                 except Exception as err:
-                    raise HTTPException(500, detail=ERROR_MESSAGES.DEFAULT(err))
+                    log.error(f"LDAP user creation error: {str(err)}")
+                    raise HTTPException(
+                        500, detail="Internal error occurred during LDAP user creation."
+                    )
 
             user = Auths.authenticate_user_by_trusted_header(email)
 
@@ -312,12 +325,10 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
             else:
                 raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
         else:
-            raise HTTPException(
-                400,
-                f"User {form_data.user} does not match the record. Search result: {str(entry[f'{LDAP_ATTRIBUTE_FOR_USERNAME}'])}",
-            )
+            raise HTTPException(400, "User record mismatch.")
     except Exception as e:
-        raise HTTPException(400, detail=str(e))
+        log.error(f"LDAP authentication error: {str(e)}")
+        raise HTTPException(400, detail="LDAP authentication failed.")
 
 
 ############################
@@ -325,92 +336,73 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
 ############################
 
 
-@router.post("/signin", response_model=SessionUserResponse)
-async def signin(request: Request, response: Response, form_data: SigninForm):
-    if WEBUI_AUTH_TRUSTED_EMAIL_HEADER:
-        if WEBUI_AUTH_TRUSTED_EMAIL_HEADER not in request.headers:
-            raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_TRUSTED_HEADER)
+@router.get("/signin", response_model=SessionUserResponse)
+async def signin(request: Request, response: Response, ticket: str):
 
-        trusted_email = request.headers[WEBUI_AUTH_TRUSTED_EMAIL_HEADER].lower()
-        trusted_name = trusted_email
-        if WEBUI_AUTH_TRUSTED_NAME_HEADER:
-            trusted_name = request.headers.get(
-                WEBUI_AUTH_TRUSTED_NAME_HEADER, trusted_email
-            )
-        if not Users.get_user_by_email(trusted_email.lower()):
-            await signup(
-                request,
-                response,
-                SignupForm(
-                    email=trusted_email, password=str(uuid.uuid4()), name=trusted_name
-                ),
-            )
-        user = Auths.authenticate_user_by_trusted_header(trusted_email)
-    elif WEBUI_AUTH == False:
-        admin_email = "admin@localhost"
-        admin_password = "admin"
+    # Get the ticket from the query parameters
+    WEBAUTH_CALLBACK = request.url.remove_query_params("ticket")
 
-        if Users.get_user_by_email(admin_email.lower()):
-            user = Auths.authenticate_user(admin_email.lower(), admin_password)
+    # Construct the URL for the webauth validation
+    WEBAUTH_URL = f"https://webauth.arizona.edu/webauth/validate?service={WEBAUTH_CALLBACK}&ticket={ticket}"
+
+    if ticket:
+        logging.info(
+            f"Received ticket. Authenticating user via \"{WEBAUTH_URL}\"...")
+        user = Auths.authenticate_user(WEBAUTH_URL)
+        if user:
+            expires_delta = parse_duration(
+                request.app.state.config.JWT_EXPIRES_IN)
+            expires_at = None
+            if expires_delta:
+                expires_at = int(time.time()) + \
+                    int(expires_delta.total_seconds())
+
+            token = create_token(
+                data={"id": user.id},
+                expires_delta=expires_delta,
+            )
+
+            datetime_expires_at = (
+                datetime.datetime.fromtimestamp(
+                    expires_at, datetime.timezone.utc)
+                if expires_at
+                else None
+            )
+
+            # Set the cookie token
+            response.set_cookie(
+                key="token",
+                value=token,
+                expires=datetime_expires_at,
+                httponly=True,  # Ensures the cookie is not accessible via JavaScript
+                samesite=WEBUI_AUTH_COOKIE_SAME_SITE,
+                secure=WEBUI_AUTH_COOKIE_SECURE,
+            )
+
+            # user_permissions = get_permissions(
+            #     user.id, request.app.state.config.USER_PERMISSIONS
+            # )
+
+            # return {
+            #     "token": token,
+            #     "token_type": "Bearer",
+            #     "expires_at": expires_at,
+            #     "id": user.id,
+            #     "email": user.email,
+            #     "name": user.name,
+            #     "role": user.role,
+            #     "profile_image_url": user.profile_image_url,
+            #     "permissions": user_permissions,
+            # }
+            auth_callback_url = f"{WEBUI_URL}/auth?token={token}"
+            logging.info(
+                f"WebAuth authorized user: \"{user.name}\". Redirecting to {auth_callback_url}")
+            return RedirectResponse(url=auth_callback_url)
         else:
-            if Users.get_num_users() != 0:
-                raise HTTPException(400, detail=ERROR_MESSAGES.EXISTING_USERS)
-
-            await signup(
-                request,
-                response,
-                SignupForm(email=admin_email, password=admin_password, name="User"),
-            )
-
-            user = Auths.authenticate_user(admin_email.lower(), admin_password)
+            logging.info("Failed to authenticate user")
+            raise HTTPException(400, detail="Invalid credentials")
     else:
-        user = Auths.authenticate_user(form_data.email.lower(), form_data.password)
-
-    if user:
-
-        expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
-        expires_at = None
-        if expires_delta:
-            expires_at = int(time.time()) + int(expires_delta.total_seconds())
-
-        token = create_token(
-            data={"id": user.id},
-            expires_delta=expires_delta,
-        )
-
-        datetime_expires_at = (
-            datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
-            if expires_at
-            else None
-        )
-
-        # Set the cookie token
-        response.set_cookie(
-            key="token",
-            value=token,
-            expires=datetime_expires_at,
-            httponly=True,  # Ensures the cookie is not accessible via JavaScript
-            samesite=WEBUI_AUTH_COOKIE_SAME_SITE,
-            secure=WEBUI_AUTH_COOKIE_SECURE,
-        )
-
-        user_permissions = get_permissions(
-            user.id, request.app.state.config.USER_PERMISSIONS
-        )
-
-        return {
-            "token": token,
-            "token_type": "Bearer",
-            "expires_at": expires_at,
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "role": user.role,
-            "profile_image_url": user.profile_image_url,
-            "permissions": user_permissions,
-        }
-    else:
-        raise HTTPException(400, detail=ERROR_MESSAGES.INVALID_CRED)
+        raise HTTPException(400, detail="Ticket required")
 
 
 ############################
@@ -463,10 +455,12 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
         )
 
         if user:
-            expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
+            expires_delta = parse_duration(
+                request.app.state.config.JWT_EXPIRES_IN)
             expires_at = None
             if expires_delta:
-                expires_at = int(time.time()) + int(expires_delta.total_seconds())
+                expires_at = int(time.time()) + \
+                    int(expires_delta.total_seconds())
 
             token = create_token(
                 data={"id": user.id},
@@ -474,7 +468,8 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
             )
 
             datetime_expires_at = (
-                datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
+                datetime.datetime.fromtimestamp(
+                    expires_at, datetime.timezone.utc)
                 if expires_at
                 else None
             )
@@ -519,7 +514,9 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
         else:
             raise HTTPException(500, detail=ERROR_MESSAGES.CREATE_USER_ERROR)
     except Exception as err:
-        raise HTTPException(500, detail=ERROR_MESSAGES.DEFAULT(err))
+        log.error(f"Signup error: {str(err)}")
+        raise HTTPException(
+            500, detail="An internal error occurred during signup.")
 
 
 @router.get("/signout")
@@ -534,7 +531,8 @@ async def signout(request: Request, response: Response):
                     async with session.get(OPENID_PROVIDER_URL.value) as resp:
                         if resp.status == 200:
                             openid_data = await resp.json()
-                            logout_url = openid_data.get("end_session_endpoint")
+                            logout_url = openid_data.get(
+                                "end_session_endpoint")
                             if logout_url:
                                 response.delete_cookie("oauth_id_token")
                                 return RedirectResponse(
@@ -547,7 +545,11 @@ async def signout(request: Request, response: Response):
                                 detail="Failed to fetch OpenID configuration",
                             )
             except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
+                log.error(f"OpenID signout error: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to sign out from the OpenID provider.",
+                )
 
     return {"status": True}
 
@@ -591,7 +593,10 @@ async def add_user(form_data: AddUserForm, user=Depends(get_admin_user)):
         else:
             raise HTTPException(500, detail=ERROR_MESSAGES.CREATE_USER_ERROR)
     except Exception as err:
-        raise HTTPException(500, detail=ERROR_MESSAGES.DEFAULT(err))
+        log.error(f"Add user error: {str(err)}")
+        raise HTTPException(
+            500, detail="An internal error occurred while adding the user."
+        )
 
 
 ############################
@@ -763,11 +768,6 @@ async def update_ldap_server(
         value = getattr(form_data, key)
         if not value:
             raise HTTPException(400, detail=f"Required field {key} is empty")
-
-    if form_data.use_tls and not form_data.certificate_path:
-        raise HTTPException(
-            400, detail="TLS is enabled but certificate file path is missing"
-        )
 
     request.app.state.config.LDAP_SERVER_LABEL = form_data.label
     request.app.state.config.LDAP_SERVER_HOST = form_data.host

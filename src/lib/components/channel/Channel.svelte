@@ -106,7 +106,7 @@
 					messages[idx] = data;
 				}
 			} else if (type === 'typing' && event.message_id === null) {
-				if (event.user.id === $user.id) {
+				if (event.user.id === $user?.id) {
 					return;
 				}
 
@@ -195,7 +195,7 @@
 </script>
 
 <svelte:head>
-	<title>#{channel?.name ?? 'Channel'} | Open WebUI</title>
+	<title>#{channel?.name ?? 'Channel'} | Arizona AI Hub</title>
 </svelte:head>
 
 <div

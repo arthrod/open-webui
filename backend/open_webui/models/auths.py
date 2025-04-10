@@ -2,12 +2,14 @@ import logging
 import uuid
 from typing import Optional
 
+import requests
+
 from open_webui.internal.db import Base, get_db
 from open_webui.models.users import UserModel, Users
 from open_webui.env import SRC_LOG_LEVELS
 from pydantic import BaseModel
 from sqlalchemy import Boolean, Column, String, Text
-from open_webui.utils.auth import verify_password
+from open_webui.utils.auth import get_netid, get_netid_email, verify_password
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MODELS"])
@@ -127,21 +129,31 @@ class AuthsTable:
             else:
                 return None
 
-    def authenticate_user(self, email: str, password: str) -> Optional[UserModel]:
-        log.info(f"authenticate_user: {email}")
+    def authenticate_user(self, webauth_url: str) -> Optional[UserModel]:
         try:
-            with get_db() as db:
-                auth = db.query(Auth).filter_by(email=email, active=True).first()
-                if auth:
-                    if verify_password(password, auth.password):
-                        user = Users.get_user_by_id(auth.id)
-                        return user
-                    else:
-                        return None
-                else:
-                    return None
-        except Exception:
+            webauth_response = requests.get(webauth_url, timeout=5)
+            webauth_response.raise_for_status()
+            netid = get_netid(webauth_response.text)
+            email = get_netid_email(netid)
+        except requests.exceptions.Timeout:
+            log.info("Request timeout to webauth after 5 seconds.")
             return None
+        except ValueError:
+            log.info("Tried to login with invalid credentials.")
+            return None
+
+        log.info(f"authenticate_user: {netid}")
+
+        user = Users.get_user_by_email(email)
+        if user == None:
+            id = str(uuid.uuid4())
+            return Users.insert_new_user(
+                id,
+                netid,
+                email,
+                role="admin" if Users.get_num_users() == 0 else "pending",
+            )
+        return user
 
     def authenticate_user_by_api_key(self, api_key: str) -> Optional[UserModel]:
         log.info(f"authenticate_user_by_api_key: {api_key}")
@@ -159,7 +171,8 @@ class AuthsTable:
         log.info(f"authenticate_user_by_trusted_header: {email}")
         try:
             with get_db() as db:
-                auth = db.query(Auth).filter_by(email=email, active=True).first()
+                auth = db.query(Auth).filter_by(
+                    email=email, active=True).first()
                 if auth:
                     user = Users.get_user_by_id(auth.id)
                     return user
@@ -170,7 +183,8 @@ class AuthsTable:
         try:
             with get_db() as db:
                 result = (
-                    db.query(Auth).filter_by(id=id).update({"password": new_password})
+                    db.query(Auth).filter_by(id=id).update(
+                        {"password": new_password})
                 )
                 db.commit()
                 return True if result == 1 else False
@@ -180,7 +194,8 @@ class AuthsTable:
     def update_email_by_id(self, id: str, email: str) -> bool:
         try:
             with get_db() as db:
-                result = db.query(Auth).filter_by(id=id).update({"email": email})
+                result = db.query(Auth).filter_by(
+                    id=id).update({"email": email})
                 db.commit()
                 return True if result == 1 else False
         except Exception:

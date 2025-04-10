@@ -202,7 +202,8 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
         )
     except Exception as e:
         log.error(f"TLS configuration error: {str(e)}")
-        raise HTTPException(400, detail="Failed to configure TLS for LDAP connection.")
+        raise HTTPException(
+            400, detail="Failed to configure TLS for LDAP connection.")
 
     try:
         server = Server(
@@ -233,13 +234,15 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
         )
 
         if not search_success:
-            raise HTTPException(400, detail="User not found in the LDAP server")
+            raise HTTPException(
+                400, detail="User not found in the LDAP server")
 
         entry = connection_app.entries[0]
         username = str(entry[f"{LDAP_ATTRIBUTE_FOR_USERNAME}"]).lower()
         email = str(entry[f"{LDAP_ATTRIBUTE_FOR_MAIL}"])
         if not email or email == "" or email == "[]":
-            raise HTTPException(400, "User does not have a valid email address.")
+            raise HTTPException(
+                400, "User does not have a valid email address.")
         else:
             email = email.lower()
 
@@ -342,13 +345,17 @@ async def signin(request: Request, response: Response, ticket: str):
     # Construct the URL for the webauth validation
     WEBAUTH_URL = f"https://webauth.arizona.edu/webauth/validate?service={WEBAUTH_CALLBACK}&ticket={ticket}"
 
-    if ticket != None:
+    if ticket:
+        logging.info(
+            f"Received ticket. Authenticating user via \"{WEBAUTH_URL}\"...")
         user = Auths.authenticate_user(WEBAUTH_URL)
         if user:
-            expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
+            expires_delta = parse_duration(
+                request.app.state.config.JWT_EXPIRES_IN)
             expires_at = None
             if expires_delta:
-                expires_at = int(time.time()) + int(expires_delta.total_seconds())
+                expires_at = int(time.time()) + \
+                    int(expires_delta.total_seconds())
 
             token = create_token(
                 data={"id": user.id},
@@ -356,7 +363,8 @@ async def signin(request: Request, response: Response, ticket: str):
             )
 
             datetime_expires_at = (
-                datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
+                datetime.datetime.fromtimestamp(
+                    expires_at, datetime.timezone.utc)
                 if expires_at
                 else None
             )
@@ -371,9 +379,9 @@ async def signin(request: Request, response: Response, ticket: str):
                 secure=WEBUI_AUTH_COOKIE_SECURE,
             )
 
-            user_permissions = get_permissions(
-                user.id, request.app.state.config.USER_PERMISSIONS
-            )
+            # user_permissions = get_permissions(
+            #     user.id, request.app.state.config.USER_PERMISSIONS
+            # )
 
             # return {
             #     "token": token,
@@ -387,12 +395,14 @@ async def signin(request: Request, response: Response, ticket: str):
             #     "permissions": user_permissions,
             # }
             auth_callback_url = f"{WEBUI_URL}/auth?token={token}"
-            logging.info(f"Redirecting authorized login to {auth_callback_url}")
+            logging.info(
+                f"WebAuth authorized user: \"{user.name}\". Redirecting to {auth_callback_url}")
             return RedirectResponse(url=auth_callback_url)
         else:
+            logging.info("Failed to authenticate user")
             raise HTTPException(400, detail="Invalid credentials")
     else:
-        raise HTTPException(400, detail="Invalid credentials")
+        raise HTTPException(400, detail="Ticket required")
 
 
 ############################
@@ -445,10 +455,12 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
         )
 
         if user:
-            expires_delta = parse_duration(request.app.state.config.JWT_EXPIRES_IN)
+            expires_delta = parse_duration(
+                request.app.state.config.JWT_EXPIRES_IN)
             expires_at = None
             if expires_delta:
-                expires_at = int(time.time()) + int(expires_delta.total_seconds())
+                expires_at = int(time.time()) + \
+                    int(expires_delta.total_seconds())
 
             token = create_token(
                 data={"id": user.id},
@@ -456,7 +468,8 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
             )
 
             datetime_expires_at = (
-                datetime.datetime.fromtimestamp(expires_at, datetime.timezone.utc)
+                datetime.datetime.fromtimestamp(
+                    expires_at, datetime.timezone.utc)
                 if expires_at
                 else None
             )
@@ -502,7 +515,8 @@ async def signup(request: Request, response: Response, form_data: SignupForm):
             raise HTTPException(500, detail=ERROR_MESSAGES.CREATE_USER_ERROR)
     except Exception as err:
         log.error(f"Signup error: {str(err)}")
-        raise HTTPException(500, detail="An internal error occurred during signup.")
+        raise HTTPException(
+            500, detail="An internal error occurred during signup.")
 
 
 @router.get("/signout")
@@ -517,7 +531,8 @@ async def signout(request: Request, response: Response):
                     async with session.get(OPENID_PROVIDER_URL.value) as resp:
                         if resp.status == 200:
                             openid_data = await resp.json()
-                            logout_url = openid_data.get("end_session_endpoint")
+                            logout_url = openid_data.get(
+                                "end_session_endpoint")
                             if logout_url:
                                 response.delete_cookie("oauth_id_token")
                                 return RedirectResponse(

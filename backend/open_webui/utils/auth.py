@@ -47,7 +47,8 @@ def verify_signature(payload: str, signature: str) -> bool:
     """
     try:
         expected_signature = base64.b64encode(
-            hmac.new(TRUSTED_SIGNATURE_KEY, payload.encode(), hashlib.sha256).digest()
+            hmac.new(TRUSTED_SIGNATURE_KEY, payload.encode(),
+                     hashlib.sha256).digest()
         ).decode()
 
         # Compare securely to prevent timing attacks
@@ -107,7 +108,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password, hashed_password):
     return (
-        pwd_context.verify(plain_password, hashed_password) if hashed_password else None
+        pwd_context.verify(
+            plain_password, hashed_password) if hashed_password else None
     )
 
 
@@ -116,7 +118,7 @@ def get_password_hash(password):
 
 
 def get_netid(webauth_response: str) -> str | None:
-    if webauth_response == "no":
+    if webauth_response.strip() == "no":
         raise ValueError("Invalid login")
     return webauth_response.split("\n")[1]
 
@@ -145,7 +147,7 @@ def decode_token(token: str) -> Optional[dict]:
 
 
 def extract_token_from_auth_header(auth_header: str):
-    return auth_header[len("Bearer ") :]
+    return auth_header[len("Bearer "):]
 
 
 def create_api_key():
@@ -226,7 +228,8 @@ def get_current_user(
             # Refresh the user's last active timestamp asynchronously
             # to prevent blocking the request
             if background_tasks:
-                background_tasks.add_task(Users.update_user_last_active_by_id, user.id)
+                background_tasks.add_task(
+                    Users.update_user_last_active_by_id, user.id)
         return user
     else:
         raise HTTPException(

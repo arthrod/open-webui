@@ -171,7 +171,8 @@ class AuthsTable:
         log.info(f"authenticate_user_by_trusted_header: {email}")
         try:
             with get_db() as db:
-                auth = db.query(Auth).filter_by(email=email, active=True).first()
+                auth = db.query(Auth).filter_by(
+                    email=email, active=True).first()
                 if auth:
                     user = Users.get_user_by_id(auth.id)
                     return user
@@ -182,7 +183,8 @@ class AuthsTable:
         try:
             with get_db() as db:
                 result = (
-                    db.query(Auth).filter_by(id=id).update({"password": new_password})
+                    db.query(Auth).filter_by(id=id).update(
+                        {"password": new_password})
                 )
                 db.commit()
                 return True if result == 1 else False
@@ -192,7 +194,8 @@ class AuthsTable:
     def update_email_by_id(self, id: str, email: str) -> bool:
         try:
             with get_db() as db:
-                result = db.query(Auth).filter_by(id=id).update({"email": email})
+                result = db.query(Auth).filter_by(
+                    id=id).update({"email": email})
                 db.commit()
                 return True if result == 1 else False
         except Exception:

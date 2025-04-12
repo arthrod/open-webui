@@ -26,13 +26,14 @@
 		createMessagesList,
 		formatDate
 	} from '$lib/utils';
-	import { WEBUI_BASE_URL } from '$lib/constants';
+	import { WEBUI_BASE_URL, TRIAL_USER_EMAIL } from '$lib/constants';
 
 	import Name from './Name.svelte';
 	import ProfileImage from './ProfileImage.svelte';
-	import Skeleton from './Skeleton.svelte';
+	import SkeletonMb from './Skeleton-mb.svelte';
 	import Image from '$lib/components/common/Image.svelte';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
+	import OptionGroup from '$lib/components/common/OptionGroup.svelte';
 	import RateComment from './RateComment.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import WebSearchResults from './ResponseMessage/WebSearchResults.svelte';
@@ -178,6 +179,64 @@
 				res();
 			};
 		});
+	};
+
+	const parseOptionsFromMessage = (message: string): { title: string; description: string, state: string}[] => {
+		const parsedMessage = JSON.parse(message);
+		const parsedOptions = parsedMessage.options;
+		return parsedOptions.map((option: { title: string; description: string, state: string}) => ({
+			title: option.title ?? '',
+			description: option.description ?? '',
+			state: option.state
+		}));
+	};
+
+	const parseContextFromMessage = (message: string): {header_message: string, footer_message: string} => {
+		const parsedMessage = JSON.parse(message);
+		const header_message = parsedMessage.header_message;
+		const footer_message = parsedMessage.footer_message;
+		return {header_message: header_message, footer_message: footer_message};
+	};
+
+	const parseProductListFromMessage = (message: string): string => {
+		const parsedMessage = JSON.parse(message);
+		return parsedMessage.product_list;
+	};
+
+	const updateMessage = async (message: MessageType, title: string) => {
+		const parsedMessage = JSON.parse(message.content);
+		// find option that has the same title as the one passed in and update its state = selected. For everything else, set state = disabled
+		const updatedOptions = parsedMessage.options.map((option: { title: string; description: string, state: string }) => {
+			if (option.title === title) {
+				return { ...option, state: 'selected' };
+			} else {
+				return { ...option, state: 'disabled' };
+			}
+		});
+
+		let header_message, footer_message, product_list;
+		if (parsedMessage.header_message) {
+			header_message = parsedMessage.header_message;
+		} else {
+			header_message = '';
+		}
+
+		if (parsedMessage.footer_message) {
+			footer_message = parsedMessage.footer_message;
+		} else {
+			footer_message = '';
+		}
+
+		if (parsedMessage.product_list) {
+			product_list = parsedMessage.product_list;
+			const updatedContent = JSON.stringify({header_message: header_message, footer_message: footer_message, options: updatedOptions, product_list: product_list}, null, 2);
+			saveMessage(message.id, {...message, content: updatedContent});
+		} else {
+			const updatedContent = JSON.stringify({header_message: header_message, footer_message: footer_message, options: updatedOptions}, null, 2);
+			saveMessage(message.id, {...message, content: updatedContent});
+		}
+		// Save updated message-content as JSON-string in history.
+		updateChat()
 	};
 
 	const toggleSpeakMessage = async () => {
@@ -332,9 +391,37 @@
 		}
 	};
 
+	let preprocessedDetailsCache = [];
+
+	function preprocessForEditing(content: string): string {
+		// Replace <details>...</details> with unique ID placeholder
+		const detailsBlocks = [];
+		let i = 0;
+
+		content = content.replace(/<details[\s\S]*?<\/details>/gi, (match) => {
+			detailsBlocks.push(match);
+			return `<details id="__DETAIL_${i++}__"/>`;
+		});
+
+		// Store original blocks in the editedContent or globally (see merging later)
+		preprocessedDetailsCache = detailsBlocks;
+
+		return content;
+	}
+
+	function postprocessAfterEditing(content: string): string {
+		const restoredContent = content.replace(
+			/<details id="__DETAIL_(\d+)__"\/>/g,
+			(_, index) => preprocessedDetailsCache[parseInt(index)] || ''
+		);
+
+		return restoredContent;
+	}
+
 	const editMessageHandler = async () => {
 		edit = true;
-		editedContent = message.content;
+
+		editedContent = preprocessForEditing(message.content);
 
 		await tick();
 
@@ -343,7 +430,8 @@
 	};
 
 	const editMessageConfirmHandler = async () => {
-		editMessage(message.id, editedContent ? editedContent : '', false);
+		const messageContent = postprocessAfterEditing(editedContent ? editedContent : '');
+		editMessage(message.id, messageContent, false);
 
 		edit = false;
 		editedContent = '';
@@ -352,7 +440,9 @@
 	};
 
 	const saveAsCopyHandler = async () => {
-		editMessage(message.id, editedContent ? editedContent : '');
+		const messageContent = postprocessAfterEditing(editedContent ? editedContent : '');
+
+		editMessage(message.id, messageContent);
 
 		edit = false;
 		editedContent = '';
@@ -551,7 +641,7 @@
 		id="message-{message.id}"
 		dir={$settings.chatDirection}
 	>
-		<div class={`shrink-0 ${($settings?.chatDirection ?? 'LTR') === 'LTR' ? 'mr-3' : 'ml-3'}`}>
+		<div class={`shrink-0 ltr:mr-3 rtl:ml-3`}>
 			<ProfileImage
 				src={model?.info?.meta?.profile_image_url ??
 					($i18n.language === 'dg-DG' ? `/doge.png` : `${WEBUI_BASE_URL}/static/favicon.png`)}
@@ -698,7 +788,7 @@
 									<div>
 										<button
 											id="save-new-message-button"
-											class=" px-4 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border dark:border-gray-700 text-gray-700 dark:text-gray-200 transition rounded-3xl"
+											class=" px-4 py-2 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-200 transition rounded-3xl"
 											on:click={() => {
 												saveAsCopyHandler();
 											}}
@@ -733,8 +823,8 @@
 						{:else}
 							<div class="w-full flex flex-col relative" id="response-content-container">
 								{#if message.content === '' && !message.error}
-									<Skeleton />
-								{:else if message.content && message.error !== true}
+									<SkeletonMb />
+								{:else if message.content && message.error !== true && !message.content.includes("\"options\":") && !message.content.includes("\"product_list\":")}
 									<!-- always show message contents even if there's an error -->
 									<!-- unless message.error === true which is legacy error handling, where the error message is stored in message.content -->
 									<ContentRenderer
@@ -742,7 +832,7 @@
 										{history}
 										content={message.content}
 										sources={message.sources}
-										floatingButtons={message?.done && !readOnly}
+										floatingButtons={message?.done}
 										save={!readOnly}
 										{model}
 										onTaskClick={async (e) => {
@@ -799,6 +889,36 @@
 												const input = e.detail?.input ?? '';
 												submitMessage(message.id, `\`\`\`\n${content}\n\`\`\`\n${input}`);
 											}
+										}}
+									/>
+								{:else if message.content && message.error !== true && message.content.includes("\"product_list\":")}
+									<!-- always show message contents even if there's an error -->
+									<!-- unless message.error === true which is legacy error handling, where the error message is stored in message.content -->
+									<!-- Render Product List -->
+									<ContentRenderer
+										id={message.id}
+										{history}
+										content={parseProductListFromMessage(message.content)}
+										sources={message.sources}
+										floatingButtons={message?.done}
+										save={!readOnly}
+										{model}
+										onTaskClick={async (e) => {
+											console.log(e);
+										}}
+									/>
+									<br>
+									<OptionGroup options={parseOptionsFromMessage(message.content)} option_context={parseContextFromMessage(message.content)}
+										on:click={(e) => {const selectedOption = e.detail;
+										updateMessage(message, selectedOption.title);
+										submitMessage(message.id, `${selectedOption.title}: ${selectedOption.description}`);
+										}}
+									/>
+								{:else if message.content && message.error !== true && message.content.includes("\"options\":")}
+									<OptionGroup options={parseOptionsFromMessage(message.content)} option_context={parseContextFromMessage(message.content)}
+										on:click={(e) => {const selectedOption = e.detail;
+										updateMessage(message, selectedOption.title);
+										submitMessage(message.id, `${selectedOption.title}: ${selectedOption.description}`);
 										}}
 									/>
 								{/if}
@@ -920,7 +1040,7 @@
 
 							{#if message.done}
 								{#if !readOnly}
-									{#if $user.role === 'user' ? ($user?.permissions?.chat?.edit ?? true) : true}
+									{#if $user?.role === 'user' ? ($user?.permissions?.chat?.edit ?? true) : true}
 										<Tooltip content={$i18n.t('Edit')} placement="bottom">
 											<button
 												class="{isLastMessage
@@ -949,31 +1069,33 @@
 									{/if}
 								{/if}
 
-								<Tooltip content={$i18n.t('Copy')} placement="bottom">
-									<button
-										class="{isLastMessage
-											? 'visible'
-											: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition copy-response-button"
-										on:click={() => {
-											copyToClipboard(message.content);
-										}}
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke-width="2.3"
-											stroke="currentColor"
-											class="w-4 h-4"
+								{#if $user?.email !== TRIAL_USER_EMAIL}
+									<Tooltip content={$i18n.t('Copy')} placement="bottom">
+										<button
+											class="{isLastMessage
+												? 'visible'
+												: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition copy-response-button"
+											on:click={() => {
+												copyToClipboard(message.content);
+											}}
 										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
-											/>
-										</svg>
-									</button>
-								</Tooltip>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke-width="2.3"
+												stroke="currentColor"
+												class="w-4 h-4"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184"
+												/>
+											</svg>
+										</button>
+									</Tooltip>
+								{/if}
 
 								<Tooltip content={$i18n.t('Read Aloud')} placement="bottom">
 									<button
@@ -1053,7 +1175,7 @@
 									</button>
 								</Tooltip>
 
-								{#if $config?.features.enable_image_generation && ($user.role === 'admin' || $user?.permissions?.features?.image_generation) && !readOnly}
+								{#if $config?.features.enable_image_generation && ($user?.role === 'admin' || $user?.permissions?.features?.image_generation) && !readOnly}
 									<Tooltip content={$i18n.t('Generate Image')} placement="bottom">
 										<button
 											class="{isLastMessage
@@ -1117,7 +1239,7 @@
 									</Tooltip>
 								{/if}
 
-								{#if message.usage}
+								{#if message.usage && $user.role === 'admin'}
 									<Tooltip
 										content={message.usage
 											? `<pre>${sanitizeResponseContent(
@@ -1234,7 +1356,7 @@
 										</Tooltip>
 									{/if}
 
-									{#if isLastMessage}
+									{#if isLastMessage && $user.role === 'admin'}
 										<Tooltip content={$i18n.t('Continue Response')} placement="bottom">
 											<button
 												type="button"
@@ -1267,47 +1389,47 @@
 												</svg>
 											</button>
 										</Tooltip>
-									{/if}
 
-									<Tooltip content={$i18n.t('Regenerate')} placement="bottom">
-										<button
-											type="button"
-											class="{isLastMessage
-												? 'visible'
-												: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition regenerate-response-button"
-											on:click={() => {
-												showRateComment = false;
-												regenerateResponse(message);
+										<Tooltip content={$i18n.t('Regenerate')} placement="bottom">
+											<button
+												type="button"
+												class="{isLastMessage
+													? 'visible'
+													: 'invisible group-hover:visible'} p-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg dark:hover:text-white hover:text-black transition regenerate-response-button"
+												on:click={() => {
+													showRateComment = false;
+													regenerateResponse(message);
 
-												(model?.actions ?? []).forEach((action) => {
-													dispatch('action', {
-														id: action.id,
-														event: {
-															id: 'regenerate-response',
-															data: {
-																messageId: message.id
+													(model?.actions ?? []).forEach((action) => {
+														dispatch('action', {
+															id: action.id,
+															event: {
+																id: 'regenerate-response',
+																data: {
+																	messageId: message.id
+																}
 															}
-														}
+														});
 													});
-												});
-											}}
-										>
-											<svg
-												xmlns="http://www.w3.org/2000/svg"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke-width="2.3"
-												stroke="currentColor"
-												class="w-4 h-4"
+												}}
 											>
-												<path
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-												/>
-											</svg>
-										</button>
-									</Tooltip>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke-width="2.3"
+													stroke="currentColor"
+													class="w-4 h-4"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+													/>
+												</svg>
+											</button>
+										</Tooltip>
+									{/if}
 
 									{#if siblings.length > 1}
 										<Tooltip content={$i18n.t('Delete')} placement="bottom">

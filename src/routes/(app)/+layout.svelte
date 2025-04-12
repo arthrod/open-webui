@@ -21,6 +21,7 @@
 
 	import { WEBUI_VERSION } from '$lib/constants';
 	import { compareVersion } from '$lib/utils';
+	import {TRIAL_USER_EMAIL} from '$lib/constants';
 
 	import {
 		config,
@@ -43,7 +44,6 @@
 	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
 	import ChangelogModal from '$lib/components/ChangelogModal.svelte';
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
-	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
 	import { get } from 'svelte/store';
 
 	const i18n = getContext('i18n');
@@ -55,9 +55,9 @@
 	let version;
 
 	onMount(async () => {
-		if ($user === undefined) {
+		if ($user === undefined || $user === null) {
 			await goto('/auth');
-		} else if (['user', 'admin'].includes($user.role)) {
+		} else if (['user', 'admin'].includes($user?.role)) {
 			try {
 				// Check if IndexedDB exists
 				DB = await openDB('Chats', 1);
@@ -191,22 +191,21 @@
 				}
 			});
 
-			if ($user.role === 'admin' && ($settings?.showChangelog ?? true)) {
-				showChangelog.set($settings?.version !== $config.version);
-			}
+			// Do not show changelog for any user
+			showChangelog.set(false);
 
-			if ($page.url.searchParams.get('temporary-chat') === 'true') {
-				temporaryChatEnabled.set(true);
-			}
+			if ($user?.permissions?.chat?.temporary ?? true) {
+				if ($page.url.searchParams.get('temporary-chat') === 'true') {
+					temporaryChatEnabled.set(true);
+				}
 
-			console.log($user.permissions);
-
-			if ($user?.permissions?.chat?.temporary_enforced) {
-				temporaryChatEnabled.set(true);
+				if ($user?.permissions?.chat?.temporary_enforced) {
+					temporaryChatEnabled.set(true);
+				}
 			}
 
 			// Check for version updates
-			if ($user.role === 'admin') {
+			if ($user?.role === 'admin') {
 				// Check if the user has dismissed the update toast in the last 24 hours
 				if (localStorage.dismissedUpdateToast) {
 					const dismissedUpdateToast = new Date(Number(localStorage.dismissedUpdateToast));
@@ -238,24 +237,12 @@
 <SettingsModal bind:show={$showSettings} />
 <ChangelogModal bind:show={$showChangelog} />
 
-{#if version && compareVersion(version.latest, version.current) && ($settings?.showUpdateToast ?? true)}
-	<div class=" absolute bottom-8 right-8 z-50" in:fade={{ duration: 100 }}>
-		<UpdateInfoToast
-			{version}
-			on:close={() => {
-				localStorage.setItem('dismissedUpdateToast', Date.now().toString());
-				version = null;
-			}}
-		/>
-	</div>
-{/if}
-
 <div class="app relative">
 	<div
 		class=" text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-900 h-screen max-h-[100dvh] overflow-auto flex flex-row justify-end"
 	>
 		{#if loaded}
-			{#if !['user', 'admin'].includes($user.role)}
+			{#if !['user', 'admin'].includes($user?.role)}
 				<AccountPending />
 			{:else if localDBChats.length > 0}
 				<div class="fixed w-full h-full flex z-50">
@@ -310,8 +297,9 @@
 					</div>
 				</div>
 			{/if}
-
-			<Sidebar />
+			{#if ($user?.email) !== TRIAL_USER_EMAIL}
+				<Sidebar />
+			{/if}
 			<slot />
 		{/if}
 	</div>

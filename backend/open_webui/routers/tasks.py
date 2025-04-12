@@ -36,7 +36,7 @@ from open_webui.config import (
     DEFAULT_MOA_GENERATION_PROMPT_TEMPLATE,
 )
 from open_webui.env import SRC_LOG_LEVELS
-
+from commons.ChatState import ChatState
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MODELS"])
@@ -147,6 +147,21 @@ async def update_task_config(
 async def generate_title(
     request: Request, form_data: dict, user=Depends(get_verified_user)
 ):
+    # Check if gift_request is ready for title generation
+    chat_state = ChatState.load(form_data["chat_id"])
+    if not chat_state.gift_request:
+        # gift_request not ready. Do not generate title
+        logging.debug("gift_request not ready. Do not generate title")
+        return
+    elif chat_state.title_generated:
+        # Title already generated. return the existing title
+        logging.debug("Title already generated. return the existing title")
+        return chat_state.chat_title
+    elif not chat_state.gift_request.has_title_fields():
+        # gift_request does not have minimal info. Do not generate title
+        logging.debug("gift_request does not have minimal info. Do not generate title")
+        return
+    logging.info("generate_title")
 
     if not request.app.state.config.ENABLE_TITLE_GENERATION:
         return JSONResponse(
@@ -186,6 +201,7 @@ async def generate_title(
     else:
         template = DEFAULT_TITLE_GENERATION_PROMPT_TEMPLATE
 
+    gift_request_desc = chat_state.gift_request.describe()
     messages = form_data["messages"]
 
     # Remove reasoning details from the messages
@@ -199,7 +215,7 @@ async def generate_title(
 
     content = title_generation_template(
         template,
-        messages,
+        gift_request_desc,
         {
             "name": user.name,
             "location": user.info.get("location") if user.info else None,
@@ -211,10 +227,10 @@ async def generate_title(
         "messages": [{"role": "user", "content": content}],
         "stream": False,
         **(
-            {"max_tokens": 1000}
+            {"max_tokens": 50}
             if models[task_model_id].get("owned_by") == "ollama"
             else {
-                "max_completion_tokens": 1000,
+                "max_completion_tokens": 50,
             }
         ),
         "metadata": {
@@ -232,7 +248,9 @@ async def generate_title(
         raise e
 
     try:
-        return await generate_chat_completion(request, form_data=payload, user=user)
+        chat_title = await generate_chat_completion(request, form_data=payload, user=user)
+        ChatState.update(form_data["chat_id"], title_generated=True, chat_title=chat_title)
+        return chat_title
     except Exception as e:
         log.error("Exception occurred", exc_info=True)
         return JSONResponse(
@@ -653,17 +671,6 @@ async def generate_moa_response(
             detail="Model not found",
         )
 
-    # Check if the user has a custom task model
-    # If the user has a custom task model, use that model
-    task_model_id = get_task_model_id(
-        model_id,
-        request.app.state.config.TASK_MODEL,
-        request.app.state.config.TASK_MODEL_EXTERNAL,
-        models,
-    )
-
-    log.debug(f"generating MOA model {task_model_id} for user {user.email} ")
-
     template = DEFAULT_MOA_GENERATION_PROMPT_TEMPLATE
 
     content = moa_response_generation_template(
@@ -673,7 +680,7 @@ async def generate_moa_response(
     )
 
     payload = {
-        "model": task_model_id,
+        "model": model_id,
         "messages": [{"role": "user", "content": content}],
         "stream": form_data.get("stream", False),
         "metadata": {

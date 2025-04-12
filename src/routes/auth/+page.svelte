@@ -1,3 +1,4 @@
+
 <script>
 	import { toast } from 'svelte-sonner';
 
@@ -10,6 +11,13 @@
 
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL } from '$lib/constants';
 	import { WEBUI_NAME, config, user, socket } from '$lib/stores';
+
+	import {
+		TRIAL_USER_EMAIL,
+		TRIAL_USER_PASSWORD,
+		WEBUI_HOSTNAME
+	} from '$lib/constants';
+	import { WEBUI_TAGLINE } from '$lib/stores';
 
 	import { generateInitialsImage, canvasPixelTest } from '$lib/utils';
 
@@ -158,7 +166,7 @@
 
 <svelte:head>
 	<title>
-		{`${$WEBUI_NAME}`}
+		{`${$WEBUI_NAME} - ${$WEBUI_TAGLINE}`}
 	</title>
 </svelte:head>
 
@@ -176,20 +184,6 @@
 	<div class="w-full absolute top-0 left-0 right-0 h-8 drag-region" />
 
 	{#if loaded}
-		<div class="fixed m-10 z-50">
-			<div class="flex space-x-2">
-				<div class=" self-center">
-					<img
-						id="logo"
-						crossorigin="anonymous"
-						src="{WEBUI_BASE_URL}/static/splash.png"
-						class=" w-6 rounded-full"
-						alt="logo"
-					/>
-				</div>
-			</div>
-		</div>
-
 		<div
 			class="fixed bg-transparent min-h-screen w-full flex justify-center font-primary z-50 text-black dark:text-white"
 		>
@@ -210,6 +204,14 @@
 					</div>
 				{:else}
 					<div class="  my-auto pb-10 w-full dark:text-gray-100">
+						<div class=" flex items-center justify-center pb-10">
+							<img
+								crossorigin="anonymous"
+								src="{WEBUI_BASE_URL}/static/splash.png"
+								class=" w-36 rounded-full"
+								alt="logo"
+							/>
+						</div>
 						<form
 							class=" flex flex-col justify-center"
 							on:submit={(e) => {
@@ -218,18 +220,26 @@
 							}}
 						>
 							<div class="mb-1">
-								<div class=" text-2xl font-medium">
+								<div class=" text-3xl font-semibold" style="color: rgb(235, 83, 82)">
 									{#if $config?.onboarding ?? false}
 										{$i18n.t(`Get started with {{WEBUI_NAME}}`, { WEBUI_NAME: $WEBUI_NAME })}
 									{:else if mode === 'ldap'}
-										{$i18n.t(`Sign in to {{WEBUI_NAME}} with LDAP`, { WEBUI_NAME: $WEBUI_NAME })}
+										{$i18n.t(`{{WEBUI_NAME}}`, { WEBUI_NAME: $WEBUI_NAME })}
 									{:else if mode === 'signin'}
-										{$i18n.t(`Sign in to {{WEBUI_NAME}}`, { WEBUI_NAME: $WEBUI_NAME })}
+										{$i18n.t(`{{WEBUI_NAME}}`, { WEBUI_NAME: $WEBUI_NAME })}
 									{:else}
-										{$i18n.t(`Sign up to {{WEBUI_NAME}}`, { WEBUI_NAME: $WEBUI_NAME })}
+										{$i18n.t(`{{WEBUI_NAME}}`, { WEBUI_NAME: $WEBUI_NAME })}
 									{/if}
 								</div>
-
+								<div class=" text-lg font-medium font-sans" style="color: rgb(235, 83, 82)">
+									{#if mode === 'ldap'}
+										{$i18n.t(`{{WEBUI_TAGLINE}}`, { WEBUI_TAGLINE: $WEBUI_TAGLINE })}
+									{:else if mode === 'signin'}
+										{$i18n.t(`{{WEBUI_TAGLINE}}`, { WEBUI_TAGLINE: $WEBUI_TAGLINE })}
+									{:else}
+										{$i18n.t(`{{WEBUI_TAGLINE}}`, { WEBUI_TAGLINE: $WEBUI_TAGLINE })}
+									{/if}
+								</div>
 								{#if $config?.onboarding ?? false}
 									<div class=" mt-1 text-xs font-medium text-gray-500">
 										ⓘ {$WEBUI_NAME}
@@ -457,6 +467,21 @@
 							</div>
 						{/if}
 
+						<hr class="w-full h-px my-4 border-0 dark:bg-gray-100/10 bg-gray-700/10" />
+						<div class=" mt-4 text-sm text-center">
+							<button
+								class="bg-[#EB8486] hover:bg-[#EB5352] text-white/60 hover:text-white transition w-1/2 rounded-full font-medium text-sm py-2.5"
+								on:click={() => {
+									email = TRIAL_USER_EMAIL;
+									password = TRIAL_USER_PASSWORD;
+									mode = 'signin';
+									submitHandler();
+								}}
+							>
+								{$i18n.t('Quick Trial')}
+							</button>
+						</div>
+
 						{#if $config?.features.enable_ldap && $config?.features.enable_login_form}
 							<div class="mt-2">
 								<button
@@ -478,6 +503,29 @@
 						{/if}
 					</div>
 				{/if}
+				<div class="flex justify-center items-center text-sm w-full text-left font-light font-sans" style="color: rgb(235, 83, 82)">
+					<span>
+						&#8226;{$i18n.t(' Chat with Magicbox about all your gifting needs.')}<br>
+						&#8226;{$i18n.t(' Get creative ideas & gifts that will be a guaranteed hit.')}<br>
+						&#8226;{$i18n.t(' Gifts from around the web at your fingertips.')}<br>
+					</span>
+				</div>
+				<button
+ 					class="flex justify-center items-center text-xs w-full text-center underline"
+ 					on:click={() => {
+ 						window.open(`https://magicboxgifts.com/terms.html`, '_blank');
+ 					}}
+ 				>
+ 					<span>{$i18n.t('Terms')}</span>
+ 				</button>
+ 				<button
+ 					class="flex justify-center items-center text-xs w-full text-center underline"
+ 					on:click={() => {
+ 						window.open(`https://magicboxgifts.com/privacy.html`, '_blank');
+ 					}}
+ 				>
+ 					<span>{$i18n.t('Privacy')}</span>
+ 				</button>
 			</div>
 		</div>
 	{/if}

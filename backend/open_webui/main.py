@@ -1,3 +1,4 @@
+
 import asyncio
 import inspect
 import json
@@ -1053,6 +1054,9 @@ async def chat_completion(
     model_item = form_data.pop("model_item", {})
     tasks = form_data.pop("background_tasks", None)
 
+    # Force title generation to be enabled each time
+    if not tasks or 'title_generation' not in tasks:
+        tasks = {'title_generation': True}
     try:
         if not model_item.get("direct", False):
             model_id = form_data.get("model", None)

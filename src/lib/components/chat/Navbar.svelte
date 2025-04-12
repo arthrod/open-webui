@@ -26,6 +26,7 @@
 	import MenuLines from '../icons/MenuLines.svelte';
 	import AdjustmentsHorizontal from '../icons/AdjustmentsHorizontal.svelte';
 	import {TRIAL_USER_EMAIL} from "$lib/constants";
+	import { userSignOut } from '$lib/apis/auths';
 
 	import PencilSquare from '../icons/PencilSquare.svelte';
 

@@ -21,6 +21,7 @@
 
 	import { WEBUI_VERSION } from '$lib/constants';
 	import { compareVersion } from '$lib/utils';
+	import {TRIAL_USER_EMAIL} from '$lib/constants';
 
 	import {
 		config,
@@ -43,7 +44,6 @@
 	import SettingsModal from '$lib/components/chat/SettingsModal.svelte';
 	import ChangelogModal from '$lib/components/ChangelogModal.svelte';
 	import AccountPending from '$lib/components/layout/Overlay/AccountPending.svelte';
-	import UpdateInfoToast from '$lib/components/layout/UpdateInfoToast.svelte';
 	import { get } from 'svelte/store';
 
 	const i18n = getContext('i18n');
@@ -191,9 +191,8 @@
 				}
 			});
 
-			if ($user?.role === 'admin' && ($settings?.showChangelog ?? true)) {
-				showChangelog.set($settings?.version !== $config.version);
-			}
+			// Do not show changelog for any user
+			showChangelog.set(false);
 
 			if ($user?.permissions?.chat?.temporary ?? true) {
 				if ($page.url.searchParams.get('temporary-chat') === 'true') {
@@ -237,18 +236,6 @@
 
 <SettingsModal bind:show={$showSettings} />
 <ChangelogModal bind:show={$showChangelog} />
-
-{#if version && compareVersion(version.latest, version.current) && ($settings?.showUpdateToast ?? true)}
-	<div class=" absolute bottom-8 right-8 z-50" in:fade={{ duration: 100 }}>
-		<UpdateInfoToast
-			{version}
-			on:close={() => {
-				localStorage.setItem('dismissedUpdateToast', Date.now().toString());
-				version = null;
-			}}
-		/>
-	</div>
-{/if}
 
 <div class="app relative">
 	<div
@@ -310,8 +297,9 @@
 					</div>
 				</div>
 			{/if}
-
-			<Sidebar />
+			{#if ($user?.email) !== TRIAL_USER_EMAIL}
+				<Sidebar />
+			{/if}
 			<slot />
 		{/if}
 	</div>

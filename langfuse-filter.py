@@ -151,7 +151,7 @@ class Pipeline:
             self.log(error_message)
             raise ValueError(error_message)
 
-        user_email: str  = user.get("email") if user else None
+        user_email: str  = hashlib.sha256(user.get("email").encode('utf-8')) if user else None
         # Defaulting to 'user_response' if no task is provided
         task_name = metadata.get("task", "user_response")
 
@@ -159,12 +159,13 @@ class Pipeline:
         tags_list = self._build_tags(task_name)
 
         if chat_id not in self.chat_traces:
+            metadata["variables"][r"{{USER_NAME}}"] = user_email 
             self.log(f"Creating new trace for chat_id: {chat_id}")
 
             trace_payload = {
                 "name": f"chat:{chat_id}",
                 "input": body,
-                "user_id": hashlib.sha256(user_email.encode('utf-8')),
+                "user_id": user_email,
                 "metadata": metadata,
                 "session_id": chat_id,
             }

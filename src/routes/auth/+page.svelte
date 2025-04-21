@@ -76,4 +76,7 @@
 	</title>
 </svelte:head>
 
-<div class="w-full h-screen max-h-[100dvh] text-white relative">Hi</div>
+<div class="w-full h-screen max-h-[100dvh] text-black dark:text-white relative">
+	<div class="w-full h-full absolute top-0 left-0 bg-white dark:bg-black"></div>
+	Please wait...
+</div>

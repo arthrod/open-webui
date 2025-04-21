@@ -6,8 +6,9 @@ export const APP_NAME = 'Arizona AI Hub';
 export const WEBUI_HOSTNAME = browser ? (dev ? `${location.hostname}:8080` : ``) : '';
 export const WEBUI_BASE_URL = browser ? (dev ? `http://${WEBUI_HOSTNAME}` : ``) : ``;
 export const WEBUI_API_BASE_URL = `${WEBUI_BASE_URL}/api/v1`;
+
 export const WEBUI_WEBAUTH_CALLBACK_URL = browser
-	? `https://webauth.arizona.edu/webauth/login?service=${dev ? 'http' : 'https'}://${location.hostname}/api/v1/auths/signin`
+	? `https://webauth.arizona.edu/webauth/login?service=${dev ? 'http' : 'https'}://${dev ? `${location.hostname}:8080` : location.hostname}/api/v1/auths/signin`
 	: '';
 
 export const OLLAMA_API_BASE_URL = `${WEBUI_BASE_URL}/ollama`;

@@ -557,7 +557,7 @@
 								</div>
 								<div class=" self-center">{$i18n.t('Audio')}</div>
 							</button>
-						{:else if tabId === 'chats'}
+						<!-- {:else if tabId === 'chats'}
 							<button
 								class="px-0.5 py-1 min-w-fit rounded-lg flex-1 md:flex-none flex text-left transition {selectedTab ===
 								'chats'
@@ -582,7 +582,7 @@
 									</svg>
 								</div>
 								<div class=" self-center">{$i18n.t('Chats')}</div>
-							</button>
+							</button> -->
 						{:else if tabId === 'account'}
 							<button
 								class="px-0.5 py-1 min-w-fit rounded-lg flex-1 md:flex-none flex text-left transition {selectedTab ===

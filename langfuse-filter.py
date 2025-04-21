@@ -151,7 +151,7 @@ class Pipeline:
             self.log(error_message)
             raise ValueError(error_message)
 
-        user_email: str  = str(hashlib.sha256(user.get("email").encode('utf-8'))) if user else None
+        user_email: str  = hashlib.sha256(user.get("email").encode('utf-8')).hexdigest() if user else None
         # Defaulting to 'user_response' if no task is provided
         task_name = metadata.get("task", "user_response")
 

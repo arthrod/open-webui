@@ -8,7 +8,9 @@ import requests
 import os
 
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
+import pytz
+from pytz import UTC
 from typing import Optional, Union, List, Dict
 
 from open_webui.models.users import Users
@@ -45,7 +47,8 @@ def verify_signature(payload: str, signature: str) -> bool:
     """
     try:
         expected_signature = base64.b64encode(
-            hmac.new(TRUSTED_SIGNATURE_KEY, payload.encode(), hashlib.sha256).digest()
+            hmac.new(TRUSTED_SIGNATURE_KEY, payload.encode(),
+                     hashlib.sha256).digest()
         ).decode()
 
         # Compare securely to prevent timing attacks
@@ -105,12 +108,23 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password, hashed_password):
     return (
-        pwd_context.verify(plain_password, hashed_password) if hashed_password else None
+        pwd_context.verify(
+            plain_password, hashed_password) if hashed_password else None
     )
 
 
 def get_password_hash(password):
     return pwd_context.hash(password)
+
+
+def get_netid(webauth_response: str) -> str | None:
+    if webauth_response.strip() == "no":
+        raise ValueError("Invalid login")
+    return webauth_response.split("\n")[1]
+
+
+def get_netid_email(netid: str):
+    return netid + "@arizona.edu"
 
 
 def create_token(data: dict, expires_delta: Union[timedelta, None] = None) -> str:
@@ -133,7 +147,7 @@ def decode_token(token: str) -> Optional[dict]:
 
 
 def extract_token_from_auth_header(auth_header: str):
-    return auth_header[len("Bearer ") :]
+    return auth_header[len("Bearer "):]
 
 
 def create_api_key():
@@ -141,12 +155,14 @@ def create_api_key():
     return f"sk-{key}"
 
 
-def get_http_authorization_cred(auth_header: str):
+def get_http_authorization_cred(auth_header: Optional[str]):
+    if not auth_header:
+        return None
     try:
         scheme, credentials = auth_header.split(" ")
         return HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials)
     except Exception:
-        raise ValueError(ERROR_MESSAGES.INVALID_TOKEN)
+        return None
 
 
 def get_current_user(
@@ -180,7 +196,12 @@ def get_current_user(
                 ).split(",")
             ]
 
-            if request.url.path not in allowed_paths:
+            # Check if the request path matches any allowed endpoint.
+            if not any(
+                request.url.path == allowed
+                or request.url.path.startswith(allowed + "/")
+                for allowed in allowed_paths
+            ):
                 raise HTTPException(
                     status.HTTP_403_FORBIDDEN, detail=ERROR_MESSAGES.API_KEY_NOT_ALLOWED
                 )
@@ -207,7 +228,8 @@ def get_current_user(
             # Refresh the user's last active timestamp asynchronously
             # to prevent blocking the request
             if background_tasks:
-                background_tasks.add_task(Users.update_user_last_active_by_id, user.id)
+                background_tasks.add_task(
+                    Users.update_user_last_active_by_id, user.id)
         return user
     else:
         raise HTTPException(

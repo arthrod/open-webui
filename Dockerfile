@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1
+# check=skip=SecretsUsedInArgOrEnv
 # Initialize device type args
 # use build args in the docker build command with --build-arg="BUILDARG=true"
 ARG USE_CUDA=false
@@ -21,7 +22,7 @@ ARG UID=0
 ARG GID=0
 
 ######## WebUI frontend ########
-FROM --platform=$BUILDPLATFORM node:22-alpine3.20 AS build
+FROM node:22-alpine3.20 AS build
 ARG BUILD_HASH
 
 WORKDIR /app
@@ -49,11 +50,16 @@ ARG GID
 ENV ENV=prod \
     PORT=8080 \
     # pass build args to the build
+    USER_PERMISSIONS_CHAT_DELETE=False \
+    ENABLE_OAUTH_SIGNUP=True \
+    ENABLE_API_KEY=False \
     USE_OLLAMA_DOCKER=${USE_OLLAMA} \
     USE_CUDA_DOCKER=${USE_CUDA} \
     USE_CUDA_DOCKER_VER=${USE_CUDA_VER} \
     USE_EMBEDDING_MODEL_DOCKER=${USE_EMBEDDING_MODEL} \
-    USE_RERANKING_MODEL_DOCKER=${USE_RERANKING_MODEL}
+    USE_RERANKING_MODEL_DOCKER=${USE_RERANKING_MODEL} \
+    AUDIO_STT_ENGINE=openai \
+    RAG_EMBEDDING_ENGINE=ollama
 
 ## Basis URL Config ##
 ENV OLLAMA_BASE_URL="/ollama" \

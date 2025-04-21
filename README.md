@@ -1,3 +1,58 @@
+# University of Arizona Open WebUI Version
+
+1. Clone the Repo
+2. `npm install` in the root directory
+3. `cd backend` and create a virtual python environment of your choice (`conda` or `venv`)
+4. `pip install -r requirements.txt` in `backend` folder
+5. To run the server, you need to run two terminal sessions:
+   - In the root directory of the project, run `npm run dev` to start the frontend
+   - In the `backend` directory, run `./dev.sh` to start the backend
+6. Done
+
+## Deploying on EC2
+
+To deploy on EC2, you need to have an EC2 instance running and SSH access to it. Assuming you have pushed your changes, follow these steps:
+
+1. Locate the **Bastion Host** instance on EC2
+
+Copy the public IP address of the Bastion Host instance. Let's say this IP address is `bastionhost`.
+
+2. SSH into the Bastion Host instance using the following command (ensure you have the private key from Joseph):
+
+
+```sh
+ssh -i /path/to/key.pem ec2-user@bastionhost
+```
+
+3. Once you are logged into the Bastion Host instance, SSH into the Arizona AI Hub instance. The IP address of this is on EC2. Let's say this IP address is `azaihub`.
+
+```sh
+ssh -i ~/subnet.pem ec2-user@azaihub
+```
+
+4. Once you are logged into the Arizona AI Hub instance, navigate to `dr-kennedy-chatbot`:
+
+```sh
+cd dr-kennedy-chatbot
+```
+
+
+This is the repository in the EC2 instance. Pull the changes, and build the docker image, assuming that the docker image works. Use this template:
+
+```sh
+docker build -t open-webui:dr-kennedy-chatbot .
+```
+
+This will build the docker image, and it will take a while.
+
+5. To deploy the built docker image, you need to simply navigate back to the home directory via `cd ~` and then run the following command:
+
+```sh
+docker compose up -d 
+```
+
+---
+
 # Open WebUI 👋
 
 ![GitHub stars](https://img.shields.io/github/stars/open-webui/open-webui?style=social)

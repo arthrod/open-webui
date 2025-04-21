@@ -243,8 +243,6 @@ async def ldap_auth(request: Request, response: Response, form_data: LdapForm):
         if not email or email == "" or email == "[]":
             raise HTTPException(
                 400, "User does not have a valid email address.")
-        else:
-            email = email.lower()
         elif isinstance(email, list):
             email = email[0].lower()
         else:

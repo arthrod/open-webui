@@ -26,6 +26,7 @@ from open_webui.constants import ERROR_MESSAGES
 from open_webui.routers.openai import get_all_models_responses
 
 from open_webui.utils.auth import get_admin_user
+from security import safe_requests
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MAIN"])
@@ -353,7 +354,7 @@ async def get_pipelines(
         url = request.app.state.config.OPENAI_API_BASE_URLS[urlIdx]
         key = request.app.state.config.OPENAI_API_KEYS[urlIdx]
 
-        r = requests.get(f"{url}/pipelines", headers={"Authorization": f"Bearer {key}"})
+        r = safe_requests.get(f"{url}/pipelines", headers={"Authorization": f"Bearer {key}"})
 
         r.raise_for_status()
         data = r.json()
@@ -390,7 +391,7 @@ async def get_pipeline_valves(
         url = request.app.state.config.OPENAI_API_BASE_URLS[urlIdx]
         key = request.app.state.config.OPENAI_API_KEYS[urlIdx]
 
-        r = requests.get(
+        r = safe_requests.get(
             f"{url}/{pipeline_id}/valves", headers={"Authorization": f"Bearer {key}"}
         )
 
@@ -429,7 +430,7 @@ async def get_pipeline_valves_spec(
         url = request.app.state.config.OPENAI_API_BASE_URLS[urlIdx]
         key = request.app.state.config.OPENAI_API_KEYS[urlIdx]
 
-        r = requests.get(
+        r = safe_requests.get(
             f"{url}/{pipeline_id}/valves/spec",
             headers={"Authorization": f"Bearer {key}"},
         )

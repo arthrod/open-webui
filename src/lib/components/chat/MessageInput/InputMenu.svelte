@@ -14,6 +14,8 @@
 	import GlobeAltSolid from '$lib/components/icons/GlobeAltSolid.svelte';
 	import WrenchSolid from '$lib/components/icons/WrenchSolid.svelte';
 	import CameraSolid from '$lib/components/icons/CameraSolid.svelte';
+	import PhotoSolid from '$lib/components/icons/PhotoSolid.svelte';
+	import CommandLineSolid from '$lib/components/icons/CommandLineSolid.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -24,14 +26,32 @@
 	export let selectedToolIds: string[] = [];
 
 	export let webSearchEnabled: boolean;
+	export let imageGenerationEnabled: boolean;
+	export let codeInterpreterEnabled: boolean;
+
 	export let onClose: Function;
 
 	let tools = {};
 	let show = false;
 
+	let showImageGeneration = false;
+
+	$: showImageGeneration =
+		$config?.features?.enable_image_generation &&
+		($user.role === 'admin' || $user?.permissions?.features?.image_generation);
+
+	let showWebSearch = false;
+
+	$: showWebSearch =
+		$config?.features?.enable_web_search &&
+		($user.role === 'admin' || $user?.permissions?.features?.web_search);
+
 	$: if (show) {
 		init();
 	}
+
+	let fileUploadEnabled = true;
+	$: fileUploadEnabled = $user.role === 'admin' || $user?.permissions?.chat?.file_upload;
 
 	const init = async () => {
 		if ($_tools === null) {
@@ -63,7 +83,7 @@
 
 	<div slot="content">
 		<DropdownMenu.Content
-			class="w-full max-w-[200px] rounded-xl px-1 py-1  border-gray-300/30 dark:border-gray-700/50 z-50 bg-white dark:bg-gray-850 dark:text-white shadow"
+			class="w-full max-w-[220px] rounded-xl px-1 py-1  border-gray-300/30 dark:border-gray-700/50 z-50 bg-white dark:bg-gray-850 dark:text-white shadow"
 			sideOffset={15}
 			alignOffset={-8}
 			side="top"
@@ -114,7 +134,37 @@
 				<hr class="border-black/5 dark:border-white/5 my-1" />
 			{/if}
 
-			{#if $config?.features?.enable_web_search}
+			{#if showImageGeneration}
+				<button
+					class="flex w-full justify-between gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-xl"
+					on:click={() => {
+						imageGenerationEnabled = !imageGenerationEnabled;
+					}}
+				>
+					<div class="flex-1 flex items-center gap-2">
+						<PhotoSolid />
+						<div class=" line-clamp-1">{$i18n.t('Image')}</div>
+					</div>
+
+					<Switch state={imageGenerationEnabled} />
+				</button>
+			{/if}
+
+			<button
+				class="flex w-full justify-between gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-xl"
+				on:click={() => {
+					codeInterpreterEnabled = !codeInterpreterEnabled;
+				}}
+			>
+				<div class="flex-1 flex items-center gap-2">
+					<CommandLineSolid />
+					<div class=" line-clamp-1">{$i18n.t('Code Intepreter')}</div>
+				</div>
+
+				<Switch state={codeInterpreterEnabled} />
+			</button>
+
+			{#if showWebSearch}
 				<button
 					class="flex w-full justify-between gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-xl"
 					on:click={() => {
@@ -128,31 +178,51 @@
 
 					<Switch state={webSearchEnabled} />
 				</button>
+			{/if}
 
+			{#if showImageGeneration || showWebSearch}
 				<hr class="border-black/5 dark:border-white/5 my-1" />
 			{/if}
 
 			{#if !$mobile}
-				<DropdownMenu.Item
-					class="flex gap-2 items-center px-3 py-2 text-sm  font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800  rounded-xl"
-					on:click={() => {
-						screenCaptureHandler();
-					}}
+				<Tooltip
+					content={!fileUploadEnabled ? $i18n.t('You do not have permission to upload files') : ''}
+					className="w-full"
 				>
-					<CameraSolid />
-					<div class=" line-clamp-1">{$i18n.t('Capture')}</div>
-				</DropdownMenu.Item>
+					<DropdownMenu.Item
+						class="flex gap-2 items-center px-3 py-2 text-sm  font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800  rounded-xl {!fileUploadEnabled
+							? 'opacity-50'
+							: ''}"
+						on:click={() => {
+							if (fileUploadEnabled) {
+								screenCaptureHandler();
+							}
+						}}
+					>
+						<CameraSolid />
+						<div class=" line-clamp-1">{$i18n.t('Capture')}</div>
+					</DropdownMenu.Item>
+				</Tooltip>
 			{/if}
 
-			<DropdownMenu.Item
-				class="flex gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl"
-				on:click={() => {
-					uploadFilesHandler();
-				}}
+			<Tooltip
+				content={!fileUploadEnabled ? $i18n.t('You do not have permission to upload files') : ''}
+				className="w-full"
 			>
-				<DocumentArrowUpSolid />
-				<div class="line-clamp-1">{$i18n.t('Upload Files')}</div>
-			</DropdownMenu.Item>
+				<DropdownMenu.Item
+					class="flex gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl {!fileUploadEnabled
+						? 'opacity-50'
+						: ''}"
+					on:click={() => {
+						if (fileUploadEnabled) {
+							uploadFilesHandler();
+						}
+					}}
+				>
+					<DocumentArrowUpSolid />
+					<div class="line-clamp-1">{$i18n.t('Upload Files')}</div>
+				</DropdownMenu.Item>
+			</Tooltip>
 
 			{#if $config?.features?.enable_google_drive_integration}
 				<DropdownMenu.Item

@@ -7,7 +7,10 @@ from aiocache import cached
 from typing import Any, Optional
 import random
 import json
+import html
 import inspect
+import re
+
 from uuid import uuid4
 from concurrent.futures import ThreadPoolExecutor
 
@@ -28,9 +31,13 @@ from open_webui.socket.main import (
 from open_webui.routers.tasks import (
     generate_queries,
     generate_title,
+    generate_image_prompt,
     generate_chat_tags,
 )
 from open_webui.routers.retrieval import process_web_search, SearchForm
+from open_webui.routers.images import image_generations, GenerateImageForm
+
+
 from open_webui.utils.webhook import post_webhook
 
 
@@ -50,6 +57,7 @@ from open_webui.utils.task import (
 from open_webui.utils.misc import (
     get_message_list,
     add_or_update_system_message,
+    add_or_update_user_message,
     get_last_user_message,
     get_last_assistant_message,
     prepend_to_first_user_message_content,
@@ -60,7 +68,10 @@ from open_webui.utils.plugin import load_function_module_by_id
 
 from open_webui.tasks import create_task
 
-from open_webui.config import DEFAULT_TOOLS_FUNCTION_CALLING_PROMPT_TEMPLATE
+from open_webui.config import (
+    DEFAULT_TOOLS_FUNCTION_CALLING_PROMPT_TEMPLATE,
+    DEFAULT_CODE_INTERPRETER_PROMPT,
+)
 from open_webui.env import (
     SRC_LOG_LEVELS,
     GLOBAL_LOG_LEVEL,
@@ -266,60 +277,70 @@ async def chat_completion_tools_handler(
 
             result = json.loads(content)
 
-            tool_function_name = result.get("name", None)
-            if tool_function_name not in tools:
-                return body, {}
+            async def tool_call_handler(tool_call):
+                log.debug(f"{tool_call=}")
 
-            tool_function_params = result.get("parameters", {})
+                tool_function_name = tool_call.get("name", None)
+                if tool_function_name not in tools:
+                    return body, {}
 
-            try:
-                required_params = (
-                    tools[tool_function_name]
-                    .get("spec", {})
-                    .get("parameters", {})
-                    .get("required", [])
-                )
-                tool_function = tools[tool_function_name]["callable"]
-                tool_function_params = {
-                    k: v
-                    for k, v in tool_function_params.items()
-                    if k in required_params
-                }
-                tool_output = await tool_function(**tool_function_params)
+                tool_function_params = tool_call.get("parameters", {})
 
-            except Exception as e:
-                tool_output = str(e)
-
-            if isinstance(tool_output, str):
-                if tools[tool_function_name]["citation"]:
-                    sources.append(
-                        {
-                            "source": {
-                                "name": f"TOOL:{tools[tool_function_name]['toolkit_id']}/{tool_function_name}"
-                            },
-                            "document": [tool_output],
-                            "metadata": [
-                                {
-                                    "source": f"TOOL:{tools[tool_function_name]['toolkit_id']}/{tool_function_name}"
-                                }
-                            ],
-                        }
+                try:
+                    required_params = (
+                        tools[tool_function_name]
+                        .get("spec", {})
+                        .get("parameters", {})
+                        .get("required", [])
                     )
-                else:
-                    sources.append(
-                        {
-                            "source": {},
-                            "document": [tool_output],
-                            "metadata": [
-                                {
-                                    "source": f"TOOL:{tools[tool_function_name]['toolkit_id']}/{tool_function_name}"
-                                }
-                            ],
-                        }
-                    )
+                    tool_function = tools[tool_function_name]["callable"]
+                    tool_function_params = {
+                        k: v
+                        for k, v in tool_function_params.items()
+                        if k in required_params
+                    }
+                    tool_output = await tool_function(**tool_function_params)
 
-                if tools[tool_function_name]["file_handler"]:
-                    skip_files = True
+                except Exception as e:
+                    tool_output = str(e)
+
+                if isinstance(tool_output, str):
+                    if tools[tool_function_name]["citation"]:
+                        sources.append(
+                            {
+                                "source": {
+                                    "name": f"TOOL:{tools[tool_function_name]['toolkit_id']}/{tool_function_name}"
+                                },
+                                "document": [tool_output],
+                                "metadata": [
+                                    {
+                                        "source": f"TOOL:{tools[tool_function_name]['toolkit_id']}/{tool_function_name}"
+                                    }
+                                ],
+                            }
+                        )
+                    else:
+                        sources.append(
+                            {
+                                "source": {},
+                                "document": [tool_output],
+                                "metadata": [
+                                    {
+                                        "source": f"TOOL:{tools[tool_function_name]['toolkit_id']}/{tool_function_name}"
+                                    }
+                                ],
+                            }
+                        )
+
+                    if tools[tool_function_name]["file_handler"]:
+                        skip_files = True
+
+            # check if "tool_calls" in result
+            if result.get("tool_calls"):
+                for tool_call in result.get("tool_calls"):
+                    await tool_call_handler(tool_call)
+            else:
+                await tool_call_handler(result)
 
         except Exception as e:
             log.exception(f"Error: {e}")
@@ -486,6 +507,100 @@ async def chat_web_search_handler(
     return form_data
 
 
+async def chat_image_generation_handler(
+    request: Request, form_data: dict, extra_params: dict, user
+):
+    __event_emitter__ = extra_params["__event_emitter__"]
+    await __event_emitter__(
+        {
+            "type": "status",
+            "data": {"description": "Generating an image", "done": False},
+        }
+    )
+
+    messages = form_data["messages"]
+    user_message = get_last_user_message(messages)
+
+    prompt = user_message
+    negative_prompt = ""
+
+    if request.app.state.config.ENABLE_IMAGE_PROMPT_GENERATION:
+        try:
+            res = await generate_image_prompt(
+                request,
+                {
+                    "model": form_data["model"],
+                    "messages": messages,
+                },
+                user,
+            )
+
+            response = res["choices"][0]["message"]["content"]
+
+            try:
+                bracket_start = response.find("{")
+                bracket_end = response.rfind("}") + 1
+
+                if bracket_start == -1 or bracket_end == -1:
+                    raise Exception("No JSON object found in the response")
+
+                response = response[bracket_start:bracket_end]
+                response = json.loads(response)
+                prompt = response.get("prompt", [])
+            except Exception as e:
+                prompt = user_message
+
+        except Exception as e:
+            log.exception(e)
+            prompt = user_message
+
+    system_message_content = ""
+
+    try:
+        images = await image_generations(
+            request=request,
+            form_data=GenerateImageForm(**{"prompt": prompt}),
+            user=user,
+        )
+
+        await __event_emitter__(
+            {
+                "type": "status",
+                "data": {"description": "Generated an image", "done": True},
+            }
+        )
+
+        for image in images:
+            await __event_emitter__(
+                {
+                    "type": "message",
+                    "data": {"content": f"![Generated Image]({image['url']})\n"},
+                }
+            )
+
+        system_message_content = "<context>User is shown the generated image, tell the user that the image has been generated</context>"
+    except Exception as e:
+        log.exception(e)
+        await __event_emitter__(
+            {
+                "type": "status",
+                "data": {
+                    "description": f"An error occured while generating an image",
+                    "done": True,
+                },
+            }
+        )
+
+        system_message_content = "<context>Unable to generate an image, tell the user that an error occured</context>"
+
+    if system_message_content:
+        form_data["messages"] = add_or_update_system_message(
+            system_message_content, form_data["messages"]
+        )
+
+    return form_data
+
+
 async def chat_completion_files_handler(
     request: Request, body: dict, user: UserModel
 ) -> tuple[dict, dict[str, list]]:
@@ -523,17 +638,28 @@ async def chat_completion_files_handler(
         if len(queries) == 0:
             queries = [get_last_user_message(body["messages"])]
 
-        sources = get_sources_from_files(
-            files=files,
-            queries=queries,
-            embedding_function=request.app.state.EMBEDDING_FUNCTION,
-            k=request.app.state.config.TOP_K,
-            reranking_function=request.app.state.rf,
-            r=request.app.state.config.RELEVANCE_THRESHOLD,
-            hybrid_search=request.app.state.config.ENABLE_RAG_HYBRID_SEARCH,
-        )
+        try:
+            # Offload get_sources_from_files to a separate thread
+            loop = asyncio.get_running_loop()
+            with ThreadPoolExecutor() as executor:
+                sources = await loop.run_in_executor(
+                    executor,
+                    lambda: get_sources_from_files(
+                        files=files,
+                        queries=queries,
+                        embedding_function=request.app.state.EMBEDDING_FUNCTION,
+                        k=request.app.state.config.TOP_K,
+                        reranking_function=request.app.state.rf,
+                        r=request.app.state.config.RELEVANCE_THRESHOLD,
+                        hybrid_search=request.app.state.config.ENABLE_RAG_HYBRID_SEARCH,
+                    ),
+                )
+
+        except Exception as e:
+            log.exception(e)
 
         log.debug(f"rag_contexts:sources: {sources}")
+
     return body, {"sources": sources}
 
 
@@ -557,11 +683,18 @@ def apply_params_to_form_data(form_data, model):
         if "temperature" in params:
             form_data["temperature"] = params["temperature"]
 
+        if "max_tokens" in params:
+            form_data["max_tokens"] = params["max_tokens"]
+
         if "top_p" in params:
             form_data["top_p"] = params["top_p"]
 
         if "frequency_penalty" in params:
             form_data["frequency_penalty"] = params["frequency_penalty"]
+
+        if "reasoning_effort" in params:
+            form_data["reasoning_effort"] = params["reasoning_effort"]
+
     return form_data
 
 
@@ -633,11 +766,23 @@ async def process_chat_payload(request, form_data, metadata, user, model):
         files.extend(knowledge_files)
         form_data["files"] = files
 
+    variables = form_data.pop("variables", None)
+
     features = form_data.pop("features", None)
     if features:
         if "web_search" in features and features["web_search"]:
             form_data = await chat_web_search_handler(
                 request, form_data, extra_params, user
+            )
+
+        if "image_generation" in features and features["image_generation"]:
+            form_data = await chat_image_generation_handler(
+                request, form_data, extra_params, user
+            )
+
+        if "code_interpreter" in features and features["code_interpreter"]:
+            form_data["messages"] = add_or_update_user_message(
+                DEFAULT_CODE_INTERPRETER_PROMPT, form_data["messages"]
             )
 
     try:
@@ -770,14 +915,25 @@ async def process_chat_response(
                         )
 
                         if res and isinstance(res, dict):
-                            title = (
-                                res.get("choices", [])[0]
-                                .get("message", {})
-                                .get(
-                                    "content",
-                                    message.get("content", "New Chat"),
+                            if len(res.get("choices", [])) == 1:
+                                title_string = (
+                                    res.get("choices", [])[0]
+                                    .get("message", {})
+                                    .get("content", message.get("content", "New Chat"))
                                 )
-                            ).strip()
+                            else:
+                                title_string = ""
+
+                            title_string = title_string[
+                                title_string.find("{") : title_string.rfind("}") + 1
+                            ]
+
+                            try:
+                                title = json.loads(title_string).get(
+                                    "title", "New Chat"
+                                )
+                            except Exception as e:
+                                title = ""
 
                             if not title:
                                 title = messages[0].get("content", "New Chat")
@@ -814,11 +970,14 @@ async def process_chat_response(
                     )
 
                     if res and isinstance(res, dict):
-                        tags_string = (
-                            res.get("choices", [])[0]
-                            .get("message", {})
-                            .get("content", "")
-                        )
+                        if len(res.get("choices", [])) == 1:
+                            tags_string = (
+                                res.get("choices", [])[0]
+                                .get("message", {})
+                                .get("content", "")
+                            )
+                        else:
+                            tags_string = ""
 
                         tags_string = tags_string[
                             tags_string.find("{") : tags_string.rfind("}") + 1
@@ -837,9 +996,10 @@ async def process_chat_response(
                                 }
                             )
                         except Exception as e:
-                            print(f"Error: {e}")
+                            pass
 
     event_emitter = None
+    event_caller = None
     if (
         "session_id" in metadata
         and metadata["session_id"]
@@ -849,10 +1009,11 @@ async def process_chat_response(
         and metadata["message_id"]
     ):
         event_emitter = get_event_emitter(metadata)
+        event_caller = get_event_call(metadata)
 
+    # Non-streaming response
     if not isinstance(response, StreamingResponse):
         if event_emitter:
-
             if "selected_model_id" in response:
                 Chats.upsert_message_to_chat_by_id_and_message_id(
                     metadata["chat_id"],
@@ -917,22 +1078,156 @@ async def process_chat_response(
         else:
             return response
 
+    # Non standard response
     if not any(
         content_type in response.headers["Content-Type"]
         for content_type in ["text/event-stream", "application/x-ndjson"]
     ):
         return response
 
-    if event_emitter:
-
+    # Streaming response
+    if event_emitter and event_caller:
         task_id = str(uuid4())  # Create a unique task ID.
+        model_id = form_data.get("model", "")
 
         # Handle as a background task
         async def post_response_handler(response, events):
+            def serialize_content_blocks(content_blocks, raw=False):
+                content = ""
+
+                for block in content_blocks:
+                    if block["type"] == "text":
+                        content = f"{content}{block['content'].strip()}\n"
+                    elif block["type"] == "reasoning":
+                        reasoning_display_content = "\n".join(
+                            (f"> {line}" if not line.startswith(">") else line)
+                            for line in block["content"].splitlines()
+                        )
+
+                        reasoning_duration = block.get("duration", None)
+
+                        if reasoning_duration:
+                            content = f'{content}<details type="reasoning" done="true" duration="{reasoning_duration}">\n<summary>Thought for {reasoning_duration} seconds</summary>\n{reasoning_display_content}\n</details>\n'
+                        else:
+                            content = f'{content}<details type="reasoning" done="false">\n<summary>Thinking…</summary>\n{reasoning_display_content}\n</details>\n'
+
+                    elif block["type"] == "code_interpreter":
+                        attributes = block.get("attributes", {})
+                        output = block.get("output", None)
+                        lang = attributes.get("lang", "")
+
+                        if output:
+                            output = html.escape(json.dumps(output))
+
+                            if raw:
+                                content = f'{content}<details type="code_interpreter" done="true" output="{output}">\n<summary>Analyzed</summary>\n```{lang}\n{block["content"]}\n```\n```output\n{output}\n```\n</details>\n'
+                            else:
+                                content = f'{content}<details type="code_interpreter" done="true" output="{output}">\n<summary>Analyzed</summary>\n```{lang}\n{block["content"]}\n```\n</details>\n'
+                        else:
+                            content = f'{content}<details type="code_interpreter" done="false">\n<summary>Analyzing...</summary>\n```{lang}\n{block["content"]}\n```\n</details>\n'
+
+                    else:
+                        block_content = str(block["content"]).strip()
+                        content = f"{content}{block['type']}: {block_content}\n"
+
+                return content
+
+            def tag_content_handler(content_type, tags, content, content_blocks):
+                end_flag = False
+
+                def extract_attributes(tag_content):
+                    """Extract attributes from a tag if they exist."""
+                    attributes = {}
+                    # Match attributes in the format: key="value" (ignores single quotes for simplicity)
+                    matches = re.findall(r'(\w+)\s*=\s*"([^"]+)"', tag_content)
+                    for key, value in matches:
+                        attributes[key] = value
+                    return attributes
+
+                if content_blocks[-1]["type"] == "text":
+                    for tag in tags:
+                        # Match start tag e.g., <tag> or <tag attr="value">
+                        start_tag_pattern = rf"<{tag}(.*?)>"
+                        match = re.search(start_tag_pattern, content)
+                        if match:
+                            # Extract attributes in the tag (if present)
+                            attributes = extract_attributes(match.group(1))
+                            # Remove the start tag from the currently handling text block
+                            content_blocks[-1]["content"] = content_blocks[-1][
+                                "content"
+                            ].replace(match.group(0), "")
+                            if not content_blocks[-1]["content"]:
+                                content_blocks.pop()
+                            # Append the new block
+                            content_blocks.append(
+                                {
+                                    "type": content_type,
+                                    "tag": tag,
+                                    "attributes": attributes,
+                                    "content": "",
+                                    "started_at": time.time(),
+                                }
+                            )
+                            break
+                elif content_blocks[-1]["type"] == content_type:
+                    tag = content_blocks[-1]["tag"]
+                    # Match end tag e.g., </tag>
+                    end_tag_pattern = rf"</{tag}>"
+                    if re.search(end_tag_pattern, content):
+                        block_content = content_blocks[-1]["content"]
+                        # Strip start and end tags from the content
+                        start_tag_pattern = rf"<{tag}(.*?)>"
+                        block_content = re.sub(
+                            start_tag_pattern, "", block_content
+                        ).strip()
+                        block_content = re.sub(
+                            end_tag_pattern, "", block_content
+                        ).strip()
+                        if block_content:
+                            end_flag = True
+                            content_blocks[-1]["content"] = block_content
+                            content_blocks[-1]["ended_at"] = time.time()
+                            content_blocks[-1]["duration"] = int(
+                                content_blocks[-1]["ended_at"]
+                                - content_blocks[-1]["started_at"]
+                            )
+                            # Reset the content_blocks by appending a new text block
+                            content_blocks.append(
+                                {
+                                    "type": "text",
+                                    "content": "",
+                                }
+                            )
+                            # Clean processed content
+                            content = re.sub(
+                                rf"<{tag}(.*?)>(.|\n)*?</{tag}>",
+                                "",
+                                content,
+                                flags=re.DOTALL,
+                            )
+                        else:
+                            # Remove the block if content is empty
+                            content_blocks.pop()
+                return content, content_blocks, end_flag
+
             message = Chats.get_message_by_id_and_message_id(
                 metadata["chat_id"], metadata["message_id"]
             )
+
             content = message.get("content", "") if message else ""
+            content_blocks = [
+                {
+                    "type": "text",
+                    "content": content,
+                }
+            ]
+
+            # We might want to disable this by default
+            DETECT_REASONING = True
+            DETECT_CODE_INTERPRETER = True
+
+            reasoning_tags = ["think", "reason", "reasoning", "thought", "Thought"]
+            code_interpreter_tags = ["code_interpreter"]
 
             try:
                 for event in events:
@@ -952,74 +1247,193 @@ async def process_chat_response(
                         },
                     )
 
-                async for line in response.body_iterator:
-                    line = line.decode("utf-8") if isinstance(line, bytes) else line
-                    data = line
+                async def stream_body_handler(response):
+                    nonlocal content
+                    nonlocal content_blocks
 
-                    # Skip empty lines
-                    if not data.strip():
-                        continue
+                    async for line in response.body_iterator:
+                        line = line.decode("utf-8") if isinstance(line, bytes) else line
+                        data = line
 
-                    # "data: " is the prefix for each event
-                    if not data.startswith("data: "):
-                        continue
-
-                    # Remove the prefix
-                    data = data[len("data: ") :]
-
-                    try:
-                        data = json.loads(data)
-
-                        if "selected_model_id" in data:
-                            Chats.upsert_message_to_chat_by_id_and_message_id(
-                                metadata["chat_id"],
-                                metadata["message_id"],
-                                {
-                                    "selectedModelId": data["selected_model_id"],
-                                },
-                            )
-
-                        else:
-                            value = (
-                                data.get("choices", [])[0]
-                                .get("delta", {})
-                                .get("content")
-                            )
-
-                            if value:
-                                content = f"{content}{value}"
-
-                                if ENABLE_REALTIME_CHAT_SAVE:
-                                    # Save message in the database
-                                    Chats.upsert_message_to_chat_by_id_and_message_id(
-                                        metadata["chat_id"],
-                                        metadata["message_id"],
-                                        {
-                                            "content": content,
-                                        },
-                                    )
-                                else:
-                                    data = {
-                                        "content": content,
-                                    }
-
-                        await event_emitter(
-                            {
-                                "type": "chat:completion",
-                                "data": data,
-                            }
-                        )
-
-                    except Exception as e:
-                        done = "data: [DONE]" in line
-
-                        if done:
-                            pass
-                        else:
+                        # Skip empty lines
+                        if not data.strip():
                             continue
 
+                        # "data:" is the prefix for each event
+                        if not data.startswith("data:"):
+                            continue
+
+                        # Remove the prefix
+                        data = data[len("data:") :].strip()
+
+                        try:
+                            data = json.loads(data)
+
+                            if "selected_model_id" in data:
+                                model_id = data["selected_model_id"]
+                                Chats.upsert_message_to_chat_by_id_and_message_id(
+                                    metadata["chat_id"],
+                                    metadata["message_id"],
+                                    {
+                                        "selectedModelId": model_id,
+                                    },
+                                )
+                            else:
+                                choices = data.get("choices", [])
+                                if not choices:
+                                    continue
+
+                                value = choices[0].get("delta", {}).get("content")
+
+                                if value:
+                                    content = f"{content}{value}"
+                                    content_blocks[-1]["content"] = (
+                                        content_blocks[-1]["content"] + value
+                                    )
+
+                                    if DETECT_REASONING:
+                                        content, content_blocks, _ = (
+                                            tag_content_handler(
+                                                "reasoning",
+                                                reasoning_tags,
+                                                content,
+                                                content_blocks,
+                                            )
+                                        )
+
+                                    if DETECT_CODE_INTERPRETER:
+                                        content, content_blocks, end = (
+                                            tag_content_handler(
+                                                "code_interpreter",
+                                                code_interpreter_tags,
+                                                content,
+                                                content_blocks,
+                                            )
+                                        )
+
+                                        if end:
+                                            break
+
+                                    if ENABLE_REALTIME_CHAT_SAVE:
+                                        # Save message in the database
+                                        Chats.upsert_message_to_chat_by_id_and_message_id(
+                                            metadata["chat_id"],
+                                            metadata["message_id"],
+                                            {
+                                                "content": serialize_content_blocks(
+                                                    content_blocks
+                                                ),
+                                            },
+                                        )
+                                    else:
+                                        data = {
+                                            "content": serialize_content_blocks(
+                                                content_blocks
+                                            ),
+                                        }
+
+                            await event_emitter(
+                                {
+                                    "type": "chat:completion",
+                                    "data": data,
+                                }
+                            )
+                        except Exception as e:
+                            done = "data: [DONE]" in line
+                            if done:
+                                pass
+                            else:
+                                log.debug("Error: ", e)
+                                continue
+
+                    # Clean up the last text block
+                    if content_blocks[-1]["type"] == "text":
+                        content_blocks[-1]["content"] = content_blocks[-1][
+                            "content"
+                        ].strip()
+
+                        if not content_blocks[-1]["content"]:
+                            content_blocks.pop()
+
+                    if response.background:
+                        await response.background()
+
+                await stream_body_handler(response)
+
+                MAX_RETRIES = 5
+                retries = 0
+
+                while (
+                    content_blocks[-1]["type"] == "code_interpreter"
+                    and retries < MAX_RETRIES
+                ):
+                    retries += 1
+                    log.debug(f"Attempt count: {retries}")
+
+                    try:
+                        if content_blocks[-1]["attributes"].get("type") == "code":
+                            output = await event_caller(
+                                {
+                                    "type": "execute:python",
+                                    "data": {
+                                        "id": str(uuid4()),
+                                        "code": content_blocks[-1]["content"],
+                                    },
+                                }
+                            )
+                    except Exception as e:
+                        output = str(e)
+
+                    content_blocks[-1]["output"] = output
+                    content_blocks.append(
+                        {
+                            "type": "text",
+                            "content": "",
+                        }
+                    )
+
+                    await event_emitter(
+                        {
+                            "type": "chat:completion",
+                            "data": {
+                                "content": serialize_content_blocks(content_blocks),
+                            },
+                        }
+                    )
+
+                    try:
+                        res = await generate_chat_completion(
+                            request,
+                            {
+                                "model": model_id,
+                                "stream": True,
+                                "messages": [
+                                    *form_data["messages"],
+                                    {
+                                        "role": "assistant",
+                                        "content": serialize_content_blocks(
+                                            content_blocks, raw=True
+                                        ),
+                                    },
+                                ],
+                            },
+                            user,
+                        )
+
+                        if isinstance(res, StreamingResponse):
+                            await stream_body_handler(res)
+                        else:
+                            break
+                    except Exception as e:
+                        log.debug(e)
+                        break
+
                 title = Chats.get_chat_title_by_id(metadata["chat_id"])
-                data = {"done": True, "content": content, "title": title}
+                data = {
+                    "done": True,
+                    "content": serialize_content_blocks(content_blocks),
+                    "title": title,
+                }
 
                 if not ENABLE_REALTIME_CHAT_SAVE:
                     # Save message in the database
@@ -1027,7 +1441,7 @@ async def process_chat_response(
                         metadata["chat_id"],
                         metadata["message_id"],
                         {
-                            "content": content,
+                            "content": serialize_content_blocks(content_blocks),
                         },
                     )
 
@@ -1064,7 +1478,7 @@ async def process_chat_response(
                         metadata["chat_id"],
                         metadata["message_id"],
                         {
-                            "content": content,
+                            "content": serialize_content_blocks(content_blocks),
                         },
                     )
 

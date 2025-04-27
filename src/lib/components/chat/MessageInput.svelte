@@ -38,6 +38,7 @@
 	import { generateAutoCompletion } from '$lib/apis';
 	import { error, text } from '@sveltejs/kit';
 	import Image from '../common/Image.svelte';
+	import { deleteFileById } from '$lib/apis/files';
 
 	const i18n = getContext('i18n');
 
@@ -61,12 +62,16 @@
 	export let files = [];
 
 	export let selectedToolIds = [];
+
+	export let imageGenerationEnabled = false;
 	export let webSearchEnabled = false;
+	export let codeInterpreterEnabled = false;
 
 	$: onChange({
 		prompt,
 		files,
 		selectedToolIds,
+		imageGenerationEnabled,
 		webSearchEnabled
 	});
 
@@ -165,7 +170,7 @@
 		// Check if the file is an audio file and transcribe/convert it to text file
 		if (['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/x-m4a'].includes(file['type'])) {
 			const res = await transcribeAudio(localStorage.token, file).catch((error) => {
-				toast.error(error);
+				toast.error(`${error}`);
 				return null;
 			});
 
@@ -207,7 +212,7 @@
 				files = files.filter((item) => item?.itemId !== tempItemId);
 			}
 		} catch (e) {
-			toast.error(e);
+			toast.error(`${e}`);
 			files = files.filter((item) => item?.itemId !== tempItemId);
 		}
 	};
@@ -381,7 +386,7 @@
 				</div>
 
 				<div class="w-full relative">
-					{#if atSelectedModel !== undefined || selectedToolIds.length > 0 || webSearchEnabled}
+					{#if atSelectedModel !== undefined || selectedToolIds.length > 0 || webSearchEnabled || imageGenerationEnabled || codeInterpreterEnabled}
 						<div
 							class="px-3 pb-0.5 pt-1.5 text-left w-full flex flex-col absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white dark:from-gray-900 z-10"
 						>
@@ -396,7 +401,7 @@
 												<span class="relative inline-flex rounded-full size-2 bg-yellow-500" />
 											</span>
 										</div>
-										<div class=" translate-y-[0.5px] text-ellipsis line-clamp-1 flex">
+										<div class="  text-ellipsis line-clamp-1 flex">
 											{#each selectedToolIds.map((id) => {
 												return $tools ? $tools.find((t) => t.id === id) : { id: id, name: id };
 											}) as tool, toolIdx (toolIdx)}
@@ -413,6 +418,38 @@
 												{/if}
 											{/each}
 										</div>
+									</div>
+								</div>
+							{/if}
+
+							{#if imageGenerationEnabled}
+								<div class="flex items-center justify-between w-full">
+									<div class="flex items-center gap-2.5 text-sm dark:text-gray-500">
+										<div class="pl-1">
+											<span class="relative flex size-2">
+												<span
+													class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"
+												/>
+												<span class="relative inline-flex rounded-full size-2 bg-teal-500" />
+											</span>
+										</div>
+										<div class=" translate-y-[0.5px]">{$i18n.t('Image generation')}</div>
+									</div>
+								</div>
+							{/if}
+
+							{#if codeInterpreterEnabled}
+								<div class="flex items-center justify-between w-full">
+									<div class="flex items-center gap-2.5 text-sm dark:text-gray-500">
+										<div class="pl-1">
+											<span class="relative flex size-2">
+												<span
+													class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"
+												/>
+												<span class="relative inline-flex rounded-full size-2 bg-blue-500" />
+											</span>
+										</div>
+										<div class=" translate-y-[0.5px]">{$i18n.t('Code interpreter')}</div>
 									</div>
 								</div>
 							{/if}
@@ -548,15 +585,15 @@
 								dir={$settings?.chatDirection ?? 'LTR'}
 							>
 								{#if files.length > 0}
-									<div class="mx-1 mt-2.5 mb-1 flex flex-wrap gap-2">
+									<div class="mx-1 mt-2.5 mb-1 flex items-center flex-wrap gap-2">
 										{#each files as file, fileIdx}
 											{#if file.type === 'image'}
 												<div class=" relative group">
-													<div class="relative">
+													<div class="relative flex items-center">
 														<Image
 															src={file.url}
 															alt="input"
-															imageClassName=" h-16 w-16 rounded-xl object-cover"
+															imageClassName=" size-14 rounded-xl object-cover"
 														/>
 														{#if atSelectedModel ? visionCapableModels.length === 0 : selectedModels.length !== visionCapableModels.length}
 															<Tooltip
@@ -615,7 +652,15 @@
 													loading={file.status === 'uploading'}
 													dismissible={true}
 													edit={true}
-													on:dismiss={() => {
+													on:dismiss={async () => {
+														if (file.type !== 'collection' && !file?.collection) {
+															if (file.id) {
+																// This will handle both file deletion and Chroma cleanup
+																await deleteFileById(localStorage.token, file.id);
+															}
+														}
+
+														// Remove from UI state
 														files.splice(fileIdx, 1);
 														files = files;
 													}}
@@ -631,6 +676,8 @@
 								<div class=" flex">
 									<div class="ml-1 self-end mb-1.5 flex space-x-1">
 										<InputMenu
+											bind:imageGenerationEnabled
+											bind:codeInterpreterEnabled
 											bind:webSearchEnabled
 											bind:selectedToolIds
 											{screenCaptureHandler}
@@ -839,6 +886,7 @@
 														atSelectedModel = undefined;
 														selectedToolIds = [];
 														webSearchEnabled = false;
+														imageGenerationEnabled = false;
 													}
 												}}
 												on:paste={async (e) => {
@@ -1025,6 +1073,7 @@
 													atSelectedModel = undefined;
 													selectedToolIds = [];
 													webSearchEnabled = false;
+													imageGenerationEnabled = false;
 												}
 											}}
 											rows="1"

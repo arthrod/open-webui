@@ -24,7 +24,7 @@ def search_serper(
     payload = json.dumps({"q": query})
     headers = {"X-API-KEY": api_key, "Content-Type": "application/json"}
 
-    response = requests.request("POST", url, headers=headers, data=payload)
+    response = requests.request("POST", url, headers=headers, data=payload, timeout=60)
     response.raise_for_status()
 
     json_response = response.json()

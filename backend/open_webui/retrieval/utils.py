@@ -631,7 +631,7 @@ def generate_openai_batch_embeddings(
                 ),
             },
             json=json_data,
-        )
+        timeout=60)
         r.raise_for_status()
         data = r.json()
         if "data" in data:
@@ -673,7 +673,7 @@ def generate_ollama_batch_embeddings(
                 ),
             },
             json=json_data,
-        )
+        timeout=60)
         r.raise_for_status()
         data = r.json()
 

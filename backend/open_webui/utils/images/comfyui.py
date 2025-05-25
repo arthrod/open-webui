@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import random
 import urllib.parse
 import urllib.request
 from typing import Optional
@@ -9,6 +8,7 @@ from typing import Optional
 import websocket  # NOTE: websocket-client (https://github.com/websocket-client/websocket-client)
 from open_webui.env import SRC_LOG_LEVELS
 from pydantic import BaseModel
+import secrets
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["COMFYUI"])
@@ -161,7 +161,7 @@ async def comfyui_generate_image(
                 seed = (
                     payload.seed
                     if payload.seed
-                    else random.randint(0, 1125899906842624)
+                    else secrets.SystemRandom().randint(0, 1125899906842624)
                 )
                 for node_id in node.node_ids:
                     workflow[node_id]["inputs"][node.key] = seed

@@ -21,6 +21,7 @@ from open_webui.utils.images.comfyui import (
     comfyui_generate_image,
 )
 from pydantic import BaseModel
+from security import safe_requests
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["IMAGES"])
@@ -195,7 +196,7 @@ def get_automatic1111_api_auth(request: Request):
 async def verify_url(request: Request, user=Depends(get_admin_user)):
     if request.app.state.config.IMAGE_GENERATION_ENGINE == "automatic1111":
         try:
-            r = requests.get(
+            r = safe_requests.get(
                 url=f"{request.app.state.config.AUTOMATIC1111_BASE_URL}/sdapi/v1/options",
                 headers={"authorization": get_automatic1111_api_auth(request)},
             )
@@ -213,7 +214,7 @@ async def verify_url(request: Request, user=Depends(get_admin_user)):
             }
 
         try:
-            r = requests.get(
+            r = safe_requests.get(
                 url=f"{request.app.state.config.COMFYUI_BASE_URL}/object_info",
                 headers=headers,
             )
@@ -231,7 +232,7 @@ def set_image_model(request: Request, model: str):
     request.app.state.config.IMAGE_GENERATION_MODEL = model
     if request.app.state.config.IMAGE_GENERATION_ENGINE in ["", "automatic1111"]:
         api_auth = get_automatic1111_api_auth(request)
-        r = requests.get(
+        r = safe_requests.get(
             url=f"{request.app.state.config.AUTOMATIC1111_BASE_URL}/sdapi/v1/options",
             headers={"authorization": api_auth},
         )
@@ -270,7 +271,7 @@ def get_image_model(request):
         or request.app.state.config.IMAGE_GENERATION_ENGINE == ""
     ):
         try:
-            r = requests.get(
+            r = safe_requests.get(
                 url=f"{request.app.state.config.AUTOMATIC1111_BASE_URL}/sdapi/v1/options",
                 headers={"authorization": get_automatic1111_api_auth(request)},
             )
@@ -343,7 +344,7 @@ def get_models(request: Request, user=Depends(get_verified_user)):
             headers = {
                 "Authorization": f"Bearer {request.app.state.config.COMFYUI_API_KEY}"
             }
-            r = requests.get(
+            r = safe_requests.get(
                 url=f"{request.app.state.config.COMFYUI_BASE_URL}/object_info",
                 headers=headers,
             )
@@ -391,7 +392,7 @@ def get_models(request: Request, user=Depends(get_verified_user)):
             request.app.state.config.IMAGE_GENERATION_ENGINE == "automatic1111"
             or request.app.state.config.IMAGE_GENERATION_ENGINE == ""
         ):
-            r = requests.get(
+            r = safe_requests.get(
                 url=f"{request.app.state.config.AUTOMATIC1111_BASE_URL}/sdapi/v1/sd-models",
                 headers={"authorization": get_automatic1111_api_auth(request)},
             )
@@ -433,9 +434,9 @@ def load_b64_image_data(b64_str):
 def load_url_image_data(url, headers=None):
     try:
         if headers:
-            r = requests.get(url, headers=headers)
+            r = safe_requests.get(url, headers=headers)
         else:
-            r = requests.get(url)
+            r = safe_requests.get(url)
 
         r.raise_for_status()
         if r.headers["content-type"].split("/")[0] == "image":

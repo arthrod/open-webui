@@ -24,7 +24,7 @@ def search_mojeek(
     }
     params = {"q": query, "api_key": api_key, "fmt": "json", "t": count}
 
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.get(url, headers=headers, params=params, timeout=60)
     response.raise_for_status()
     json_response = response.json()
     results = json_response.get("response", {}).get("results", [])

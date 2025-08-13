@@ -66,7 +66,7 @@ class TavilyLoader(BaseLoader):
                 urls_param = batch_urls[0] if len(batch_urls) == 1 else batch_urls
                 payload = {"urls": urls_param, "extract_depth": self.extract_depth}
                 # Make the API call
-                response = requests.post(self.api_url, headers=headers, json=payload)
+                response = requests.post(self.api_url, headers=headers, json=payload, timeout=60)
                 response.raise_for_status()
                 response_data = response.json()
                 # Process successful results

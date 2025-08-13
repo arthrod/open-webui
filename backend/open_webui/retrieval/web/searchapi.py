@@ -30,7 +30,7 @@ def search_searchapi(
     payload = {"engine": engine, "q": query, "api_key": api_key}
 
     url = f"{url}?{urlencode(payload)}"
-    response = requests.request("GET", url)
+    response = requests.request("GET", url, timeout=60)
 
     json_response = response.json()
     log.info(f"results from searchapi search: {json_response}")

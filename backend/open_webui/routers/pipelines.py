@@ -223,7 +223,7 @@ async def upload_pipeline(
                 f"{url}/pipelines/upload",
                 headers={"Authorization": f"Bearer {key}"},
                 files=files,
-            )
+            timeout=60)
 
         r.raise_for_status()
         data = r.json()
@@ -274,7 +274,7 @@ async def add_pipeline(
             f"{url}/pipelines/add",
             headers={"Authorization": f"Bearer {key}"},
             json={"url": form_data.url},
-        )
+        timeout=60)
 
         r.raise_for_status()
         data = r.json()
@@ -319,7 +319,7 @@ async def delete_pipeline(
             f"{url}/pipelines/delete",
             headers={"Authorization": f"Bearer {key}"},
             json={"id": form_data.id},
-        )
+        timeout=60)
 
         r.raise_for_status()
         data = r.json()
@@ -353,7 +353,7 @@ async def get_pipelines(
         url = request.app.state.config.OPENAI_API_BASE_URLS[urlIdx]
         key = request.app.state.config.OPENAI_API_KEYS[urlIdx]
 
-        r = requests.get(f"{url}/pipelines", headers={"Authorization": f"Bearer {key}"})
+        r = requests.get(f"{url}/pipelines", headers={"Authorization": f"Bearer {key}"}, timeout=60)
 
         r.raise_for_status()
         data = r.json()
@@ -391,8 +391,8 @@ async def get_pipeline_valves(
         key = request.app.state.config.OPENAI_API_KEYS[urlIdx]
 
         r = requests.get(
-            f"{url}/{pipeline_id}/valves", headers={"Authorization": f"Bearer {key}"}
-        )
+            f"{url}/{pipeline_id}/valves", headers={"Authorization": f"Bearer {key}"}, 
+        timeout=60)
 
         r.raise_for_status()
         data = r.json()
@@ -432,7 +432,7 @@ async def get_pipeline_valves_spec(
         r = requests.get(
             f"{url}/{pipeline_id}/valves/spec",
             headers={"Authorization": f"Bearer {key}"},
-        )
+        timeout=60)
 
         r.raise_for_status()
         data = r.json()
@@ -474,7 +474,7 @@ async def update_pipeline_valves(
             f"{url}/{pipeline_id}/valves/update",
             headers={"Authorization": f"Bearer {key}"},
             json={**form_data},
-        )
+        timeout=60)
 
         r.raise_for_status()
         data = r.json()

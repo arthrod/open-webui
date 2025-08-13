@@ -43,7 +43,7 @@ def search_google_pse(
             "num": num_results_this_page,
             "start": start_index,
         }
-        response = requests.request("GET", url, headers=headers, params=params)
+        response = requests.request("GET", url, headers=headers, params=params, timeout=60)
         response.raise_for_status()
         json_response = response.json()
         results = json_response.get("items", [])

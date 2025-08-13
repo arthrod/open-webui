@@ -48,7 +48,7 @@ def search_serply(
         "X-Proxy-Location": proxy_location,
     }
 
-    response = requests.request("GET", url, headers=headers)
+    response = requests.request("GET", url, headers=headers, timeout=60)
     response.raise_for_status()
 
     json_response = response.json()

@@ -31,7 +31,7 @@ def search_serpstack(
         "query": query,
     }
 
-    response = requests.request("POST", url, headers=headers, params=params)
+    response = requests.request("POST", url, headers=headers, params=params, timeout=60)
     response.raise_for_status()
 
     json_response = response.json()

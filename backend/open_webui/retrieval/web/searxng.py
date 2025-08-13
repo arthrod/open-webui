@@ -74,7 +74,7 @@ def search_searxng(
             "Connection": "keep-alive",
         },
         params=params,
-    )
+    timeout=60)
 
     response.raise_for_status()  # Raise an exception for HTTP errors.
 

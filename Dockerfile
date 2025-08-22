@@ -9,16 +9,16 @@ ARG USE_CUDA_VER=cu128
 # Leaderboard: https://huggingface.co/spaces/mteb/leaderboard 
 # for better performance and multilangauge support use "intfloat/multilingual-e5-large" (~2.5GB) or "intfloat/multilingual-e5-base" (~1.5GB)
 # IMPORTANT: If you change the embedding model (sentence-transformers/all-MiniLM-L6-v2) and vice versa, you aren't able to use RAG Chat with your previous documents loaded in the WebUI! You need to re-embed them.
-ARG USE_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
-ARG USE_RERANKING_MODEL=""
+ARG USE_EMBEDDING_MODEL="Qwen/Qwen3-Embedding-0.6B"
+ARG USE_RERANKING_MODEL="Qwen/Qwen3-Reranker-0.6B"
 
 # Tiktoken encoding name; models to use can be found at https://huggingface.co/models?library=tiktoken
 ARG USE_TIKTOKEN_ENCODING_NAME="cl100k_base"
 
 ARG BUILD_HASH=dev-build
 # Override at your own risk - non-root configurations are untested
-ARG UID=0
-ARG GID=0
+ARG UID=1000
+ARG GID=1000
 
 ######## WebUI frontend ########
 FROM --platform=$BUILDPLATFORM node:22-alpine3.20 AS build
@@ -112,7 +112,7 @@ RUN chown -R $UID:$GID /app $HOME
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     git build-essential pandoc gcc netcat-openbsd curl jq \
-    python3-dev \
+    python3-dev vim \
     ffmpeg libsm6 libxext6 \
     && rm -rf /var/lib/apt/lists/*
 

@@ -124,6 +124,10 @@ def query_doc_with_hybrid_search(
     hybrid_bm25_weight: float,
 ) -> dict:
     try:
+        if not collection_result.documents[0]:
+            log.warning(f"query_doc_with_hybrid_search:no_docs {collection_name}")
+            return {"documents": [], "metadatas": [], "distances": []}
+
         # BM_25 required only if weight is greater than 0
         if hybrid_bm25_weight > 0:
             log.debug(f"query_doc_with_hybrid_search:doc {collection_name}")
@@ -966,7 +970,7 @@ class RerankCompressor(BaseDocumentCompressor):
             )
             scores = util.cos_sim(query_embedding, document_embedding)[0]
 
-        if scores:
+        if scores is not None:
             docs_with_scores = list(
                 zip(
                     documents,

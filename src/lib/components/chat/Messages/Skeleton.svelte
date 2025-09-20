@@ -1,30 +1,18 @@
 <script lang="ts">
-	export let size = 'md';
+ 	import { WEBUI_BASE_URL } from '$lib/constants';
+	console.log(WEBUI_BASE_URL)
+ 	const metaThemeColorTag = document.querySelector('meta[name="theme-color"]');
+ 	let SRC = `${WEBUI_BASE_URL}/static/chat-waiting-mb-dark.gif`;
+ 	if (metaThemeColorTag?.content) {
+ 		if (metaThemeColorTag.content === '#ffffff') {
+ 			SRC = `${WEBUI_BASE_URL}/static/chat-waiting-mb-light.gif`;
+ 		}
+ 	}
 </script>
 
-<span class="relative flex {size === 'md' ? 'size-3 my-2' : 'size-2 my-1'} mx-1">
-	<span
-		class="absolute inline-flex h-full w-full animate-pulse rounded-full bg-gray-700 dark:bg-gray-200 opacity-75"
-	></span>
-	<span
-		class="relative inline-flex {size === 'md'
-			? 'size-3'
-			: 'size-2'} rounded-full bg-black dark:bg-white animate-size"
-	></span>
-</span>
-
-<style>
-	@keyframes size {
-		0%,
-		100% {
-			transform: scale(1);
-		}
-		50% {
-			transform: scale(1.25);
-		}
-	}
-
-	.animate-size {
-		animation: size 1.5s ease-in-out infinite;
-	}
-</style>
+<img
+ 	crossorigin="anonymous"
+ 	src="{SRC}"
+ 	class="w-20 h-10"
+ 	alt="Loading..."
+ />

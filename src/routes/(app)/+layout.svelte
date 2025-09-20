@@ -19,7 +19,7 @@
 	import { getBanners } from '$lib/apis/configs';
 	import { getUserSettings } from '$lib/apis/users';
 
-	import { WEBUI_VERSION } from '$lib/constants';
+	import { TRIAL_USER_EMAIL, WEBUI_VERSION } from '$lib/constants';
 	import { compareVersion } from '$lib/utils';
 
 	import {
@@ -114,7 +114,20 @@
 
 			banners.set(await getBanners(localStorage.token));
 			tools.set(await getTools(localStorage.token));
-			toolServers.set(await getToolServersData($i18n, $settings?.toolServers ?? []));
+
+			let toolServersData = await getToolServersData($settings?.toolServers ?? []);
+			toolServersData = toolServersData.filter((data) => {
+				if (data.error) {
+					toast.error(
+						$i18n.t(`Failed to connect to {{URL}} OpenAPI tool server`, {
+							URL: data?.url
+						})
+					);
+					return false;
+				}
+				return true;
+			});
+			toolServers.set(toolServersData);
 
 			document.addEventListener('keydown', async function (event) {
 				const isCtrlPressed = event.ctrlKey || event.metaKey; // metaKey is for Cmd key on Mac
@@ -214,9 +227,8 @@
 				}
 			});
 
-			if ($user?.role === 'admin' && ($settings?.showChangelog ?? true)) {
-				showChangelog.set($settings?.version !== $config.version);
-			}
+			// Do not show changelog for any user
+ 			showChangelog.set(false);
 
 			if ($user?.role === 'admin' || ($user?.permissions?.chat?.temporary ?? true)) {
 				if ($page.url.searchParams.get('temporary-chat') === 'true') {
@@ -336,7 +348,9 @@
 					</div>
 				{/if}
 
-				<Sidebar />
+				{#if ($user?.email) !== TRIAL_USER_EMAIL}
+					<Sidebar />
+				{/if}
 
 				{#if loaded}
 					<slot />

@@ -41,7 +41,7 @@
 		importChat
 	} from '$lib/apis/chats';
 	import { createNewFolder, getFolders, updateFolderParentIdById } from '$lib/apis/folders';
-	import { WEBUI_BASE_URL } from '$lib/constants';
+	import { TRIAL_USER_EMAIL, WEBUI_BASE_URL } from '$lib/constants';
 
 	import ArchivedChatsModal from './ArchivedChatsModal.svelte';
 	import UserMenu from './Sidebar/UserMenu.svelte';
@@ -442,6 +442,8 @@
 
 		await tick();
 	};
+
+	const isWindows = /Windows/i.test(navigator.userAgent);
 </script>
 
 <ArchivedChatsModal
@@ -509,13 +511,13 @@
 	}}
 />
 
-{#if !$mobile && !$showSidebar}
+{#if !$mobile && !$showSidebar && $user?.email !== TRIAL_USER_EMAIL}
 	<div
 		class=" py-2 px-1.5 flex flex-col justify-between text-black dark:text-white h-full border-e border-gray-50 dark:border-gray-850 z-10"
 		id="sidebar"
 	>
 		<button
-			class="flex flex-col flex-1 cursor-[e-resize]"
+			class="flex flex-col flex-1 {isWindows ? 'cursor-pointer' : 'cursor-[e-resize]'}"
 			on:click={async () => {
 				showSidebar.set(!$showSidebar);
 			}}
@@ -526,7 +528,10 @@
 					placement="right"
 				>
 					<button
-						class=" flex rounded-lg hover:bg-gray-100 dark:hover:bg-gray-850 transition group cursor-[e-resize]"
+						class="flex rounded-lg hover:bg-gray-100 dark:hover:bg-gray-850 transition group {isWindows
+							? 'cursor-pointer'
+							: 'cursor-[e-resize]'}"
+						aria-label={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
 					>
 						<div class=" self-center flex items-center justify-center size-9">
 							<img
@@ -544,7 +549,7 @@
 
 			<div>
 				<div class="">
-					<Tooltip content={$i18n.t('New Chat')} placement="right">
+					<Tooltip content={$i18n.t('New Gift Chat')} placement="right">
 						<a
 							class=" cursor-pointer flex rounded-lg hover:bg-gray-100 dark:hover:bg-gray-850 transition group"
 							href="/"
@@ -556,6 +561,7 @@
 								goto('/');
 								newChatHandler();
 							}}
+							aria-label={$i18n.t('New Gift Chat')}
 						>
 							<div class=" self-center flex items-center justify-center size-9">
 								<PencilSquare className="size-4.5" />
@@ -575,6 +581,7 @@
 								showSearch.set(true);
 							}}
 							draggable="false"
+							aria-label={$i18n.t('Search')}
 						>
 							<div class=" self-center flex items-center justify-center size-9">
 								<Search className="size-4.5" />
@@ -597,6 +604,7 @@
 									itemClickHandler();
 								}}
 								draggable="false"
+								aria-label={$i18n.t('Notes')}
 							>
 								<div class=" self-center flex items-center justify-center size-9">
 									<Note className="size-4.5" />
@@ -619,6 +627,7 @@
 									goto('/workspace');
 									itemClickHandler();
 								}}
+								aria-label={$i18n.t('Workspace')}
 								draggable="false"
 							>
 								<div class=" self-center flex items-center justify-center size-9">
@@ -721,10 +730,13 @@
 					placement="bottom"
 				>
 					<button
-						class=" flex rounded-lg hover:bg-gray-100 dark:hover:bg-gray-850 transition cursor-[w-resize]"
+						class="flex rounded-lg hover:bg-gray-100 dark:hover:bg-gray-850 transition {isWindows
+							? 'cursor-pointer'
+							: 'cursor-[w-resize]'}"
 						on:click={() => {
 							showSidebar.set(!$showSidebar);
 						}}
+						aria-label={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}
 					>
 						<div class=" self-center p-1.5">
 							<Sidebar />
@@ -741,13 +753,14 @@
 						href="/"
 						draggable="false"
 						on:click={newChatHandler}
+						aria-label={$i18n.t('New Gift Chat')}
 					>
 						<div class="self-center">
 							<PencilSquare className=" size-4.5" strokeWidth="2" />
 						</div>
 
 						<div class="flex self-center translate-y-[0.5px]">
-							<div class=" self-center text-sm font-primary">{$i18n.t('New Chat')}</div>
+							<div class=" self-center text-sm font-primary">{$i18n.t('New Gift Chat')}</div>
 						</div>
 					</a>
 				</div>
@@ -759,6 +772,7 @@
 							showSearch.set(true);
 						}}
 						draggable="false"
+						aria-label={$i18n.t('Search')}
 					>
 						<div class="self-center">
 							<Search strokeWidth="2" className="size-4.5" />
@@ -777,6 +791,7 @@
 							href="/notes"
 							on:click={itemClickHandler}
 							draggable="false"
+							aria-label={$i18n.t('Notes')}
 						>
 							<div class="self-center">
 								<Note className="size-4.5" strokeWidth="2" />
@@ -796,6 +811,7 @@
 							href="/workspace"
 							on:click={itemClickHandler}
 							draggable="false"
+							aria-label={$i18n.t('Workspace')}
 						>
 							<div class="self-center">
 								<svg

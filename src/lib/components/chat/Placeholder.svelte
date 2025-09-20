@@ -221,7 +221,7 @@
 					{toolServers}
 					{stopResponse}
 					{createMessagePair}
-					placeholder={$i18n.t('How can I help you today?')}
+					placeholder={$i18n.t('I\'m Magicbox, your gift-finding assistant. How can I help you today?')}
 					{onChange}
 					on:upload={(e) => {
 						dispatch('upload', e.detail);

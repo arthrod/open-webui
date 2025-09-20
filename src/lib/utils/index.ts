@@ -672,7 +672,7 @@ export const getUserPosition = async (raw = false) => {
 };
 
 const convertOpenAIMessages = (convo) => {
-	// Parse OpenAI chat messages and create chat dictionary for creating new chats
+	// Parse OpenAI chat messages and create chat dictionary for creating new gift chats
 	const mapping = convo['mapping'];
 	const messages = [];
 	let currentId = '';
@@ -724,7 +724,7 @@ const convertOpenAIMessages = (convo) => {
 		messages: messages,
 		options: {},
 		timestamp: convo['create_time'],
-		title: convo['title'] ?? 'New Chat'
+		title: convo['title'] ?? 'New Gift Chat'
 	};
 	return chat;
 };

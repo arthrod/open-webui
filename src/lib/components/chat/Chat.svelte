@@ -324,6 +324,8 @@
 					message.content = data.content;
 				} else if (type === 'chat:message:files' || type === 'files') {
 					message.files = data.files;
+				} else if (type === 'chat:message:error') {
+					message.error = data.error;
 				} else if (type === 'chat:message:follow_ups') {
 					message.followUps = data.follow_ups;
 
@@ -1045,6 +1047,15 @@
 			}
 		}
 
+		// Bring focus on top of the latest response message (instead of the bottom)
+		const messageElement = document.getElementById(`message-${responseMessageId}`);
+		console.info(responseMessageId)
+		if (messageElement) {
+				window.setTimeout(() => {
+					messageElement.scrollIntoView({ behavior: 'instant' });
+				}, 0);
+		}
+
 		taskIds = null;
 	};
 
@@ -1562,7 +1573,7 @@
 		}
 		history = history;
 
-		// Create new chat if newChat is true and first user message
+		// Create new gift chat if newChat is true and first user message
 		if (newChat && _history.messages[_history.currentId].parentId === null) {
 			_chatId = await initChatHandler(_history);
 		}
@@ -2048,7 +2059,7 @@
 				localStorage.token,
 				{
 					id: _chatId,
-					title: $i18n.t('New Chat'),
+					title: $i18n.t('New Gift Chat'),
 					models: selectedModels,
 					system: $settings.system ?? undefined,
 					params: params,
@@ -2227,7 +2238,7 @@
 								}
 								const messages = createMessagesList(history, history.currentId);
 								const title =
-									messages.find((m) => m.role === 'user')?.content ?? $i18n.t('New Chat');
+									messages.find((m) => m.role === 'user')?.content ?? $i18n.t('New Gift Chat');
 
 								const savedChat = await createNewChat(
 									localStorage.token,
@@ -2288,6 +2299,7 @@
 										{mergeResponses}
 										{chatActionHandler}
 										{addMessages}
+										{initNewChat}
 										topPadding={true}
 										bottomPadding={files.length > 0}
 										{onSelect}

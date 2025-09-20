@@ -21,6 +21,9 @@
 	let _src = '';
 	$: _src = src.startsWith('/') ? `${WEBUI_BASE_URL}${src}` : src;
 
+	let _caption = '';
+	$: _caption = alt;
+
 	let showImagePreview = false;
 </script>
 
@@ -30,7 +33,7 @@
 	<button
 		class={className}
 		on:click={() => {
-			showImagePreview = true;
+			showImagePreview = false;
 		}}
 		aria-label={$i18n.t('Show image preview')}
 		type="button"

@@ -1,7 +1,7 @@
 import { browser, dev } from '$app/environment';
 // import { version } from '../../package.json';
 
-export const APP_NAME = 'Open WebUI';
+export const APP_NAME = 'Magicbox';
 
 export const WEBUI_HOSTNAME = browser ? (dev ? `${location.hostname}:8080` : ``) : '';
 export const WEBUI_BASE_URL = browser ? (dev ? `http://${WEBUI_HOSTNAME}` : ``) : ``;
@@ -96,6 +96,8 @@ export const SUPPORTED_FILE_EXTENSIONS = [
 ];
 
 export const PASTED_TEXT_CHARACTER_LIMIT = 1000;
+export const TRIAL_USER_EMAIL = 'trial@magicboxgifts.com';
+export const TRIAL_USER_PASSWORD = '';
 
 // Source: https://kit.svelte.dev/docs/modules#$env-static-public
 // This feature, akin to $env/static/private, exclusively incorporates environment variables

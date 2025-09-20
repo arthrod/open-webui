@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import '$lib/styles/pill-button.css'; // Import the shared styles
 
 	import {
 		WEBUI_NAME,
@@ -15,6 +16,8 @@
 		temporaryChatEnabled,
 		user
 	} from '$lib/stores';
+	import { TRIAL_USER_EMAIL, WEBUI_BASE_URL } from '$lib/constants';
+	import { userSignOut } from '$lib/apis/auths';
 
 	import { slide } from 'svelte/transition';
 	import { page } from '$app/stores';
@@ -36,6 +39,7 @@
 
 	import EllipsisHorizontal from '../icons/EllipsisHorizontal.svelte';
 	import ChatPlus from '../icons/ChatPlus.svelte';
+	import ProfileImage from '$lib/components/chat/Messages/ProfileImage.svelte';
 
 	const i18n = getContext('i18n');
 
@@ -57,6 +61,8 @@
 
 	let showShareChatModal = false;
 	let showDownloadChatModal = false;
+
+	console.info(history)
 </script>
 
 <ShareChatModal bind:show={showShareChatModal} chatId={$chatId} />
@@ -67,34 +73,36 @@
 	on:click={() => {
 		initNewChat();
 	}}
-	aria-label="New Chat"
+	aria-label="New Gift Chat"
 />
 
-<nav class="sticky top-0 z-30 w-full py-1 -mb-8 flex flex-col items-center drag-region">
-	<div class="flex items-center w-full pl-1.5 pr-1">
+<nav class="sticky top-0 z-30 w-full py-1.5 -mb-8 flex flex-col items-center drag-region">
+	<div class="flex items-center w-full px-1.5">
 		<div
 			class=" bg-linear-to-b via-50% from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pointer-events-none absolute inset-0 -bottom-7 z-[-1]"
 		></div>
 
 		<div class=" flex max-w-full w-full mx-auto px-1.5 md:px-2 pt-0.5 bg-transparent">
 			<div class="flex items-center w-full max-w-full">
-				{#if $mobile && !$showSidebar}
-					<div
-						class="-translate-x-0.5 mr-1 mt-1 self-start flex flex-none items-center text-gray-600 dark:text-gray-400"
-					>
-						<Tooltip content={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}>
-							<button
-								class=" cursor-pointer flex rounded-lg hover:bg-gray-100 dark:hover:bg-gray-850 transition"
-								on:click={() => {
-									showSidebar.set(!$showSidebar);
-								}}
-							>
-								<div class=" self-center p-1.5">
-									<Sidebar />
-								</div>
-							</button>
-						</Tooltip>
-					</div>
+				{#if $user?.email !== TRIAL_USER_EMAIL}
+					{#if $mobile && !$showSidebar}
+						<div
+							class="-translate-x-0.5 mr-1 mt-1 self-start flex flex-none items-center text-gray-600 dark:text-gray-400"
+						>
+							<Tooltip content={$showSidebar ? $i18n.t('Close Sidebar') : $i18n.t('Open Sidebar')}>
+								<button
+									class=" cursor-pointer flex rounded-lg hover:bg-gray-100 dark:hover:bg-gray-850 transition"
+									on:click={() => {
+										showSidebar.set(!$showSidebar);
+									}}
+								>
+									<div class=" self-center p-1.5">
+										<Sidebar />
+									</div>
+								</button>
+							</Tooltip>
+						</div>
+					{/if}
 				{/if}
 
 				<div
@@ -102,8 +110,43 @@
 			{$showSidebar ? 'ml-1' : ''}
 			"
 				>
-					{#if showModelSelector}
+					{#if showModelSelector && $user?.role === 'admin'}
 						<ModelSelector bind:selectedModels showSetDefault={!shareEnabled} />
+					{/if}
+					{#if $user?.email === TRIAL_USER_EMAIL}
+						<div class="flex justify-center items-center text-base w-full text-left font-sans" style="color:#EB5352">
+							<span class="px-1">
+								{#if $mobile}
+									{$i18n.t('Trial experience. For more')}<br>
+								{:else}
+									{$i18n.t('This is a limited version of the App. To experience full capability')}<br>
+								{/if}
+							</span>
+							<button
+								class="pill-button transition w-max rounded-full font-medium text-sm py-1 px-4"
+								on:click={async () => {
+									await userSignOut();
+									user.set(null);
+									localStorage.removeItem('token');
+									location.href = '/auth';
+									show = false;
+								}}
+							>
+								{$i18n.t('Sign up')}
+							</button>
+						</div>
+					{:else if (history?.currentId && Object.keys(history.messages).length)}
+						<div class="flex flex-row justify-center items-center gap-1">
+							<div class={`shrink-0`}>
+								<ProfileImage
+									src={`${WEBUI_BASE_URL}/static/favicon.png`}
+									className={'size-6'}
+								/>
+							</div>
+							<div class=" text-base @sm:text-base line-clamp-1 font-primary">
+								{$i18n.t($WEBUI_NAME)}
+							</div>
+						</div>
 					{/if}
 				</div>
 
@@ -160,7 +203,7 @@
 						{/if}
 					{/if}
 
-					{#if shareEnabled && chat && (chat.id || $temporaryChatEnabled)}
+					{#if shareEnabled && chat && (chat.id || $temporaryChatEnabled) && $user?.email !== TRIAL_USER_EMAIL}
 						<Menu
 							{chat}
 							{shareEnabled}
@@ -200,7 +243,7 @@
 					{/if}
 
 					{#if $mobile}
-						<Tooltip content={$i18n.t('New Chat')}>
+						<Tooltip content={$i18n.t('New Gift Chat')}>
 							<button
 								class=" flex {$showSidebar
 									? 'md:hidden'
@@ -208,7 +251,7 @@
 								on:click={() => {
 									initNewChat();
 								}}
-								aria-label="New Chat"
+								aria-label="New Gift Chat"
 							>
 								<div class=" m-auto self-center">
 									<PencilSquare className=" size-5" strokeWidth="2" />
@@ -217,7 +260,7 @@
 						</Tooltip>
 					{/if}
 
-					{#if $user !== undefined && $user !== null}
+					{#if $user !== undefined && $user !== null && $user?.email !== TRIAL_USER_EMAIL}
 						<UserMenu
 							className="max-w-[240px]"
 							role={$user?.role}

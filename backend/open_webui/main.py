@@ -306,6 +306,8 @@ from open_webui.config import (
     ENABLE_GOOGLE_DRIVE_INTEGRATION,
     ENABLE_ONEDRIVE_INTEGRATION,
     UPLOAD_DIR,
+    GIFT_REQUESTS_DIR,
+    USER_ACTIVITY_LOG_DIR,
     EXTERNAL_WEB_SEARCH_URL,
     EXTERNAL_WEB_SEARCH_API_KEY,
     EXTERNAL_WEB_LOADER_URL,
@@ -313,6 +315,8 @@ from open_webui.config import (
     # WebUI
     WEBUI_AUTH,
     WEBUI_NAME,
+    WEBUI_SOCKET_URL,
+    WEBUI_TAGLINE,
     WEBUI_BANNERS,
     WEBHOOK_URL,
     ADMIN_EMAIL,
@@ -369,6 +373,7 @@ from open_webui.config import (
     # Misc
     ENV,
     CACHE_DIR,
+    IMAGE_CACHE_DIR,
     STATIC_DIR,
     FRONTEND_BUILD_DIR,
     CORS_ALLOW_ORIGIN,
@@ -583,7 +588,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Open WebUI",
+    title="Magicbox",
     docs_url="/docs" if ENV == "dev" else None,
     openapi_url="/openapi.json" if ENV == "dev" else None,
     redoc_url=None,
@@ -602,6 +607,8 @@ app.state.config = AppConfig(
 app.state.redis = None
 
 app.state.WEBUI_NAME = WEBUI_NAME
+app.state.WEBUI_TAGLINE = WEBUI_TAGLINE
+app.state.WEBUI_SOCKET_URL = WEBUI_SOCKET_URL
 app.state.LICENSE_METADATA = None
 
 
@@ -1405,6 +1412,10 @@ async def chat_completion(
     model_item = form_data.pop("model_item", {})
     tasks = form_data.pop("background_tasks", None)
 
+    # Force title generation to be enabled each time
+    if not tasks or 'title_generation' not in tasks:
+        tasks = {'title_generation': True}
+
     metadata = {}
     try:
         if not model_item.get("direct", False):
@@ -1437,10 +1448,14 @@ async def chat_completion(
         stream_delta_chunk_size = form_data.get("params", {}).get(
             "stream_delta_chunk_size"
         )
+        reasoning_tags = form_data.get("params", {}).get("reasoning_tags")
 
         # Model Params
         if model_info_params.get("stream_delta_chunk_size"):
             stream_delta_chunk_size = model_info_params.get("stream_delta_chunk_size")
+
+        if model_info_params.get("reasoning_tags") is not None:
+            reasoning_tags = model_info_params.get("reasoning_tags")
 
         metadata = {
             "user_id": user.id,
@@ -1457,6 +1472,7 @@ async def chat_completion(
             "direct": model_item.get("direct", False),
             "params": {
                 "stream_delta_chunk_size": stream_delta_chunk_size,
+                "reasoning_tags": reasoning_tags,
                 "function_calling": (
                     "native"
                     if (
@@ -1660,6 +1676,8 @@ async def get_app_config(request: Request):
         **({"onboarding": True} if onboarding else {}),
         "status": True,
         "name": app.state.WEBUI_NAME,
+        "tagline": app.state.WEBUI_TAGLINE,
+        "webui_socket_url": app.state.WEBUI_SOCKET_URL,
         "version": VERSION,
         "default_locale": str(DEFAULT_LOCALE),
         "oauth": {
@@ -1887,7 +1905,7 @@ async def get_manifest_json():
         return {
             "name": app.state.WEBUI_NAME,
             "short_name": app.state.WEBUI_NAME,
-            "description": f"{app.state.WEBUI_NAME} is an open, extensible, user-friendly interface for AI that adapts to your workflow.",
+            "description": app.state.WEBUI_TAGLINE,
             "start_url": "/",
             "display": "standalone",
             "background_color": "#343541",
@@ -1935,7 +1953,35 @@ async def healthcheck_with_db():
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+app.mount("/cache", StaticFiles(directory=CACHE_DIR), name="cache")
+app.mount("/image_cache", StaticFiles(directory=IMAGE_CACHE_DIR), name="image_cache")
 
+@app.get("/api/gift_requests/{chat_id}")
+async def get_gift_request_file(chat_id: str):
+    file_path = os.path.join(GIFT_REQUESTS_DIR, chat_id + ".json")
+    log.info(file_path)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path)
+
+@app.post("/api/log")
+async def log_message(form_data: dict):
+    message = form_data.get("log_message")
+    if not message:
+        raise HTTPException(status_code=400, detail="Missing log_message")
+    log.info(message)
+    return {"status": "logged"}
+
+@app.post("/api/log_activity")
+async def log_message_to_file(form_data: dict):
+    message = form_data.get("log_message")
+    user_id = form_data.get("user_id")
+    if not message:
+        raise HTTPException(status_code=400, detail="Missing log_message")
+    log_file_path = os.path.join(USER_ACTIVITY_LOG_DIR, f"{user_id}.log")
+    with open(log_file_path, "a", encoding="utf-8") as f:
+        f.write(message + "\n")
+    return {"status": "logged"}
 
 @app.get("/cache/{path:path}")
 async def serve_cache_file(

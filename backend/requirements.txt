@@ -18,7 +18,7 @@ aiofiles
 
 sqlalchemy==2.0.32
 alembic==1.14.0
-peewee==3.17.8
+peewee==3.18.3
 peewee-migrate==1.12.2
 psycopg2-binary==2.9.9
 pgvector==0.3.5
@@ -104,3 +104,4 @@ googleapis-common-protos==1.63.2
 
 ## LDAP
 ldap3==2.9.1
+werkzeug>=3.1.4 # not directly required, pinned by Snyk to avoid a vulnerability

@@ -9,12 +9,17 @@
 	export let show = false;
 	export let side = 'bottom';
 	export let align = 'start';
+	export let closeOnOutsideClick = true;
+	export let portal: HTMLElement | null | undefined = undefined;
+
 	const dispatch = createEventDispatcher();
 </script>
 
 <DropdownMenu.Root
 	bind:open={show}
 	closeFocus={false}
+	{closeOnOutsideClick}
+	{portal}
 	onOpenChange={(state) => {
 		dispatch('change', state);
 	}}

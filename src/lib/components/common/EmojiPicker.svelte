@@ -96,8 +96,8 @@
 	const ROW_HEIGHT = 48; // Approximate height for a row with multiple emojis
 	// Handle emoji selection
 	function selectEmoji(emoji) {
-		const selectedCode = emoji.shortCodes[0];
-		onSubmit(selectedCode);
+		const character = String.fromCodePoint(parseInt(emoji.name, 16));
+		onSubmit(character);
 		show = false;
 	}
 </script>
@@ -117,13 +117,13 @@
 		<slot />
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content
-		class="max-w-full w-80 bg-gray-50 dark:bg-gray-850 rounded-lg z-9999 shadow-lg dark:text-white"
+		class="max-w-full w-80 border border-gray-100  dark:border-gray-800   bg-white dark:bg-gray-850  rounded-3xl z-9999 shadow-lg dark:text-white"
 		sideOffset={8}
 		{side}
 		{align}
 		transition={flyAndScale}
 	>
-		<div class="mb-1 px-3 pt-2 pb-2">
+		<div class="mb-1 px-4 pt-2.5 pb-2">
 			<input
 				type="text"
 				class="w-full text-sm bg-transparent outline-hidden"

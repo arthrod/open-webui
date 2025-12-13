@@ -1,10 +1,29 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+
+	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { showSidebar } from '$lib/stores';
+	import { showSidebar, showThemeEditor, themeEditorCollapsed } from '$lib/stores';
+
+	import dayjs from '$lib/dayjs';
+	import { createNoteHandler } from '$lib/components/notes/utils';
 
 	import NoteEditor from '$lib/components/notes/NoteEditor.svelte';
+
+	let loaded = false;
+
+	onMount(async () => {
+		loaded = true;
+	});
 </script>
 
-<div id="note-container" class="w-full h-full {$showSidebar ? 'md:max-w-[calc(100%-260px)]' : ''}">
-	<NoteEditor id={$page.params.id} />
-</div>
+{#if loaded}
+	<div
+		id="note-container"
+		class="w-full h-full transition-all duration-300 ease-in-out {$showSidebar
+			? 'md:max-w-[calc(100%-var(--sidebar-width))]'
+			: ''} {$showThemeEditor ? ($themeEditorCollapsed ? 'pr-[44px]' : 'pr-[600px]') : ''}"
+	>
+		<NoteEditor id={$page.params.id} />
+	</div>
+{/if}

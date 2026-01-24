@@ -104,3 +104,4 @@ googleapis-common-protos==1.63.2
 
 ## LDAP
 ldap3==2.9.1
+pyasn1>=0.6.2 # not directly required, pinned by Snyk to avoid a vulnerability

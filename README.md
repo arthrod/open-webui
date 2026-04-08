@@ -11,6 +11,13 @@
 [![Discord](https://img.shields.io/badge/Discord-Open_WebUI-blue?logo=discord&logoColor=white)](https://discord.gg/5rJgQTnV4s)
 [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/tjbck)
 
+> [!IMPORTANT]
+> **This repository has been archived and is no longer actively maintained.**
+> 
+> The project is no longer under active development. The code remains available for reference and educational purposes, but no further updates, bug fixes, or support will be provided.
+>
+> Feel free to fork this repository if you wish to continue development.
+
 **Open WebUI is an [extensible](https://docs.openwebui.com/features/plugin/), feature-rich, and user-friendly self-hosted AI platform designed to operate entirely offline.** It supports various LLM runners like **Ollama** and **OpenAI-compatible APIs**, with **built-in inference engine** for RAG, making it a **powerful AI deployment solution**.
 
 ![Open WebUI Demo](./demo.gif)
